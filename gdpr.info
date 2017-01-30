@@ -1,0 +1,4 @@
+name = General Data Protection Regulation (GDPR)
+description = Helps with making a site GDPR-compliant.
+core = 7.x
+
