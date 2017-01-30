@@ -124,46 +124,19 @@ function gdpr_checklistapi_checklist_info() {
           '#text' => t('Account configuration'),
           '#path' => 'admin/config/people/accounts',
         ),
-        'handbook_page_patching' => array(
-          '#text' => t('Applying patches'),
-          '#path' => 'http://drupal.org/patch/apply',
-        ),
-        'security_advisories' => array(
-          '#text' => t('Security advisories'),
-          '#path' => 'http://drupal.org/security',
-        ),
-        'handbook_page_monitoring' => array(
-          '#text' => t('Monitoring a site'),
-          '#path' => 'http://drupal.org/node/627162',
-        ),
-      ),
-      'navigation_menus_taxonomy' => array(
-        '#title' => t('Navigation, menus, taxonomy'),
-        'handbook_page_menus' => array(
-          '#text' => t('Working with Menus'),
-          '#path' => 'http://drupal.org/documentation/modules/menu',
-        ),
       ),
     ),
-    'policies' => array(
-      '#title' => t('Policies and other measures'),
-      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
-      'data1' => array(
-        '#title' => t('Cookie policy'),
-        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
-        'handbook_page' => array(
-          '#text' => t('EU Cookie Compliance-module'),
-          '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
+      'policies' => array(
+        '#title' => t('Policies and other measures'),
+        '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
+        'data1' => array(
+          '#title' => t('Cookie policy'),
+          '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
+          'handbook_page' => array(
+            '#text' => t('EU Cookie Compliance-module'),
+            '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
+          ),
         ),
-      ),
-      'data2' => array(
-        '#title' => t('Block system'),
-        '#description' => t('Create blocks and adjust their appearance, shape, size and position.'),
-        'handbook_page' => array(
-          '#text' => t('Allow user to delete his/her account and all data'),
-          '#path' => 'admin/config/people/accounts',
-        ),
-      ),
     ),
   );
   return $definitions;
