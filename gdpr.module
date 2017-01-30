@@ -1,2 +1,194 @@
 <?php
 
+/**
+ * Implements hook_menu().
+ */
+function gdpr_menu() {
+  $items['user/%user/collected_data'] = array(
+    'title' => 'All your data',
+    'page callback' => 'gdpr_collected_user_data',
+    'access arguments' => array('access content'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * @TODO: Documentation
+ */
+function gdpr_collected_user_data() {
+  $user_fields  = gdpr_get_user_fields();
+  $user_data    = gdpr_get_user_data();
+  $user_content = gdpr_get_user_content();
+  foreach ($user_content as $key => $value) {
+    $formatted_content[] = $value['formatted'];
+  }
+  //dsm($user_content);
+  $profile_data_table = theme('table', array('header' => $user_fields['table_header'], 'rows' => $user_fields['table_rows']));
+  $output = theme('user_data_page', array(
+      'profile_data_table' => $profile_data_table,
+      'raw_field_values' => $user_fields['raw_values'],
+      'raw_user_data' => $user_data,
+      'formatted_content' => $formatted_content,
+    ));
+  return $output;
+}
+
+function gdpr_get_user_content() {
+  global $user;
+  $query = new EntityFieldQuery;
+
+  $result = db_select('node', 'n')->fields('n')->condition('uid', $user->uid, '=')->execute()->fetchAll();
+  foreach ($result as $key => $value) {
+    $content[] = array(
+      'nid' => $value->nid,
+      'title' => $value->title,
+      'formatted' => l(t($value->title), "node/$value->nid"),
+    );
+  }
+  //dsm($content);
+  return $content;
+}
+
+/**
+ * @TODO: Documentation
+ */
+function gdpr_get_user_data() {
+  global $user;
+  $account = user_load($user->uid);
+  foreach ($account as $key => $value) {
+    $type = gettype($value);
+    if ($type != 'array' && $type != 'object' && $type != 'resource') {
+      $user_data[$key] = $value;
+    };
+  }
+  // Remove empty elements
+  $user_data = array_filter($user_data);
+  return $user_data;
+}
+
+function gdpr_get_user_fields() {
+  global $user;
+  $account       = user_load($user->uid);
+  $search        = "field";
+  $search_length = strlen($search);
+  foreach ($account as $key => $value) {
+    if (substr($key, 0, $search_length) == $search) {
+      $user_fields[] = $key;
+    }
+  }
+  foreach ($user_fields as $field) {
+    $field_items = field_get_items('user', $account, $field);
+    if ($field_items) {
+      $field_info = field_info_instance('user', $field, 'user');
+      $header[] = $field_info['label'];
+      // @TODO: Support multivalue fields
+      $field_values[$field_info['label']] = check_plain($field_items[0]['value']);
+    }
+  }
+  $rows = array(
+    'data' => $field_values,
+  );
+  $user_fields = array('raw_values' => $field_values, 'table_header' => $header, 'table_rows' => $rows);
+  return $user_fields;
+}
+
+/**
+ * Implements hook_checklistapi_checklist_info().
+ */
+function gdpr_checklistapi_checklist_info() {
+  $definitions = array();
+  $definitions['gdpr_checklist'] = array(
+    '#title' => t('GDPR Checklist'),
+    '#path' => 'admin/config/gdpr/checklist',
+    '#description' => t('GDPR Checklist'),
+    '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
+    'modules' => array(
+      '#title' => t('Modules and features'),
+      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
+      'cookie_policy' => array(
+        '#title' => t('Cookie policy'),
+        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
+        'handbook_page' => array(
+          '#text' => t('EU Cookie Compliance-module'),
+          '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
+        ),
+      ),
+    ),
+    'configuration' => array(
+      '#title' => t('Configuration'),
+      '#description' => t('<p>Things you can can do by just making changes in your site configuration'),
+      'delete_data' => array(
+        '#title' => t('Users need to be able to request for removal of all their personal data.'),
+        'handbook_page_upgrading' => array(
+          '#text' => t('Account configuration'),
+          '#path' => 'admin/config/people/accounts',
+        ),
+        'handbook_page_patching' => array(
+          '#text' => t('Applying patches'),
+          '#path' => 'http://drupal.org/patch/apply',
+        ),
+        'security_advisories' => array(
+          '#text' => t('Security advisories'),
+          '#path' => 'http://drupal.org/security',
+        ),
+        'handbook_page_monitoring' => array(
+          '#text' => t('Monitoring a site'),
+          '#path' => 'http://drupal.org/node/627162',
+        ),
+      ),
+      'navigation_menus_taxonomy' => array(
+        '#title' => t('Navigation, menus, taxonomy'),
+        'handbook_page_menus' => array(
+          '#text' => t('Working with Menus'),
+          '#path' => 'http://drupal.org/documentation/modules/menu',
+        ),
+      ),
+    ),
+    'policies' => array(
+      '#title' => t('Policies and other measures'),
+      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
+      'data1' => array(
+        '#title' => t('Cookie policy'),
+        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
+        'handbook_page' => array(
+          '#text' => t('EU Cookie Compliance-module'),
+          '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
+        ),
+      ),
+      'data2' => array(
+        '#title' => t('Block system'),
+        '#description' => t('Create blocks and adjust their appearance, shape, size and position.'),
+        'handbook_page' => array(
+          '#text' => t('Allow user to delete his/her account and all data'),
+          '#path' => 'admin/config/people/accounts',
+        ),
+      ),
+    ),
+  );
+  return $definitions;
+}
+
+/**
+ * Implements hook_theme
+ */
+function gdpr_theme() {
+  return array(
+    'user_data_page' => array(
+      // Add default variables if needed
+      // 'variables' => array(
+      // ),
+      'template' => 'gdpr-user-data-page',
+      'path' => drupal_get_path('module', 'gdpr') . '/templates',
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_HOOK()
+ */
+function gdpr_preprocess_user_data_page(&$vars) {
+  // Placeholder incase we need to add or change variables for the template.
+  $vars['custom_value'] = 'custom text';
+}
+
