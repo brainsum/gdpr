@@ -1,9 +1,10 @@
-<pre>
-<h2>Basic data we collect:</h2>
-<?php print_r($raw_user_data); ?>
-<h2>Extra fields in your user profile:</h2>
-<?php print_r($raw_field_values); ?>
-<?php $formatted_content = implode(', ', $formatted_content);?>
-<h2>And this is all the content you have created:</h2>
-<?php print $formatted_content; ?>
-</pre>
+<h2><?php print t('Data stored about you') ?>:</h2>
+
+<table id="gdpr_user_data">
+  <?php foreach ($user_data as $field => $value): ?>
+      <tr>
+          <th><?php print $field ?></th>
+          <td><?php print $value ?></td>
+      </tr>
+  <?php endforeach ?>
+</table>
