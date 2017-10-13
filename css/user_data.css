@@ -1,0 +1,9 @@
+table#gdpr_user_data {
+  width: 100%;
+}
+table#gdpr_user_data td,
+table#gdpr_user_data th {
+  border-collapse: collapse;
+  border: 1px solid grey;
+  padding: 4px;
+}
