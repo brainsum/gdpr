@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+(
+    cd `dirname "$0"`/.. &&
+    ./vendor/bin/phpcs --colors --standard=Drupal -v ./gdpr.module
+)

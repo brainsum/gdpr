@@ -1,0 +1,33 @@
+{
+  "name": "drupal/gdpr",
+  "type": "drupal-module",
+  "require" : {
+    "php": "~5.6 || ~7.1"
+  },
+  "require-dev" : {
+    "drupal/coder": "~8.2.12"
+  },
+  "autoload": {
+    "files": [
+      "gdpr.module"
+    ]
+  },
+  "scripts": {
+    "initCodeSniffer": [
+      "cp -R ./vendor/drupal/coder/coder_sniffer/Drupal ./vendor/squizlabs/php_codesniffer/CodeSniffer/Standards/Drupal",
+      "cp -R ./vendor/drupal/coder/coder_sniffer/DrupalPractice ./vendor/squizlabs/php_codesniffer/CodeSniffer/Standards/DrupalPractice"
+    ],
+    "post-install-cmd": [
+      "@initCodeSniffer"
+    ],
+    "post-update-cmd": [
+      "@initCodeSniffer"
+    ]
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://packages.drupal.org/7"
+    }
+  ]
+}

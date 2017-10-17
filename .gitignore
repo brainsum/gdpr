@@ -1,4 +1,6 @@
 # Ignore project files that should not be in version control
+/composer.lock
+/vendor
 
 # Ignore the folder created by PhpStorm
 .idea/*
