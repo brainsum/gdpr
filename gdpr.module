@@ -13,7 +13,8 @@ function gdpr_menu() {
     'title' => 'All your data',
     'page callback' => 'gdpr_collected_user_data',
     'page arguments' => [1],
-    'access arguments' => ['access content'],
+    'access callback' => 'gdpr_collected_user_data_access',
+    'access arguments' => [1],
     'type' => MENU_LOCAL_TASK,
   ];
   return $items;
@@ -99,6 +100,19 @@ function gdpr_collected_user_data(\stdClass $user) {
 }
 
 /**
+ * Implements an access callback to a user's GDPR data collection page.
+ *
+ * @param \stdClass $user
+ *   The user entity.
+ *
+ * @return bool
+ *   Whether or not the current user has access.
+ */
+function gdpr_collected_user_data_access(\stdClass $user) {
+  return $GLOBALS['user']->uid == $user->uid;
+}
+
+/**
  * Gets all collected data for the given user.
  *
  * @param \stdClass $user
@@ -108,18 +122,21 @@ function gdpr_collected_user_data(\stdClass $user) {
  *   Keys are data machine names, and values the collected data itself.
  */
 function gdpr_get_user_data(\stdClass $user) {
-
   foreach ($user as $key => $value) {
-    $type = gettype($value);
-
-    if ($key === 'roles') {
-      $user_data[$key] = implode(", ", $value);
-    }
-    elseif ($type != 'array' && $type != 'object' && $type != 'resource') {
+    if (is_scalar($value)) {
       $user_data[$key] = $value;
     }
-    else {
-      $user_data[$key] = $value[LANGUAGE_NONE][0]['safe_value'];
+    elseif (is_array($value)) {
+      $scalar_list = TRUE;
+      foreach ($value as $item) {
+        if (!is_scalar($item)) {
+          $scalar_list = FALSE;
+          break;
+        }
+      }
+      if ($scalar_list) {
+        $user_data[$key] = implode(", ", $value);
+      }
     }
   }
 

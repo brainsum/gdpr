@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * @file
+ * Contains GDPR tests.
+ */
+
+/**
+ * Tests users' data collection pages.
+ */
+class UserCollectedDataPageTest extends DrupalWebTestCase {
+
+  /**
+   * The user whose collected data to access.
+   *
+   * @var \stdClass
+   */
+  private $subject;
+
+  /**
+   * The user who tries to access the subject's data.
+   *
+   * @var \stdClass
+   */
+  private $observer;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getInfo() {
+    return [
+      'name' => 'Data collection pages',
+      'description' => 'Tests users\' data collection pages.',
+      'group' => 'GDPR',
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp('gdpr');
+    $this->subject = $this->drupalCreateUser();
+    $this->observer = $this->drupalCreateUser();
+  }
+
+  /**
+   * Tests that anonymous users do not have access to these pages.
+   */
+  public function testAnonymousUserShouldNotHaveAccess() {
+    $this->drupalGet(sprintf('user/%d/collected_data', $this->subject->uid));
+    $this->assertResponse(403);
+  }
+
+  /**
+   * Tests that users have access to their own page.
+   */
+  public function testUsersShouldHaveAccessToOwnPage() {
+    $this->drupalLogin($this->subject);
+    $this->drupalGet(sprintf('user/%d/collected_data', $this->subject->uid));
+    $this->assertResponse(200);
+  }
+
+  /**
+   * Tests that users do not have access to each other's pages.
+   */
+  public function testUsersShouldNotHaveAccessToOtherPages() {
+    $this->drupalLogin($this->observer);
+    $this->drupalGet(sprintf('user/%d/collected_data', $this->subject->uid));
+    $this->assertResponse(403);
+  }
+
+}
