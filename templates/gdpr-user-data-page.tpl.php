@@ -1,10 +1,18 @@
-<h2><?php print t('Data stored about you') ?>:</h2>
+<?php
 
-<table id="gdpr_user_data">
-  <?php foreach ($user_data as $field => $value): ?>
-      <tr>
-          <th><?php print $field ?></th>
-          <td><?php print $value ?></td>
-      </tr>
-  <?php endforeach ?>
-</table>
+/**
+ * @file
+ * Renders a user's collected data.
+ */
+
+$header = [t('Type'), t('Value')];
+$rows = [];
+foreach ($user_data as $field => $value) {
+  $rows[] = [
+    'data' => [$field, $value],
+  ];
+}
+print theme('table', [
+  'header' => $header,
+  'rows' => $rows,
+]);

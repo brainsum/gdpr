@@ -32,13 +32,6 @@ function gdpr_theme() {
 }
 
 /**
- * Implements hook_preprocess_HOOK().
- */
-function gdpr_preprocess_user_data_page(array &$vars) {
-  drupal_add_css(drupal_get_path('module', 'gdpr') . '/css/user_data.css', []);
-}
-
-/**
  * Implements hook_checklistapi_checklist_info().
  */
 function gdpr_checklistapi_checklist_info() {
@@ -97,6 +90,7 @@ function gdpr_checklistapi_checklist_info() {
  *   The rendered page.
  */
 function gdpr_collected_user_data(\stdClass $user) {
+  drupal_set_title(t('Data stored about you'));
   $user_data = gdpr_get_user_data($user);
   $output    = theme('user_data_page', [
     'user_data' => $user_data,
