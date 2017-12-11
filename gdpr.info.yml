@@ -1,0 +1,6 @@
+name: General Data Protection Regulation (GDPR)
+description: Helps with making a site GDPR-compliant.
+core: 8.x
+type: module
+dependencies:
+  - drupal:checklistapi

@@ -1,0 +1,10 @@
+gdpr.admin_config:
+  title: 'GDPR'
+  parent: system.admin_config
+  route_name: gdpr.admin_config
+
+gdpr.cheklist:
+  title: 'Checklist'
+  parent: gdpr.admin_config
+  route_name: checklistapi.checklists.gdpr_checklist
+  description: 'GDPR Checklist'

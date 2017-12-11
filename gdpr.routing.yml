@@ -1,0 +1,21 @@
+gdpr.collected_user_data:
+  path: '/user/{user}/collected-data'
+  defaults:
+    _title: 'Data stored about you'
+    _controller: '\Drupal\gdpr\Controller\UserController::collectedData'
+  requirements:
+    _custom_access: '\Drupal\gdpr\Controller\UserController::access'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+gdpr.admin_config:
+  path: '/admin/config/gdpr'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'GDPR'
+  requirements:
+    _permission: 'access administration pages'
+  options:
+    _admin_route: TRUE

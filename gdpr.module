@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * @file
+ * Module file.
+ */
+
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_checklistapi_checklist_info().
+ */
+function gdpr_checklistapi_checklist_info() {
+  $definitions = [];
+  $definitions['gdpr_checklist'] = [
+    '#title' => t('GDPR Checklist'),
+    '#path' => 'admin/config/gdpr/checklist',
+    '#description' => t('GDPR Checklist'),
+    '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
+    'configuration' => [
+      '#title' => t('Configuration'),
+      '#description' => t('<p>Things you can can do by just making changes in your site configuration'),
+      'delete_data' => [
+        '#title' => t('Users need to be able to request for removal of all their personal data.'),
+        'handbook_page_upgrading' => [
+          '#text' => t('Account configuration'),
+          '#url' => Url::fromRoute('entity.user.admin_form'),
+        ],
+      ],
+    ],
+    'policies' => [
+      '#title' => t('Policies and other measures'),
+      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
+      'data1' => [
+        '#title' => t('Cookie policy'),
+        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
+        'handbook_page' => [
+          '#text' => t('EU Cookie Compliance-module'),
+          '#url' => Url::fromUri('https://www.drupal.org/project/eu_cookie_compliance'),
+        ],
+      ],
+    ],
+  ];
+  return $definitions;
+}

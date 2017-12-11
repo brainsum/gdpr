@@ -1,0 +1,15 @@
+{
+    "name": "drupal/gdpr",
+    "description": "Helps with making a site GDPR-compliant.",
+    "type": "drupal-module",
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name": "mhavelant",
+            "email": "mhavelant@brainsum.com"
+        }
+    ],
+    "require": {
+        "drupal/checklistapi": "^1.0"
+    }
+}
