@@ -1,0 +1,22 @@
+services:
+  gdpr_dump.sql_dump:
+    class: \Drupal\gdpr_dump\Service\GdprSqlDump
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@gdpr_dump.database_manager'
+      - '@gdpr_dump.sanitizer_factory'
+
+  gdpr_dump.database_manager:
+    class: \Drupal\gdpr_dump\Service\GdprDatabaseManager
+    arguments:
+      - '@database'
+
+  plugin.manager.gdpr_sanitizer:
+    class: Drupal\gdpr_dump\Sanitizer\GdprSanitizerPluginManager
+    parent: default_plugin_manager
+
+  gdpr_dump.sanitizer_factory:
+    class: Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory
+    arguments:
+      - '@plugin.manager.gdpr_sanitizer'
