@@ -37,10 +37,17 @@ function gdpr_checklistapi_checklist_info() {
     'configuration' => [
       '#title' => t('Configuration'),
       '#description' => t('<p>Things you can can do by just making changes in your site configuration'),
+      'cancel_account' => [
+        '#title' => t('Allow users to cancel their own user account'),
+        'permission' => [
+          '#text' => t('Permissions for "Cancel own user account"'),
+          '#url' => Url::fromUserInput('/admin/people/permissions#module-user'),
+        ],
+      ],
       'delete_data' => [
         '#title' => t('Users need to be able to request for removal of all their personal data.'),
-        'handbook_page_upgrading' => [
-          '#text' => t('Account configuration'),
+        'account_config' => [
+          '#text' => t('Account configuration for "Delete the account and make its content belong to the Anonymous user"'),
           '#url' => Url::fromRoute('entity.user.admin_form'),
         ],
       ],
