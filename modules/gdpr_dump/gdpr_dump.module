@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Module file for the GDPR Sql-Dump module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function gdpr_dump_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the prova module.
+    case 'help.page.gdpr_dump':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provides a drush command for creating GDPR-compliant sql dumps.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
