@@ -5,7 +5,24 @@
  * Module file.
  */
 
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
+
+/**
+ * Implements hook_help().
+ */
+function gdpr_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the prova module.
+    case 'help.page.gdpr':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provides help for making your drupal site GDPR-compliant.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
 
 /**
  * Implements hook_checklistapi_checklist_info().

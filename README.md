@@ -6,6 +6,8 @@ This module gives end user visibility to the data stored about himself/herself a
 * Allow logged in user to see all raw data stored about himself/herself (user entity)
 * Allow user to initiate “forget me” action from site admins
 * Checklist for site admin (recommend modules like cookie consent, check if there is privacy policy page etc)
+    * Note, the viewing/editing the checklist requires permissions.
+    * After enabling GDPR, see: /admin/people/permissions#module-checklistapi
 
 ## Planned features
 * Make sure user can rectify all data about himself/herself
