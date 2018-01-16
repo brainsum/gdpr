@@ -60,16 +60,20 @@ class GdprSqlMysql extends Sqlmysql {
    *   The command.
    */
   protected function createRenameCommands() {
-    $command = "\n\n";
     // @todo: Dep.inj.
     /** @var array $gdprOptions */
     $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
     $sensitiveDataTables = \array_keys($gdprOptions);
 
+    $command = '';
     foreach ($sensitiveDataTables as $table) {
       $clone = GdprSqlDump::GDPR_TABLE_PREFIX . $table;
-      $command = "RENAME TABLE \`$clone\` TO \`$table\`;\n";
-      $command = " ( echo \"$command\" ); ";
+      $rename = "RENAME TABLE \`$clone\` TO \`$table\`;";
+      if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
+        drush_print("Adding rename command: '$rename'", 0, STDERR);
+      }
+
+      $command .= " ( echo \"$rename\" ); ";
     }
 
     return $command;

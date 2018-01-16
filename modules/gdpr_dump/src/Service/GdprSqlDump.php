@@ -192,7 +192,6 @@ class GdprSqlDump {
    */
   protected function createCloneQueryString($originalTable) {
     $clonedTable = self::GDPR_TABLE_PREFIX . $originalTable;
-
     switch ($this->driver) {
       case 'mysql':
         return "CREATE TABLE IF NOT EXISTS `$clonedTable` LIKE `$originalTable`;";
@@ -223,32 +222,37 @@ class GdprSqlDump {
   /**
    * Creates table clones according to the config.
    *
+   * @throws \Drupal\Core\Database\TransactionNoActiveException
+   * @throws \Drupal\Core\Database\TransactionCommitFailedException
    * @throws \InvalidArgumentException
    * @throws \Drupal\Core\Database\IntegrityConstraintViolationException
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    * @throws \Exception
    */
   protected function createTableClones() {
-    $commands = [];
     $tables = \array_keys($this->gdprOptions);
+    $transaction = $this->database->startTransaction('gdpr_clone_tables');
     foreach ($tables as $table) {
       $queryString = $this->createCloneQueryString($table);
       if (NULL === $queryString) {
+        // @todo: Notify?
         continue;
       }
 
-      $commands[] = $queryString;
+      try {
+        if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
+          drush_print("Executing: '$queryString'", 0, STDERR);
+        }
+        $query = $this->database->query($queryString);
+        $query->execute();
+      }
+      catch (\Exception $e) {
+        drush_print("Error while cloning the '$table' table.");
+        $transaction->rollBack();
+      }
     }
 
-    $commandString = \trim(\implode(' ', $commands));
-
-    if (empty($commandString)) {
-      // @todo: Notify?
-      return;
-    }
-
-    $query = $this->database->query($commandString);
-    $query->execute();
+    $this->database->popTransaction($transaction->name());
   }
 
   /**
