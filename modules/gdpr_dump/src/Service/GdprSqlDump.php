@@ -261,6 +261,11 @@ class GdprSqlDump {
    * @throws \Exception
    */
   protected function sanitizeData() {
+    /* @todo
+     * Remote API call optimization:
+     *   Prefetch the required amount of data from remote APIs.
+     *   Maybe do it on a table level.
+     */
     /** @var array $sanitationOptions */
     foreach ($this->gdprOptions as $table => $sanitationOptions) {
       $selectQuery = $this->database->select($table);
