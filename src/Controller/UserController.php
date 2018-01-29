@@ -68,7 +68,7 @@ class UserController extends ControllerBase {
 
     $table = [
       '#type' => 'table',
-      '#caption' => $this->t('Stored u0ser data'),
+      '#caption' => $this->t('Stored user data'),
       '#header' => [
         $this->t('Type'),
         $this->t('Value'),
