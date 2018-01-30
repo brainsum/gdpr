@@ -70,8 +70,11 @@ function gdpr_checklistapi_checklist_info() {
       'delete_data' => [
         '#title' => t('Users need to be able to request for removal of all their personal data.'),
         'handbook_page_upgrading' => [
-          '#text' => t('Account configuration'),
-          '#path' => 'admin/config/people/accounts',
+          '#text' => t('Permissions for "Cancel own user account"'),
+          '#path' => '/admin/people/permissions',
+          '#options' => [
+            'fragment' => 'module-user',
+          ],
         ],
       ],
     ],
