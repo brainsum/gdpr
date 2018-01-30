@@ -52,29 +52,24 @@ function gdpr_checklistapi_checklist_info() {
     '#path' => 'admin/config/gdpr/checklist',
     '#description' => t('GDPR Checklist'),
     '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
-    'modules' => [
-      '#title' => t('Modules and features'),
-      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
-      'cookie_policy' => [
-        '#title' => t('Cookie policy'),
-        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
-        'handbook_page' => [
-          '#text' => t('EU Cookie Compliance-module'),
-          '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
-        ],
-      ],
-    ],
     'configuration' => [
       '#title' => t('Configuration'),
       '#description' => t('<p>Things you can can do by just making changes in your site configuration'),
-      'delete_data' => [
-        '#title' => t('Users need to be able to request for removal of all their personal data.'),
-        'handbook_page_upgrading' => [
+      'cancel_account' => [
+        '#title' => t('Allow users to cancel their own user account'),
+        'permission' => [
           '#text' => t('Permissions for "Cancel own user account"'),
           '#path' => '/admin/people/permissions',
           '#options' => [
             'fragment' => 'module-user',
           ],
+        ],
+      ],
+      'delete_data' => [
+        '#title' => t('Users need to be able to request for removal of all their personal data.'),
+        'account_config' => [
+          '#text' => t('Account configuration for "Delete the account and make its content belong to the Anonymous user"'),
+          '#path' => '/admin/config/people/accounts',
         ],
       ],
     ],
