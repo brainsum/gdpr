@@ -52,9 +52,60 @@ function gdpr_checklistapi_checklist_info() {
     '#path' => 'admin/config/gdpr/checklist',
     '#description' => t('GDPR Checklist'),
     '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
+    'getting_started' => [
+      '#title' => t('Getting Started'),
+      '#description' => t('<p>To begin your self-assessment process, it\'s highly recommended to take the following steps:</p>'),
+      'responsability_agreement' => [
+        '#title' => t('Yes, I agree that by using the <em>GDPR</em> module, I\'m still accountable for personal data handling performed on the site.'),
+        '#description' => t('Responsibility Agreement: before the site owner starts the checklist process, they should acknowledge that installing and using this module pack does not mean sharing responsibility. Neither the Drupal Community nor module maintainers can guarantee full compliance with these regulations in case of potential control or audit.'),
+      ],
+      'recommended_resources' => [
+        '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
+        'technical_approach' => [
+          '#text' => t('General summary of technical approach'),
+          '#path' => t('https://edps.europa.eu/about-edps/data-protection-within-edps/data-protection-legal-notices_en'),
+        ],
+        'marketing_viewpoint' => [
+          '#text' => t('General summary of marketing viewpoint'),
+          '#path' => t('https://www.eugdpr.org/eugdpr.org.html'),
+        ],
+        'legal_viewpoint' => [
+          '#text' => t('General summary of Legal viewpoint'),
+          '#path' => t('https://webdevlaw.uk/data-protection-gdpr'),
+        ]
+      ]
+    ],
+    'policies' => [
+      '#title' => t('Policies and other measures'),
+      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
+      'data1' => [
+        '#title' => t('Cookie policy'),
+        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
+        'handbook_page' => [
+          '#text' => t('EU Cookie Compliance-module'),
+          '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
+        ],
+      ],
+    ],
+    'content_related_suggestions' => [
+      '#title' => t('Content related suggestions'),
+      '#description' => t('<p>Automated search performed on uploaded content of site.</p>'),
+      'privacy_policy_page' => [
+        '#title' => t('I have checked through the uploaded content and verified that a page containing <em>Privacy Policy</em> exists and has been published to this site.'),
+        '#description' => t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum". Please verify manually that such content of similar titles exists and has been published.'),
+      ],
+      'privacy_policy_published' => [
+        '#title' => t('I confirm the existing "Privacy Policy" has been published.'),
+        '#description' => t('This <em>GDPR</em> module does not automatically affect publishing status of site content. Therefore, even if such information has been uploaded (regarding the previous point), then you must make sure that this content is available to visitors.'),
+      ],
+      'privacy_policy_in_menu' => [
+        '#title' => t('I confirm the published "Privacy Policy" is included in at least one menu of the site.'),
+        '#description' => t('To ensure best practice, it\'s strongly recommended to divulge personal data handling guidelines on the site by including a link to the guidelines page in a generally displayed menu in clear view on the site layout.'),
+      ]
+    ],
     'configuration' => [
       '#title' => t('Configuration'),
-      '#description' => t('<p>Things you can can do by just making changes in your site configuration'),
+      '#description' => t('<p>Things you can can do by just making changes in your site configuration</p>'),
       'cancel_account' => [
         '#title' => t('Allow users to cancel their own user account'),
         'permission' => [
@@ -70,18 +121,6 @@ function gdpr_checklistapi_checklist_info() {
         'account_config' => [
           '#text' => t('Account configuration for "Delete the account and make its content belong to the Anonymous user"'),
           '#path' => '/admin/config/people/accounts',
-        ],
-      ],
-    ],
-    'policies' => [
-      '#title' => t('Policies and other measures'),
-      '#description' => t('<p>Modules or libraries that already implement some of the needed features.</p>'),
-      'data1' => [
-        '#title' => t('Cookie policy'),
-        '#description' => t('User needs to be informed when your site uses cookies to collect data.'),
-        'handbook_page' => [
-          '#text' => t('EU Cookie Compliance-module'),
-          '#path' => 'https://www.drupal.org/project/eu_cookie_compliance',
         ],
       ],
     ],
