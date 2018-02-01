@@ -46,7 +46,7 @@ class GdprSanitizerFactory {
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  public function get($name): GdprSanitizerInterface {
+  public function get($name) {
     if (!isset($this->sanitizers[$name])) {
       $this->sanitizers[$name] = $this->pluginManager->createInstance($name);
     }
