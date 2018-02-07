@@ -13,7 +13,7 @@ use Drupal\Core\Url;
  */
 function gdpr_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    // Main module help for the prova module.
+    // Main module help for the GDPR module.
     case 'help.page.gdpr':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
@@ -36,26 +36,26 @@ function gdpr_checklistapi_checklist_info() {
     '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
     'getting_started' => [
       '#title' => t('Getting Started'),
-      '#description' => t('<p>To begin your self-assessment process, it\'s highly recommended to take the following steps:</p>'),
-      'responsability_agreement' => [
-        '#title' => t('Yes, I agree that by using the <em>GDPR</em> module, I\'m still accountable for personal data handling performed on the site.'),
+      '#description' => t("<p>To begin your self-assessment process, it's highly recommended to take the following steps:</p>"),
+      'responsibility_agreement' => [
+        '#title' => t("Yes, I agree that by using the <em>GDPR</em> module, I'm still accountable for personal data handling performed on the site."),
         '#description' => t('Responsibility Agreement: before the site owner starts the checklist process, they should acknowledge that installing and using this module pack does not mean sharing responsibility. Neither the Drupal Community nor module maintainers can guarantee full compliance with these regulations in case of potential control or audit.'),
       ],
       'recommended_resources' => [
         '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
         'technical_approach' => [
           '#text' => t('General summary of technical approach'),
-          '#url' => URL::fromUri(t('https://edps.europa.eu/about-edps/data-protection-within-edps/data-protection-legal-notices_en'))
+          '#url' => Url::fromUri(t('https://edps.europa.eu/about-edps/data-protection-within-edps/data-protection-legal-notices_en')),
         ],
         'marketing_viewpoint' => [
           '#text' => t('General summary of marketing viewpoint'),
-          '#url' => URL::fromUri(t('https://www.eugdpr.org/eugdpr.org.html')),
+          '#url' => Url::fromUri(t('https://www.eugdpr.org/eugdpr.org.html')),
         ],
         'legal_viewpoint' => [
           '#text' => t('General summary of Legal viewpoint'),
-          '#url' => URL::fromUri(t('https://webdevlaw.uk/data-protection-gdpr')),
-        ]
-      ]
+          '#url' => Url::fromUri(t('https://webdevlaw.uk/data-protection-gdpr')),
+        ],
+      ],
     ],
     'policies' => [
       '#title' => t('Policies and other measures'),
@@ -82,8 +82,8 @@ function gdpr_checklistapi_checklist_info() {
       ],
       'privacy_policy_in_menu' => [
         '#title' => t('I confirm the published "Privacy Policy" is included in at least one menu of the site.'),
-        '#description' => t('To ensure best practice, it\'s strongly recommended to divulge personal data handling guidelines on the site by including a link to the guidelines page in a generally displayed menu in clear view on the site layout.'),
-      ]
+        '#description' => t("To ensure best practice, it's strongly recommended to divulge personal data handling guidelines on the site by including a link to the guidelines page in a generally displayed menu in clear view on the site layout."),
+      ],
     ],
     'configuration' => [
       '#title' => t('Configuration'),
