@@ -14,7 +14,7 @@ use Drupal\Core\Link;
  */
 function gdpr_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    // Main module help for the prova module.
+    // Main module help for the GDPR module.
     case 'help.page.gdpr':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
@@ -114,15 +114,15 @@ function gdpr_checklistapi_checklist_info() {
         '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
         'technical_approach' => [
           '#text' => t('General summary of technical approach'),
-          '#url' => URL::fromUri(t('https://edps.europa.eu/about-edps/data-protection-within-edps/data-protection-legal-notices_en')),
+          '#url' => Url::fromUri(t('https://edps.europa.eu/about-edps/data-protection-within-edps/data-protection-legal-notices_en')),
         ],
         'marketing_viewpoint' => [
           '#text' => t('General summary of marketing viewpoint'),
-          '#url' => URL::fromUri(t('https://www.eugdpr.org/eugdpr.org.html')),
+          '#url' => Url::fromUri(t('https://www.eugdpr.org/eugdpr.org.html')),
         ],
         'legal_viewpoint' => [
           '#text' => t('General summary of Legal viewpoint'),
-          '#url' => URL::fromUri(t('https://webdevlaw.uk/data-protection-gdpr')),
+          '#url' => Url::fromUri(t('https://webdevlaw.uk/data-protection-gdpr')),
         ],
       ],
     ],
