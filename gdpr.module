@@ -87,12 +87,12 @@ function gdpr_checklistapi_checklist_info() {
 
       $description['#items'][] = t('@title (@status) @menu', [
         '@title' => $url->toString(),
-        '@status' => drupal_render($status),
+        '@status' => \Drupal::service('renderer')->renderPlain($status),
         '@menu' => $in_menu_text,
       ]);
     }
 
-    $content_discovery_description = drupal_render($description);
+    $content_discovery_description = \Drupal::service('renderer')->renderPlain($description);
   }
   else {
     $content_discovery_description = t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum".');
@@ -237,7 +237,7 @@ function _get_logging_responsability_description() {
     ],
   ];
 
-  return drupal_render($logging_items);
+  return \Drupal::service('renderer')->renderPlain($logging_items);
 }
 
 /**
@@ -249,6 +249,8 @@ function _get_logging_responsability_description() {
 function _get_gdpr_module_description() {
   $all_modules = system_rebuild_module_data();
   uasort($all_modules, 'system_sort_modules_by_info_name');
+
+  $renderer = \Drupal::service('renderer');
 
   $gdpr_module_names = ['gdpr_dump', 'custom_contact_form'];
 
@@ -277,7 +279,7 @@ function _get_gdpr_module_description() {
 
         $gdpr_modules_list['#items'][] = t('@title (@status)', [
           '@title' => $all_modules[$module_name]->info['name'],
-          '@status' => drupal_render($status),
+          '@status' => $renderer->renderPlain($status),
         ]);
       }
     }
@@ -291,12 +293,12 @@ function _get_gdpr_module_description() {
 
       $gdpr_modules_list['#items'][] = t('@title (@status)', [
         '@title' => $module_name,
-        '@status' => drupal_render($status),
+        '@status' => $renderer->renderPlain($status),
       ]);
     }
   }
 
-  $gdpr_modules = drupal_render($gdpr_modules_list);
+  $gdpr_modules = $renderer->renderPlain($gdpr_modules_list);
 
   $options = ['absolute' => TRUE];
   $link = Link::createFromRoute(t('Enable them on Extend admin page'), 'system.modules_list', [], $options);
@@ -319,6 +321,8 @@ function _get_gdpr_module_description() {
 function _get_data_collecting_modules_description() {
   $all_modules = system_rebuild_module_data();
   uasort($all_modules, 'system_sort_modules_by_info_name');
+
+  $renderer = \Drupal::service('renderer');
 
   $c_modules = ['contact', 'webform', 'geoip'];
 
@@ -346,12 +350,12 @@ function _get_data_collecting_modules_description() {
 
       $data_collecting_modules_list['#items'][] = t('@title (@status)', [
         '@title' => $all_modules[$c_module]->info['name'],
-        '@status' => drupal_render($status),
+        '@status' => $renderer->renderPlain($status),
       ]);
     }
   }
 
-  $data_collecting_modules = drupal_render($data_collecting_modules_list);
+  $data_collecting_modules = $renderer->renderPlain($data_collecting_modules_list);
 
   $text = t('Owner and/or maintainer of the site has to ensure that the modules listed below have been revised as to gather only necessary (i.e. not needed for provision of service) personal data of site visitors.');
 
