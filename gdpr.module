@@ -136,17 +136,17 @@ function gdpr_checklistapi_checklist_info() {
       ],
       'recommended_resources' => [
         '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
-        'technical_approach' => [
-          '#text' => t('General summary of technical approach'),
-          '#path' => t('https://edps.europa.eu/about-edps/data-protection-within-edps/data-protection-legal-notices_en'),
+        'wiki_page' => [
+          '#text' => t('GDPR Wikipedia page'),
+          '#path' => t('https://en.wikipedia.org/wiki/General_Data_Protection_Regulation'),
         ],
-        'marketing_viewpoint' => [
-          '#text' => t('General summary of marketing viewpoint'),
-          '#path' => t('https://www.eugdpr.org/eugdpr.org.html'),
+        'summary' => [
+          '#text' => t('Summary of the GDPR regulation'),
+          '#path' => t('http://eur-lex.europa.eu/legal-content/EN/LSU/?uri=CELEX:32016R0679#document1'),
         ],
-        'legal_viewpoint' => [
-          '#text' => t('General summary of Legal viewpoint'),
-          '#path' => t('https://webdevlaw.uk/data-protection-gdpr'),
+        'legislation' => [
+          '#text' => t('The GDPR legislation'),
+          '#path' => t('http://eur-lex.europa.eu/eli/reg/2016/679/oj'),
         ],
       ],
     ],
