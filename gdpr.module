@@ -169,17 +169,14 @@ function gdpr_checklistapi_checklist_info() {
       'privacy_policy_page' => [
         '#title' => t('I have checked through the uploaded content and verified that a page containing <em>Privacy Policy</em> exists and has been published to this site.'),
         '#description' => t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum". Please verify manually that such content of similar titles exists and has been published.'),
-        '#default_value' => !empty($content),
       ],
       'privacy_policy_published' => [
         '#title' => t('I confirm the existing "Privacy Policy" has been published.'),
         '#description' => t('This <em>GDPR</em> module does not automatically affect publishing status of site content. Therefore, even if such information has been uploaded (regarding the previous point), then you must make sure that this content is available to visitors.'),
-        '#default_value' => $is_published,
       ],
       'privacy_policy_in_menu' => [
         '#title' => t('I confirm the published "Privacy Policy" is included in at least one menu of the site.'),
         '#description' => t("To ensure best practice, it's strongly recommended to divulge personal data handling guidelines on the site by including a link to the guidelines page in a generally displayed menu in clear view on the site layout."),
-        '#default_value' => $in_menu,
       ],
     ],
     'site_features' => [
@@ -235,8 +232,7 @@ function gdpr_checklistapi_checklist_info() {
       ],
       'gdpr_modules' => [
         '#title' => t('I have enabled all features of the GDPR module'),
-        '#description' => ($gdpr_desc = _get_gdpr_module_description()),
-        '#default_value' => empty($gdpr_desc),
+        '#description' => _get_gdpr_module_description(),
       ],
       'notice_upon_breach' => [
         '#title' => t('I declare that I am able to notify the supervisory authority within 72 hours in the case of a personal data breach'),
