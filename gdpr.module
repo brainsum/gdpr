@@ -187,15 +187,18 @@ function gdpr_checklistapi_checklist_info() {
       '#description' => t('This group of checkpoints addresses various actions to be taken regarding site features.'),
       'external_traffic_measurement' => [
         '#title' => t("Yes, I'm aware there are external traffic measurement and user tracking services integrated on this site"),
-        '#description' => t('As the owner and/or maintainer of the site I have, to the best of my knowledge, taken the necessary measures to set up these 3rd-party data collecting tools to ensure maximum compliance with GDPR regulations.'),
+        '#description' => t('As the owner and/or maintainer of the site I have, to the best of my knowledge, taken the necessary measures to set up these 3rd-party data collecting tools to ensure maximum compliance with GDPR regulations.')
+        . _get_module_list('tracking'),
       ],
       'social_media_connections' => [
         '#title' => t("Yes, I'm aware there are connections established between this site and some social media platforms"),
-        '#description' => t('As many social media platforms collects identifiable personal data, I acknowledge that the owner of this site is responsible for setting up these connections to ensure maximum compliance with GDPR regulations.'),
+        '#description' => t('As many social media platforms collects identifiable personal data, I acknowledge that the owner of this site is responsible for setting up these connections to ensure maximum compliance with GDPR regulations.')
+        . _get_module_list('social'),
       ],
       'module_data_collection' => [
         '#title' => t('I confirm that all Drupal core, community, and custom modules have been revised as to not gather any unnecessary personal data of site visitors'),
-        '#description' => _get_data_collecting_modules_description(),
+        '#description' => t('Owner and/or maintainer of the site has to ensure that the modules listed below have been revised as to gather only necessary (i.e. not needed for provision of service) personal data of site visitors.')
+        . _get_module_list('collect'),
       ],
       'user_role_permissions' => [
         '#title' => t('I have examined all aspects of displayed personal data, associated with this site, to ensure that all users can access only permitted types of information according to their role'),
@@ -352,8 +355,7 @@ function _get_logging_responsability_description() {
  *   HTML markup string
  */
 function _get_gdpr_module_description() {
-  $all_modules = system_rebuild_module_data();
-  uasort($all_modules, 'system_sort_modules_by_info_name');
+  $all_modules = _get_modules();
 
   $gdpr_module_names = ['gdpr_dump', 'custom_contact_form'];
 
@@ -372,16 +374,16 @@ function _get_gdpr_module_description() {
 
   foreach ($gdpr_module_names as $module_name) {
     if (isset($all_modules[$module_name])) {
-      if (!$all_modules[$module_name]->status) {
-        $status_class = $color_classes[$all_modules[$module_name]->status];
+      if (!$all_modules[$module_name]['status']) {
+        $status_class = $color_classes[$all_modules[$module_name]['status']];
         $status = [
           '#prefix' => '<span class="' . $status_class . '">',
           '#suffix' => '</span>',
-          '#markup' => $module_statuses[$all_modules[$module_name]->status],
+          '#markup' => $module_statuses[$all_modules[$module_name]['status']],
         ];
 
         $gdpr_modules_list['#items'][] = t('@title (!status)', [
-          '@title' => $all_modules[$module_name]->info['name'],
+          '@title' => $all_modules[$module_name]['name'],
           '!status' => drupal_render($status),
         ]);
       }
@@ -404,7 +406,7 @@ function _get_gdpr_module_description() {
   $gdpr_modules = drupal_render($gdpr_modules_list);
 
   $options = ['absolute' => TRUE];
-  $link = l(t('Enable them on Extend admin page'), '/admin/modules', $options);
+  $link = l(t('Enable them on Modules admin page'), '/admin/modules', $options);
 
   if (!empty($gdpr_modules_list['#items'])) {
     $text = t("In order to have a complete overview of the site functionalities, it's recommended to enable the following features as well:");
@@ -413,55 +415,6 @@ function _get_gdpr_module_description() {
   else {
     return '';
   }
-}
-
-/**
- * Returns a HTML makrup for data_collecting modules checkpoint description.
- *
- * @return string
- *   HTML markup string
- */
-function _get_data_collecting_modules_description() {
-  module_load_include('inc', 'system', 'system.admin');
-  $all_modules = system_rebuild_module_data();
-  uasort($all_modules, 'system_sort_modules_by_info_name');
-
-  $c_modules = ['contact', 'webform', 'geoip'];
-
-  $data_collecting_modules_list = [
-    '#theme' => 'item_list',
-    '#items' => [],
-  ];
-
-  $module_statuses = _get_module_statuses();
-
-  $color_classes = [
-    -1 => 'admin-enabled',
-    0 => 'admin-enabled',
-    1 => 'admin-disabled',
-  ];
-
-  foreach ($c_modules as $c_module) {
-    if (isset($all_modules[$c_module])) {
-      $status_class = $color_classes[$all_modules[$c_module]->status];
-      $status = [
-        '#prefix' => '<span class="' . $status_class . '">',
-        '#suffix' => '</span>',
-        '#markup' => $module_statuses[$all_modules[$c_module]->status],
-      ];
-
-      $data_collecting_modules_list['#items'][] = t('@title (!status)', [
-        '@title' => $all_modules[$c_module]->info['name'],
-        '!status' => drupal_render($status),
-      ]);
-    }
-  }
-
-  $data_collecting_modules = drupal_render($data_collecting_modules_list);
-
-  $text = t('Owner and/or maintainer of the site has to ensure that the modules listed below have been revised as to gather only necessary (i.e. not needed for provision of service) personal data of site visitors.');
-
-  return $text . $data_collecting_modules;
 }
 
 /**
@@ -491,7 +444,7 @@ function gdpr_search_content() {
   $query = new EntityFieldQuery();
 
   $results = $query->entityCondition('entity_type', 'node')
-    ->propertyCondition('title', $pattern, 'REGEXP')
+    ->propertyCondition('title', $pattern, 'RLIKE')
     ->execute();
 
   if (!empty($results['node'])) {
@@ -503,4 +456,124 @@ function gdpr_search_content() {
     return [];
   }
 
+}
+
+/**
+ * Returns a HTML makrup for data_collecting modules checkpoint description.
+ *
+ * @param string $type
+ *   Type of modules to search for.
+ *
+ * @return string
+ *   HTML markup string
+ */
+function _get_module_list($type) {
+
+  $c_modules = _get_module_list_by_type($type);
+
+  $modules_list = [
+    '#theme' => 'item_list',
+    '#items' => [],
+  ];
+
+  $module_statuses = _get_module_statuses();
+  $all_modules = _get_modules();
+
+  $color_classes = [
+    -1 => 'admin-enabled',
+    0 => 'admin-enabled',
+    1 => 'admin-missing',
+  ];
+
+  foreach ($c_modules as $c_module) {
+    if (isset($all_modules[$c_module])) {
+      $status_class = $color_classes[$all_modules[$c_module]['status']];
+      $status = [
+        '#prefix' => '<span class="' . $status_class . '">',
+        '#suffix' => '</span>',
+        '#markup' => $module_statuses[$all_modules[$c_module]['status']],
+      ];
+
+      $modules_list['#items'][] = t('@title (!status)', [
+        '@title' => $all_modules[$c_module]['name'],
+        '!status' => drupal_render($status),
+      ]);
+    }
+  }
+
+  return drupal_render($modules_list);
+}
+
+/**
+ * Returns array of module machine_names by type.
+ *
+ * @param string $type
+ *   The type of modules to swarch for.
+ *
+ * @return array
+ *   Array of module machine_names
+ */
+function _get_module_list_by_type($type) {
+  $list = [];
+  switch ($type) {
+    case 'collect':
+      $list = [
+        'contact',
+        'webform',
+        'geoip',
+      ];
+      break;
+
+    case 'tracking':
+      $list = [
+        'google_analytics',
+        'google_tag',
+        'piwik',
+        'hotjar',
+        'recaptcha',
+        'site_verify',
+        'adsense',
+        'yandex_metrics',
+      ];
+      break;
+
+    case 'social':
+      $list = [
+        'oauth',
+        'sharethis',
+        'addtoany',
+        'cas',
+        'fb_likebox',
+        'easy_social',
+      ];
+      break;
+  }
+  return $list;
+}
+
+/**
+ * Returns cached module data from module info files.
+ *
+ * @return array
+ *   Array of module data
+ */
+function _get_modules() {
+  $cache = cache_get('modules_list');
+
+  if ($cache) {
+    return $cache->data;
+  }
+  else {
+    $modules_list_raw = system_rebuild_module_data();
+    $modules_list = [];
+
+    foreach ($modules_list_raw as $module) {
+      $modules_list[$module->name] = [
+        'status' => $module->status,
+        'name' => $module->info['name'],
+      ];
+    }
+    cache_set('modules_list', $modules_list);
+    return $modules_list;
+  }
 }
