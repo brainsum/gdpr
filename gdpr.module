@@ -108,7 +108,7 @@ function gdpr_checklistapi_checklist_info() {
       '#description' => t("<p>To begin your self-assessment process, it's highly recommended to take the following steps:</p>"),
       'responsability_agreement' => [
         '#title' => t("Yes, I agree that by using the <em>GDPR</em> module, I'm still accountable for personal data handling performed on the site."),
-        '#description' => t('Responsibility Agreement: before the site owner starts the checklist process, they should acknowledge that installing and using this module pack does not mean sharing responsibility. Neither the Drupal Community nor module maintainers can guarantee full compliance with these regulations in case of potential control or audit.'),
+        '#description' => t('Responsibility Agreement: before the site owner starts the checklist process, they should acknowledge that installing and using this module pack does not mean sharing responsibility. Neither the Drupal Community nor module maintainers can guarantee full compliance with the GDPR regulations in case of a potential control.'),
       ],
       'recommended_resources' => [
         '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
@@ -231,7 +231,7 @@ function _get_logging_responsability_description() {
   $logging_items = [
     '#theme' => 'item_list',
     '#items' => [
-      t('Has fewer than 250 employees and as such my organisation is not required to create records of processing acitivities'),
+      t('Has fewer than 250 employees the processing it carries out is likely no result in a risk to the rights and freedoms of data subjects, the processing is only occasional and the processing does not includes special categories of data (Article 30/5) and as such my organisation is not required to create records of processing acitivities'),
       t('My organisation has 250 or more employees and records of processing activities have been prepared according to Article 30 of the regulation'),
     ],
   ];
