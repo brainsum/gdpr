@@ -12,7 +12,6 @@ use Drush\Sql\Sqloracle;
 class GdprSqlOracle extends Sqloracle {
 
   // @todo $file is no longer provided. We are supposed to return bash that can be piped to gzip.
-
   /**
    * Probably Oracle needs to override dump() entirely - http://stackoverflow.com/questions/2236615/oracle-can-imp-exp-go-to-stdin-stdout.
    */
