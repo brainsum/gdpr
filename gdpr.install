@@ -1,10 +1,16 @@
 <?php
 
 /**
+ * @file
+ * Install file for the GDPR module.
+ */
+
+/**
  * Implements hook_requirements().
  */
 function gdpr_requirements($phase) {
   $requirements = [];
+  $t = get_t();
 
   if ($phase === 'runtime' && $definitions = checklistapi_get_checklist_info()) {
     $id = 'gdpr_checklist';
@@ -12,8 +18,8 @@ function gdpr_requirements($phase) {
 
       $percent = round($checklist->getPercentComplete());
       $requirements['gdpr_status'] = [
-        'title' => t('GDPR Preparation'),
-        'value' => t('Self assessment Checklist: <a href="@url">@percent% done</a>.', [
+        'title' => $t('GDPR Preparation'),
+        'value' => $t('Self assessment Checklist: <a href="@url">@percent% done</a>.', [
           '@percent' => $percent,
           '@url' => '/admin/config/gdpr/checklist',
         ]),

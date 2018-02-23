@@ -8,7 +8,7 @@
 /**
  * Tests users' data collection pages.
  */
-class UserCollectedDataPageTest extends DrupalWebTestCase {
+class GdprUserCollectedDataPageTest extends DrupalWebTestCase {
 
   /**
    * The user whose collected data to access.

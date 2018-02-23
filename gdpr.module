@@ -50,9 +50,6 @@ function gdpr_checklistapi_checklist_info() {
 
   $content = gdpr_search_content();
 
-  $is_published = FALSE;
-  $in_menu = FALSE;
-
   if (!empty($content)) {
     $description = [
       '#theme' => 'item_list',
@@ -75,7 +72,6 @@ function gdpr_checklistapi_checklist_info() {
           '#suffix' => '</span>',
           '#markup' => t('published'),
         ];
-        $is_published = TRUE;
       }
       else {
         $status = [
@@ -100,7 +96,6 @@ function gdpr_checklistapi_checklist_info() {
 
       $menu_list = [];
       if (!empty($mlids)) {
-        $in_menu = TRUE;
         foreach ($mlids as $mlid) {
           $link = menu_link_load($mlid);
           $menu_list[] = $link['menu_name'];
