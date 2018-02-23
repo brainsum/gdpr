@@ -4,6 +4,6 @@ gdpr_dump.settings:
     _form: '\Drupal\gdpr_dump\Form\SettingsForm'
     _title: 'SQL Dump settings'
   requirements:
-    _permission: 'access administration pages'
+    _permission: 'administer site configuration'
   options:
     _admin_route: TRUE

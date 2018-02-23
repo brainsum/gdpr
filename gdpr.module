@@ -35,9 +35,6 @@ function gdpr_checklistapi_checklist_info() {
 
   $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
 
-  $is_published = FALSE;
-  $in_menu = FALSE;
-
   if (!empty($content)) {
     $menu_handler = \Drupal::service('plugin.manager.menu.link');
     $description = [
@@ -55,7 +52,6 @@ function gdpr_checklistapi_checklist_info() {
           '#suffix' => '</span>',
           '#markup' => t('published'),
         ];
-        $is_published = TRUE;
       }
       else {
         $status = [
@@ -77,7 +73,6 @@ function gdpr_checklistapi_checklist_info() {
 
       $menu_list = [];
       if (!empty($links)) {
-        $in_menu = TRUE;
         foreach ($links as $link) {
           $menu_list[] = $link->getMenuName();
         }

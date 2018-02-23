@@ -4,7 +4,6 @@ namespace Drupal\gdpr_dump\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\InvalidQueryException;
-use Drupal\Core\Entity\Query\QueryException;
 
 /**
  * Class GdprDatabaseManager.

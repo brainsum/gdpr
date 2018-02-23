@@ -14,13 +14,13 @@ use Drush\Sql\Sqlmysql;
  */
 class GdprSqlMysql extends Sqlmysql {
 
-  /*
- * Execute a SQL dump and return the path to the resulting dump file.
- *
- * @param string|bool @file
- *   The path where the dump file should be stored. If TRUE, generate a path
- *   based on usual backup directory and current date.
- */
+  /**
+   * Execute a SQL dump and return the path to the resulting dump file.
+   *
+   * @param string|bool $file
+   *   The path where the dump file should be stored. If TRUE, generate a path
+   *   based on usual backup directory and current date.
+   */
   public function dump($file = '') {
     $file_suffix = '';
     $table_selection = $this->get_expanded_table_selection();
@@ -42,7 +42,7 @@ class GdprSqlMysql extends Sqlmysql {
     }
 
     // Avoid the php memory of the $output array in drush_shell_exec().
-    if (!$return = drush_op_system($cmd)) {
+    if (drush_op_system($cmd)) {
       if ($file) {
         drush_log(dt('Database dump saved to !path', ['!path' => $file]), LogLevel::SUCCESS);
         drush_backend_set_result($file);
@@ -90,7 +90,7 @@ class GdprSqlMysql extends Sqlmysql {
    *   ready for executing. If multiple statements are needed,
    *   enclose in parenthesis.
    */
-  public function dumpCmd($tableSelection) {
+  public function dumpCmd(array $tableSelection) {
     // @todo: Dep.inj.
     /** @var array $gdprOptions */
     $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
