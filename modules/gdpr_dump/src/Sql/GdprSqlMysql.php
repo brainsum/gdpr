@@ -29,7 +29,7 @@ class GdprSqlMysql extends Sqlmysql {
     $cmd = '{ ';
     $cmd .= $this->dumpCmd($table_selection);
     // Append the RENAME commands at the end.
-    $cmd .= ' ; ' . $this->createRenameCommands() . '}';
+    $cmd .= ' ; ' . $this->createRenameCommands($table_selection) . '}';
 
     // Gzip the output from dump command(s) if requested.
     if (drush_get_option('gzip')) {
@@ -56,17 +56,30 @@ class GdprSqlMysql extends Sqlmysql {
   /**
    * Create table renames according to the GDPR config.
    *
+   * @param array $tableSelection
+   *   Supported keys: 'skip', 'structure', 'tables'.
+   *
    * @return string
    *   The command.
    */
-  protected function createRenameCommands() {
+  protected function createRenameCommands(array $tableSelection) {
     // @todo: Dep.inj.
     /** @var array $gdprOptions */
     $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
+    $emptyTables = $gdprOptions['empty_tables'];
+    unset($gdprOptions['empty_tables']);
     $sensitiveDataTables = \array_keys($gdprOptions);
+
+    $skipTables = \array_merge($tableSelection['skip'], $tableSelection['structure']);
+    $skipTables = \array_flip($skipTables);
+    $skipTables = $skipTables + $emptyTables;
 
     $command = '';
     foreach ($sensitiveDataTables as $table) {
+      if (\array_key_exists($table, $skipTables)) {
+        // Don't try to rename a table if it is excluded.
+        continue;
+      }
       $clone = GdprSqlDump::GDPR_TABLE_PREFIX . $table;
       $rename = "RENAME TABLE \`$clone\` TO \`$table\`;";
       if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
@@ -94,11 +107,14 @@ class GdprSqlMysql extends Sqlmysql {
     // @todo: Dep.inj.
     /** @var array $gdprOptions */
     $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
+    $emptyTables = \array_keys($gdprOptions['empty_tables']);
+    unset($gdprOptions['empty_tables']);
     $sensitiveDataTables = \array_keys($gdprOptions);
 
     $multipleCommands = FALSE;
     $skipTables = $tableSelection['skip'];
     $structureTables = $tableSelection['structure'];
+    $structureTables = \array_merge($emptyTables, $structureTables);
     $tables = $tableSelection['tables'];
 
     $ignores = [];

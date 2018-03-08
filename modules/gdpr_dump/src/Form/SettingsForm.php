@@ -171,6 +171,11 @@ class SettingsForm extends ConfigFormBase {
       $form['tables'][$table] = [
         '#type' => 'details',
         '#title' => $table,
+        'empty_table' => [
+          '#type' => 'checkbox',
+          '#title' => $this->t('Empty this table'),
+          '#default_value' => isset($config['empty_tables'][$table]) ? $config['empty_tables'][$table] : NULL,
+        ],
         'columns' => [
           '#type' => 'container',
           'data' => $rows,
@@ -191,13 +196,19 @@ class SettingsForm extends ConfigFormBase {
       $config = [];
       /** @var array $tables */
       $tables = $form_state->getValue('tables', []);
+      $empty_tables = [];
       foreach ($tables as $table => $row) {
+        if ($row['empty_table']) {
+          $empty_tables[$table] = 1;
+        }
         foreach ($row['columns']['data'] as $data) {
           if ($data['sanitize'] === 1) {
             $config[$table][$data['name']] = $data['option'];
           }
         }
       }
+
+      $config['empty_tables'] = $empty_tables;
 
       $this->configFactory->getEditable(self::GDPR_DUMP_CONF_KEY)
         ->set('mapping', $config)

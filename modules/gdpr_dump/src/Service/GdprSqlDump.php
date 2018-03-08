@@ -45,6 +45,13 @@ class GdprSqlDump {
   protected $gdprOptions = [];
 
   /**
+   * The list of tables needed to be skipped.
+   *
+   * @var array
+   */
+  protected $skipTables = [];
+
+  /**
    * The database.
    *
    * @var \Drupal\Core\Database\Connection
@@ -191,6 +198,10 @@ class GdprSqlDump {
    * @throws \Exception
    */
   protected function createCloneQueryString($originalTable) {
+    if (\array_key_exists($originalTable, $this->skipTables)) {
+      // No need to clone tables that are excluded.
+      return NULL;
+    }
     $clonedTable = self::GDPR_TABLE_PREFIX . $originalTable;
     switch ($this->driver) {
       case 'mysql':
@@ -268,6 +279,9 @@ class GdprSqlDump {
      */
     /** @var array $sanitationOptions */
     foreach ($this->gdprOptions as $table => $sanitationOptions) {
+      if (\array_key_exists($table, $this->skipTables)) {
+        continue;
+      }
       $selectQuery = $this->database->select($table);
       $selectQuery->fields($table);
       $oldRows = $selectQuery->execute();
@@ -314,8 +328,26 @@ class GdprSqlDump {
    */
   protected function prepare() {
     $this->cleanup();
+    $this->buildSkipTables();
     $this->createTableClones();
     $this->sanitizeData();
+  }
+
+  /**
+   * Builds skipTables array.
+   */
+  protected function buildSkipTables() {
+    $emptyTables = $this->gdprOptions['empty_tables'];
+    unset($this->gdprOptions['empty_tables']);
+
+    // Get table expanded selection.
+    $sql = $this->getInstance();
+    $table_selection = $sql->get_expanded_table_selection();
+    $skipTables = \array_merge($table_selection['skip'], $table_selection['structure']);
+    $skipTables = \array_flip($skipTables);
+    $skipTables = $skipTables + $emptyTables;
+
+    $this->skipTables = $skipTables;
   }
 
   /**
