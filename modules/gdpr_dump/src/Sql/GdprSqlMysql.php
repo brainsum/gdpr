@@ -95,15 +95,12 @@ class GdprSqlMysql extends Sqlmysql {
   /**
    * Build bash for dumping a database.
    *
-   * @param array $tableSelection
-   *   Supported keys: 'skip', 'structure', 'tables'.
-   *
    * @return string
    *   One or more mysqldump/pg_dump/sqlite3/etc statements that are
    *   ready for executing. If multiple statements are needed,
    *   enclose in parenthesis.
    */
-  public function dumpCmd(array $tableSelection) {
+  public function dumpCmd($tableSelection) {
     // @todo: Dep.inj.
     /** @var array $gdprOptions */
     $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
