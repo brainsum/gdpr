@@ -3,4 +3,5 @@ description = Helps with making a site GDPR-compliant.
 core = 7.x
 dependencies[] = checklistapi
 configure = admin/config/gdpr/checklist
+package = General Data Protection Regulation
 files[] = gdpr.test

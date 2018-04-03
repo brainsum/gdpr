@@ -19,6 +19,18 @@ function gdpr_help($path, $arg) {
  * Implements hook_menu().
  */
 function gdpr_menu() {
+  // Administration pages.
+  $items['admin/config/gdpr'] = array(
+    'title' => 'GDPR',
+    'position' => 'left',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array(
+      'access administration pages',
+    ),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+
   $items['user/%user/collected_data'] = [
     'title' => 'All your data',
     'page callback' => 'gdpr_collected_user_data',

@@ -1,0 +1,295 @@
+<?php
+
+/**
+ * @file
+ * Module file for the GDPR Sql-Dump module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function gdpr_dump_menu() {
+  $items['admin/config/gdpr/dump-settings'] = array(
+    'title' => 'SQL Dump settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['gdpr_dump_settings_form'],
+    'access arguments' => ['administer site configuration'],
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Gdpr dump settings form.
+ */
+function gdpr_dump_settings_form($form, &$form_state) {
+  $form['#tree'] = TRUE;
+
+  $form['description'] = [
+    '#markup' => t('Check the checkboxes for each table columns containing sensitive data!'),
+  ];
+
+  $form['tables'] = [
+    '#type' => 'container',
+  ];
+
+  $plugins = [];
+  // @todo: implement sanitize plugins
+  foreach (gdpr_dump_get_sanitizer_plugins() as $plugin_name => $plugin) {
+    $plugins[$plugin_name] = $plugin['title'];
+  }
+
+  $sanitationOptions = [
+    '#type' => 'select',
+    '#title' => t('Sanitation plugin'),
+    '#options' => $plugins,
+    '#empty_value' => 'none',
+    '#empty_option' => t('- None -'),
+  ];
+
+  $config = variable_get('gdpr_config_tables', []);
+
+  $db_schema = gdpr_get_complete_schema();
+
+  $empty_tables = variable_get('gdpr_dump_empty_tables', []);
+  $config = variable_get('gdpr_dump_table_map', []);
+
+  foreach ($db_schema as $table => $table_schema) {
+    $rows = [];
+    foreach ($table_schema['fields'] as $column_name => $column_info) {
+      $currentOptions = $sanitationOptions;
+      $checked = 0;
+      if (isset($config[$table][$column_name])) {
+        $checked = 1;
+        $currentOptions['#default_value'] = $config[$table][$column_name];
+      }
+
+      $rows[] = [
+        '#type' => 'container',
+        'name' => [
+          '#type' => 'value',
+          '#value' => $column_name,
+        ],
+        'sanitize' => [
+          '#type' => 'checkbox',
+          '#title' => t('Sanitize <strong>@field_name</strong>?', [
+            '@field_name' => $column_name,
+          ]),
+          '#default_value' => $checked,
+        ],
+        'type' => [
+          '#type' => 'item',
+          '#markup' => $column_info['type'],
+          '#title' => t('Field type'),
+        ],
+        'comment' => [
+          '#type' => 'item',
+          '#markup' => empty($column_info['description']) ? '-' : $column_info['description'],
+          '#title' => t('Field comment'),
+        ],
+        'option' => $currentOptions,
+      ];
+    }
+
+    $form['tables'][$table] = [
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => $table,
+      'empty_table' => [
+        '#type' => 'checkbox',
+        '#title' => t('Empty this table'),
+        '#default_value' => isset($empty_tables[$table]) ? $empty_tables[$table] : NULL,
+      ],
+      'columns' => [
+        '#type' => 'container',
+        'data' => $rows,
+      ],
+    ];
+  }
+
+  $form['actions'] = [
+    '#type' => 'actions',
+    'save' => [
+      '#type' => 'submit',
+      '#value' => t('Save configuration'),
+    ],
+  ];
+
+  return $form;
+}
+
+/**
+ * Gdpr dump settings form submit callback.
+ */
+function gdpr_dump_settings_form_submit($form, &$form_state) {
+  $tables = $form_state['values']['tables'];
+
+  $config = [];
+  $empty_tables = [];
+
+  foreach ($tables as $table => $row) {
+    if ($row['empty_table'] === 1) {
+      $empty_tables[$table] = 1;
+    }
+    foreach ($row['columns']['data'] as $data) {
+      if ($data['sanitize'] === 1) {
+        $config[$table][$data['name']] = $data['option'];
+      }
+    }
+  }
+
+  variable_set('gdpr_dump_empty_tables', $empty_tables);
+  variable_set('gdpr_dump_table_map', $config);
+}
+
+/**
+ * Gets the whole database schema with field descriptions.
+ */
+function gdpr_get_complete_schema() {
+  $schema = array();
+
+  if (function_exists('module_load_all_includes')) {
+
+    module_list(TRUE);
+    module_load_all_includes('install');
+  }
+  require_once DRUPAL_ROOT . '/includes/common.inc';
+
+  // Invoke hook_schema for all modules.
+  foreach (module_implements('schema') as $module) {
+
+    $current = (array) module_invoke($module, 'schema');
+
+    _drupal_schema_initialize($current, $module, FALSE);
+    $schema = array_merge($schema, $current);
+  }
+  drupal_alter('schema', $schema);
+
+  return $schema;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function gdpr_dump_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'gdpr_dump' && in_array($plugin, array_keys(gdpr_dump_ctools_plugin_type()))) {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_type().
+ */
+function gdpr_dump_ctools_plugin_type() {
+  return array(
+    'sanitizer' => array(
+      'label' => 'sanitizer',
+      'use hooks' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Helper function for listing gdpr sanitizer plugins.
+ */
+function gdpr_dump_get_sanitizer_plugins($id = NULL) {
+  return ctools_get_plugins('gdpr_dump', 'sanitizer', $id);
+}
+
+/**
+ * Random word generator function.
+ */
+function gdpr_random_word($length = 8) {
+  mt_srand((double) microtime() * 1000000);
+  $vowels = array(
+    "a",
+    "e",
+    "i",
+    "o",
+    "u",
+  );
+  $cons = array(
+    "b",
+    "c",
+    "d",
+    "g",
+    "h",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "tr",
+    "cr",
+    "br",
+    "fr",
+    "th",
+    "dr",
+    "ch",
+    "ph",
+    "wr",
+    "st",
+    "sp",
+    "sw",
+    "pr",
+    "sl",
+    "cl",
+    "sh",
+  );
+  $num_vowels = count($vowels);
+  $num_cons = count($cons);
+  $word = '';
+  while (strlen($word) < $length) {
+    $word .= $cons[mt_rand(0, $num_cons - 1)] . $vowels[mt_rand(0, $num_vowels - 1)];
+  }
+  return substr($word, 0, $length);
+}
+
+/**
+ * Random sentence generator.
+ */
+function gdpr_random_sentence($word_count) {
+  $output_array = [];
+
+  for ($i = 0; $i < $word_count; $i++) {
+    $output_array[] = gdpr_random_word(rand(1, 12));
+  }
+
+  $output = implode(' ', $output_array);
+
+  return ucfirst($output) . '.';
+}
+
+/**
+ * Random paragraph generator.
+ */
+function gdpr_random_paragraphs($paragraph_count) {
+  $output = '';
+  for ($i = 1; $i <= $paragraph_count; $i++) {
+    $output .= gdpr_random_sentence(mt_rand(20, 60)) . "\n\n";
+  }
+  return $output;
+}
+
+/**
+ * Helper function to load gdpr dump service.
+ */
+function gdpr_dump_service() {
+  $service = &drupal_static(__FUNCTION__);
+
+  if (empty($service)) {
+    module_load_include('inc', 'gdpr_dump', 'inc/GdprSqlDump');
+    $service = new GdprSqlDump();
+  }
+
+  return $service;
+}
