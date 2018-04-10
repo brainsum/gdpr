@@ -335,15 +335,19 @@ function _get_module_statuses() {
  */
 function gdpr_search_content() {
   // TODO: Localization.
-  $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
+  $nodes = [];
+  $moduleHandler = \Drupal::service('module_handler');
 
-  $nids = \Drupal::entityQuery('node')
-    ->condition('title', $pattern, 'RLIKE')
-    ->execute();
+  if ($moduleHandler->moduleExists('node')){
+    $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
 
-  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $nids = \Drupal::entityQuery('node')
+      ->condition('title', $pattern, 'RLIKE')
+      ->execute();
 
-  $nodes = $node_storage->loadMultiple($nids);
+    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $nodes = $node_storage->loadMultiple($nids);
+  }
 
   return $nodes;
 }
