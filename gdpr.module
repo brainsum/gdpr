@@ -442,23 +442,23 @@ function _get_module_statuses() {
  */
 function gdpr_search_content() {
   // TODO: Localization.
-  $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
+  $nodes = [];
 
-  $query = new EntityFieldQuery();
+  if (module_exists('node')) {
+    $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
 
-  $results = $query->entityCondition('entity_type', 'node')
-    ->propertyCondition('title', $pattern, 'RLIKE')
-    ->execute();
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'node')
+      ->propertyCondition('title', $pattern, 'RLIKE')
+      ->execute();
 
-  if (!empty($results['node'])) {
-    $nids = array_keys($results['node']);
-    $nodes = node_load_multiple($nids);
-    return $nodes;
+    if (!empty($results['node'])) {
+      $nids = array_keys($results['node']);
+      $nodes = node_load_multiple($nids);
+    }
   }
-  else {
-    return [];
-  }
 
+  return $nodes;
 }
 
 /**
