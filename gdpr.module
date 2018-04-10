@@ -31,6 +31,20 @@ function gdpr_help($route_name, RouteMatchInterface $route_match) {
 function gdpr_checklistapi_checklist_info() {
   $definitions = [];
 
+  $definitions['gdpr_checklist'] = [
+    '#title' => t('GDPR Checklist'),
+    '#path' => 'admin/config/gdpr/checklist',
+    '#description' => t('GDPR Checklist'),
+    '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
+    '#callback' => 'gdpr_checklistapi_checklist_items',
+  ];
+  return $definitions;
+}
+
+/**
+ * Callback for gdpr_checklistapi_checklist_info().
+ */
+function gdpr_checklistapi_checklist_items() {
   $content = gdpr_search_content();
 
   $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
@@ -92,12 +106,7 @@ function gdpr_checklistapi_checklist_info() {
   else {
     $content_discovery_description = t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum".');
   }
-
-  $definitions['gdpr_checklist'] = [
-    '#title' => t('GDPR Checklist'),
-    '#path' => 'admin/config/gdpr/checklist',
-    '#description' => t('GDPR Checklist'),
-    '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
+  $items = [
     'getting_started' => [
       '#title' => t('Getting Started'),
       '#description' => t("<p>To begin your self-assessment process, it's highly recommended to take the following steps:</p>"),
@@ -212,8 +221,7 @@ function gdpr_checklistapi_checklist_info() {
       ],
     ],
   ];
-
-  return $definitions;
+  return $items;
 }
 
 /**
