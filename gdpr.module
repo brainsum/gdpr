@@ -455,7 +455,7 @@ function _get_module_list_by_type($type) {
 function _get_modules() {
   $cache = \Drupal::cache()->get('modules.list');
 
-  if ($cache->data) {
+  if (!empty($cache->data)) {
     return $cache->data;
   }
   else {
