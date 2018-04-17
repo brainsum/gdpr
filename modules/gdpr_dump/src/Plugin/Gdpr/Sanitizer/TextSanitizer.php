@@ -3,13 +3,14 @@
 namespace Drupal\gdpr_dump\Plugin\Gdpr\Sanitizer;
 
 use Drupal\Component\Utility\Random;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\gdpr_dump\Sanitizer\GdprSanitizerBase;
 
 /**
  * Class TextSanitizer.
  *
  * @GdprSanitizer(
- *   id = "gpdr_text_sanitizer",
+ *   id = "gdpr_text_sanitizer",
  *   label = @Translation("Text sanitizer"),
  *   description=@Translation("Provides sanitation functionality intended to be used for titles or short text.")
  * )
@@ -30,7 +31,7 @@ class TextSanitizer extends GdprSanitizerBase {
    *
    * @throws \RuntimeException
    */
-  public function sanitize($input) {
+  public function sanitize($input, FieldItemListInterface $field = NULL) {
     if (empty($input)) {
       return $input;
     }

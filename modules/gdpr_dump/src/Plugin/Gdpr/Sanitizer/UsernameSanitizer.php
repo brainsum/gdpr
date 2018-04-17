@@ -3,6 +3,7 @@
 namespace Drupal\gdpr_dump\Plugin\Gdpr\Sanitizer;
 
 use Drupal\Component\Utility\Random;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\gdpr_dump\Sanitizer\GdprSanitizerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -10,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Class UsernameSanitizer.
  *
  * @GdprSanitizer(
- *   id = "gpdr_username_sanitizer",
+ *   id = "gdpr_username_sanitizer",
  *   label = @Translation("Username sanitizer"),
  *   description=@Translation("Provides sanitation functionality intended to be used for usernames.")
  * )
@@ -54,7 +55,7 @@ class UsernameSanitizer extends GdprSanitizerBase {
    *
    * @throws \RuntimeException
    */
-  public function sanitize($input) {
+  public function sanitize($input, FieldItemListInterface $field = NULL) {
     if (empty($input)) {
       return $input;
     }

@@ -3,6 +3,7 @@
 namespace Drupal\gdpr_dump\Plugin\Gdpr\Sanitizer;
 
 use Drupal\Component\Utility\Random;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\gdpr_dump\Sanitizer\GdprSanitizerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -10,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Class EmailSanitizer.
  *
  * @GdprSanitizer(
- *   id = "gpdr_email_sanitizer",
+ *   id = "gdpr_email_sanitizer",
  *   label = @Translation("Email sanitizer"),
  *   description=@Translation("Provides sanitation functionality intended to be used for emails.")
  * )
@@ -57,7 +58,7 @@ class EmailSanitizer extends GdprSanitizerBase {
   /**
    * {@inheritdoc}
    */
-  public function sanitize($input) {
+  public function sanitize($input, FieldItemListInterface $field = NULL) {
     if (empty($input)) {
       return $input;
     }

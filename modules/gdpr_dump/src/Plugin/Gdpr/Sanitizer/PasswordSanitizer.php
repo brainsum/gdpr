@@ -3,6 +3,7 @@
 namespace Drupal\gdpr_dump\Plugin\Gdpr\Sanitizer;
 
 use Drupal\Component\Utility\Random;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\gdpr_dump\Sanitizer\GdprSanitizerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -10,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Class PasswordSanitizer.
  *
  * @GdprSanitizer(
- *   id = "gpdr_password_sanitizer",
+ *   id = "gdpr_password_sanitizer",
  *   label = @Translation("Password sanitizer"),
  *   description=@Translation("Provides sanitation functionality intended to be used for passwords.")
  * )
@@ -65,7 +66,7 @@ class PasswordSanitizer extends GdprSanitizerBase {
    * @return int|string
    *   The sanitized input.
    */
-  public function sanitize($input) {
+  public function sanitize($input, FieldItemListInterface $field = NULL) {
     if (NULL === $this->random) {
       $this->random = new Random();
     }

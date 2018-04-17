@@ -45,7 +45,6 @@ class GdprSanitizerPluginManager extends DefaultPluginManager {
 
     $this->setCacheBackend($cacheBackend, 'gdpr_sanitizer_plugins');
     $this->alterInfo('gdpr_sanitizer_info');
-
   }
 
 }

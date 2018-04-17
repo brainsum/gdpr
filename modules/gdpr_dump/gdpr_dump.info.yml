@@ -6,4 +6,4 @@ configure: gdpr_dump.settings
 package: General Data Protection Regulation
 
 dependencies:
-  - drupal:gdpr
+  - gdpr:gdpr
