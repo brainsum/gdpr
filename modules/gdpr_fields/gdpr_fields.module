@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * @file
+ * Module file for the GDPR Fields module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
+use Drupal\gdpr_fields\Form\GdprFieldSettingsForm;
+
+/**
+ * Implements hook_toolbar_alter().
+ */
+function gdpr_fields_toolbar_alter(&$items) {
+  $user = \Drupal::currentUser();
+
+  if ($user->hasPermission('view gdpr fields')) {
+    $items['gdpr']['tray']['links']['#links']['fields'] = [
+      'title' => t('Field list'),
+      'url' => Url::fromRoute('gdpr_fields.fields_list'),
+      'attributes' => [
+        'title' => t('Field list'),
+      ],
+      'weight' => 100,
+    ];
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * @todo Find a better way of editing field GDPR settings as lots of fields are not UI configurable.
+ * @todo Check user edit permission for GDPR fields.
+ */
+function gdpr_fields_form_field_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+  /* @var \Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory $sanitizer_factory */
+  $sanitizer_factory = \Drupal::service('gdpr_dump.sanitizer_factory');
+  $sanitizer_definitions = $sanitizer_factory->getDefinitions();
+  /* @var \Drupal\Core\Field\FieldConfigInterface $field */
+  $field = $form_state->getFormObject()->getEntity();
+  // @todo Check that target entity is a content entity.
+
+  // Do not add GDPR settings to the GDPR Consent Agreement form.
+  if ($field->getType() == 'gdpr_user_consent') {
+    return;
+  }
+
+  $form['field']['gdpr_fields'] = [
+    '#type' => 'details',
+    '#title' => t('GDPR field settings'),
+    '#open' => TRUE,
+  ];
+
+  GdprFieldSettingsForm::buildFormFields($form['field']['gdpr_fields'], $field->getTargetEntityTypeId(), $field->getTargetBundle(), $field->getName());
+
+  $form['actions']['submit']['#submit'][] = 'gdpr_fields_form_field_config_edit_form_submit';
+}
+
+/**
+ * Form submission handler for gdpr_fields_form_field_config_edit_form_alter.
+ *
+ * This version of the GDPR fields form is embedded on the standard field
+ * settings page.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ */
+function gdpr_fields_form_field_config_edit_form_submit(array $form, FormStateInterface $form_state) {
+  /* @var \Drupal\Core\Field\FieldConfigInterface $field */
+  $field = $form_state->getFormObject()->getEntity();
+  $form_fields = &$form_state->getValues();
+
+  $config = GdprFieldConfigEntity::load($field->getTargetEntityTypeId()) ?? GdprFieldConfigEntity::create(['id' => $field->getTargetEntityTypeId()]);
+  $config->setField(
+    $field->getTargetBundle(),
+    $field->getName(), [
+      'enabled' => $form_state->getValue('gdpr_enabled'),
+      'rta' => $form_state->getValue('gdpr_rta'),
+      'rtf' => $form_state->getValue('gdpr_rtf'),
+      'sanitizer' => $form_state->getValue('gdpr_sanitizer'),
+      'notes' => $form_state->getValue('gdpr_notes'),
+    ]
+  );
+  $config->save();
+}

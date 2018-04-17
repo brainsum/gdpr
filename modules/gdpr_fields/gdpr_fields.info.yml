@@ -1,0 +1,9 @@
+name: General Data Protection Regulation (GDPR) - Fields
+description: Allow tracking and removing of user data in all fields.
+core: 8.x
+type: module
+package: General Data Protection Regulation
+
+dependencies:
+  - gdpr:gdpr
+  - ctools:ctools (>=8.x-3.0-beta1)

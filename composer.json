@@ -16,11 +16,20 @@
         }
     ],
     "require": {
+        "cweagans/composer-patches": "~1.0",
         "drupal/core": "~8",
         "drupal/checklistapi": "^1.0",
         "drupal/entity_reference_revisions": "^1.4",
         "drupal/message": "^1.0@RC",
         "drupal/token": "^1.1",
-        "fzaninotto/faker": "^1.7"
+        "fzaninotto/faker": "^1.7",
+        "drupal/ctools": "~3.0-beta1"
+    },
+    "extra": {
+        "patches": {
+            "drupal/ctools": {
+                "#2951267: Bundle specific fields not derived correctly in entity reference relationships": "https://www.drupal.org/files/issues/2951267-2.patch"
+            }
+        }
     }
 }
