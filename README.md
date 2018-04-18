@@ -20,10 +20,10 @@ This module gives end user visibility to the data stored about himself/herself a
 * Tests
 
 ## More information about GDPR
-* https://www.eugdpr.org/
+* [EU GDPR](https://www.eugdpr.org/)
 * [GDPR compliance in core](https://www.drupal.org/project/drupal/issues/2848974)
-* https://www.itgovernance.co.uk/data-protection-dpa-and-eu-data-protection-regulation
-* https://www.csoonline.com/article/3202771/data-protection/general-data-protection-regulation-gdpr-requirements-deadlines-and-facts.html
+* [ITGovernance Article](https://www.itgovernance.co.uk/data-protection-dpa-and-eu-data-protection-regulation)
+* [CSO Article](https://www.csoonline.com/article/3202771/data-protection/general-data-protection-regulation-gdpr-requirements-deadlines-and-facts.html)
 
 # Contribution
 ## On [drupal.org](https://www.drupal.org/project/gdpr)
