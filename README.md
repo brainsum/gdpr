@@ -1,4 +1,7 @@
 # General Data Protection Regulation
+
+[![Build Status](https://travis-ci.org/brainsum/gdpr.svg?branch=8.x-1.x)](https://travis-ci.org/brainsum/gdpr)
+
 ## What it does
 This module gives end user visibility to the data stored about himself/herself and aims to help site admins follows the guidelines and legislation set by the EU.
 
