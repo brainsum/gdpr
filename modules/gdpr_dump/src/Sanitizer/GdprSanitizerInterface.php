@@ -16,7 +16,7 @@ interface GdprSanitizerInterface {
    *
    * @var int|string $input
    *   The input.
-   * @var FieldItemListInterface|null $field
+   * @var \Drupal\Core\Field\FieldItemListInterface|null $field
    *   The field being sanitized.
    *
    * @return int|string

@@ -54,7 +54,6 @@ class GdprSanitizerFactory {
     return $this->sanitizers[$name];
   }
 
-
   /**
    * Gets all sanitizers currently registered.
    */

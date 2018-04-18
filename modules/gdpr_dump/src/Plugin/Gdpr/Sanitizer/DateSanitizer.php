@@ -2,7 +2,6 @@
 
 namespace Drupal\gdpr_dump\Plugin\Gdpr\Sanitizer;
 
-use Drupal\Component\Utility\Random;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\gdpr_dump\Sanitizer\GdprSanitizerBase;
 
