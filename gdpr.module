@@ -338,7 +338,7 @@ function gdpr_search_content() {
   $nodes = [];
   $moduleHandler = \Drupal::service('module_handler');
 
-  if ($moduleHandler->moduleExists('node')){
+  if ($moduleHandler->moduleExists('node')) {
     $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
 
     $nids = \Drupal::entityQuery('node')
