@@ -12,6 +12,8 @@ use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Context\ContextInterface;
 
 /**
+ * Reverse entity relationship.
+ *
  * @Relationship(
  *   id = "typed_data_entity_relationship_reverse",
  *   deriver = "\Drupal\gdpr_fields\Plugin\Deriver\TypedDataEntityRelationshipReverseDeriver"

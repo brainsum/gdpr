@@ -6,6 +6,9 @@ use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\TypedData\DataDefinitionInterface;
 use Drupal\ctools\Plugin\Deriver\TypedDataEntityRelationshipDeriver;
 
+/**
+ * Derives reverse entity relationships.
+ */
 class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelationshipDeriver {
 
   /**
@@ -27,7 +30,7 @@ class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelations
           $this->derivatives[$derivative_id]['source_entity_type'] = $base_definition->getConstraint('EntityType');
         }
 
-        $target_data_type =  'entity:' . $this->derivatives[$derivative_id]['target_entity_type'];
+        $target_data_type = 'entity:' . $this->derivatives[$derivative_id]['target_entity_type'];
         $context_definition = new ContextDefinition($target_data_type, $this->typedDataManager->createDataDefinition($target_data_type));
         // Add the constraints of the base definition to the context definition.
         if ($property_definition->getFieldStorageDefinition()->getPropertyDefinition('entity')->getConstraint('Bundle')) {

@@ -3,8 +3,6 @@
 namespace Drupal\gdpr_fields\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Link;
-use Drupal\Core\Url;
 use Drupal\gdpr_fields\GDPRCollector;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -55,11 +53,10 @@ class GDPRController extends ControllerBase {
     $output['filter'] = $this->formBuilder()->getForm('Drupal\gdpr_fields\Form\GdprFieldFilterForm');
     $output['#attached']['library'][] = 'gdpr_fields/field-list';
 
-
     foreach ($entities as $entity_type => $bundles) {
       $output[$entity_type] = [
         '#type' => 'details',
-        '#title' => t($entity_type),
+        '#title' => $entity_type,
         '#open' => TRUE,
       ];
 
@@ -67,7 +64,7 @@ class GDPRController extends ControllerBase {
         foreach ($bundles as $bundle_id) {
           $output[$entity_type][$bundle_id] = [
             '#type' => 'details',
-            '#title' => t($bundle_id),
+            '#title' => $bundle_id,
             '#open' => TRUE,
           ];
           $output[$entity_type][$bundle_id]['fields'] = $this->buildFieldTable($entity_type, $bundle_id, $include_not_configured);
@@ -90,19 +87,27 @@ class GDPRController extends ControllerBase {
    *   The entity type id.
    * @param string $bundle_id
    *   The entity bundle id.
+   * @param bool $include_not_configured
+   *   Include fields for entities that have not yet been configured.
    *
    * @return array
    *   Renderable array for field list table.
    */
-  protected function buildFieldTable($entity_type, $bundle_id, $include_not_configured) {
-    $rows = $this->collector->listFields($entity_type, $bundle_id, $include_not_configured);
+  protected function buildFieldTable($entity_type, $bundle_id, $include_not_configured = FALSE) {
+    $rows = $this->collector->listFields($bundle_id, $entity_type, $include_not_configured);
     // Sort rows by field name.
     ksort($rows);
 
     $table = [
       '#type' => 'table',
-      '#header' => [t('Name'), t('Type'), t('Right to access'), t('Right to be forgotten'), t('Notes'), ''],
-    //  '#rows' => $rows,
+      '#header' => [
+        t('Name'),
+        t('Type'),
+        t('Right to access'),
+        t('Right to be forgotten'),
+        t('Notes'),
+        '',
+      ],
       '#sticky' => TRUE,
       '#empty' => t('There are no GDPR fields for this entity.'),
     ];
@@ -155,7 +160,7 @@ class GDPRController extends ControllerBase {
 
     foreach ($entities as $entity_type => $bundles) {
       foreach ($bundles as $bundle_entity) {
-        $rows += $this->collector->fieldValues($entity_type, $bundle_entity, ['rta' => 'rta']);
+        $rows += $this->collector->fieldValues($bundle_entity, $entity_type, ['rta' => 'rta']);
       }
     }
 
@@ -180,7 +185,7 @@ class GDPRController extends ControllerBase {
 
     foreach ($entities as $entity_type => $bundles) {
       foreach ($bundles as $bundle_entity) {
-        $rows += $this->collector->fieldValues($entity_type, $bundle_entity, ['rtf' => 'rtf']);
+        $rows += $this->collector->fieldValues($bundle_entity, $entity_type, ['rtf' => 'rtf']);
       }
     }
 

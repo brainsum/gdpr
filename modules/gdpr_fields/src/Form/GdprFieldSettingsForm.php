@@ -12,7 +12,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * GDPR Field settings.
- *
  */
 class GdprFieldSettingsForm extends FormBase {
 
@@ -81,16 +80,16 @@ class GdprFieldSettingsForm extends FormBase {
    *   Bundle.
    * @param string $field_name
    *   Field.
-   * @param boolean $enabled
-   *   Whether GDPR is enabled for this field
+   * @param bool $enabled
+   *   Whether GDPR is enabled for this field.
    * @param string $rta
-   *   Right to Access setting
+   *   Right to Access setting.
    * @param string $rtf
-   *   Right to be forgotten
+   *   Right to be forgotten.
    * @param string $sanitizer
-   *  Sanitizer to use.
+   *   Sanitizer to use.
    * @param string $notes
-   *   Notes
+   *   Notes.
    *
    * @return \Drupal\gdpr_fields\Entity\GdprFieldConfigEntity
    *   The config entity.
@@ -124,6 +123,12 @@ class GdprFieldSettingsForm extends FormBase {
    *   An associative array containing the structure of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
+   * @param string $entity_type
+   *   The entity type.
+   * @param string $bundle_name
+   *   The entity bundle.
+   * @param string $field_name
+   *   The field name.
    *
    * @return array
    *   The form structure.
@@ -144,7 +149,6 @@ class GdprFieldSettingsForm extends FormBase {
     $form['#title'] = 'GDPR Settings for ' . $field_def->getLabel();
 
     static::buildFormFields($form, $entity_type, $bundle_name, $field_name);
-
 
     $form['entity_type'] = [
       '#type' => 'hidden',
@@ -187,16 +191,16 @@ class GdprFieldSettingsForm extends FormBase {
    * This is in a separate method so it can also be attached to the regular
    * field settings page by hook.
    *
-   * @see gdpr_fields_form_field_config_edit_form_submit
-   *
    * @param array $form
-   *   Form
+   *   Form.
    * @param string $entity_type
-   *   Entity type
+   *   Entity type.
    * @param string $bundle_name
-   *   Bundle
+   *   Bundle.
    * @param string $field_name
-   *   Field
+   *   Field.
+   *
+   * @see gdpr_fields_form_field_config_edit_form_submit
    */
   public static function buildFormFields(array &$form, $entity_type = NULL, $bundle_name = NULL, $field_name = NULL) {
     $config = static::getConfig($entity_type, $bundle_name, $field_name);
@@ -250,7 +254,7 @@ class GdprFieldSettingsForm extends FormBase {
 
     $sanitizer_options = ['' => ''] + array_map(function ($s) {
         return $s['label'];
-      }, $sanitizer_definitions);
+    }, $sanitizer_definitions);
 
     $form['gdpr_sanitizer'] = [
       '#type' => 'select',

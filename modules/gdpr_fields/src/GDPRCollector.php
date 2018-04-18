@@ -47,14 +47,14 @@ class GDPRCollector {
   /**
    * Get entity tree for GDPR.
    *
-   * @param $entity_list
+   * @param array $entity_list
    *   List of all gotten entities keyed by entity type and bundle id.
    * @param string $entity_type
    *   The entity type id.
    * @param string|null $bundle_id
    *   The entity bundle id, NULL if bundles should be loaded.
    */
-  public function getEntities(&$entity_list, $entity_type = 'user', $bundle_id = NULL) {
+  public function getEntities(array &$entity_list, $entity_type = 'user', $bundle_id = NULL) {
     $definition = $this->entityTypeManager->getDefinition($entity_type);
 
     if ($definition instanceof ConfigEntityTypeInterface) {
@@ -190,15 +190,17 @@ class GDPRCollector {
   /**
    * List fields on entity including their GDPR values.
    *
-   * @param string $entity_type
-   *   The entity type id.
    * @param string $bundle_id
    *   The entity bundle id.
+   * @param string $entity_type
+   *   The entity type id.
+   * @param bool $include_not_configured
+   *   Include fields for entities that have not yet been configured.
    *
    * @return array
    *   GDPR entity field list.
    */
-  public function listFields($entity_type = 'user', $bundle_id, $include_not_configured) {
+  public function listFields($bundle_id, $entity_type = 'user', $include_not_configured = FALSE) {
     $storage = $this->entityTypeManager->getStorage($entity_type);
     $entity_definition = $this->entityTypeManager->getDefinition($entity_type);
     $bundle_type = $entity_definition->getBundleEntityType();
@@ -270,17 +272,17 @@ class GDPRCollector {
   /**
    * List field values on an entity including their GDPR values.
    *
-   * @param string $entity_type
-   *   The entity type id.
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The fully loaded entity for which values are listed.
+   * @param string $entity_type
+   *   The entity type id.
    * @param array $extra_fields
-   *   Add extra fields if required
+   *   Add extra fields if required.
    *
    * @return array
    *   GDPR entity field value list.
    */
-  public function fieldValues($entity_type = 'user', EntityInterface $entity, $extra_fields = []) {
+  public function fieldValues(EntityInterface $entity, $entity_type = 'user', array $extra_fields = []) {
     $entity_definition = $this->entityTypeManager->getDefinition($entity_type);
     $bundle_type = $entity_definition->getBundleEntityType();
     $bundle_id = $entity->bundle();
@@ -334,7 +336,6 @@ class GDPRCollector {
 
         if ($rta_value && $rta_value !== 'no') {
           $fields[$key]['gdpr_rta'] = $rta_value;
-          //$fields[$key]['gdpr_rta_desc'] = $field_config->rtaDescription();
         }
         else {
           unset($fields[$key]);
@@ -345,7 +346,6 @@ class GDPRCollector {
 
         if ($rtf_value && $rtf_value !== 'no') {
           $fields[$key]['gdpr_rtf'] = $rtf_value;
-          //$fields[$key]['gdpr_rtf_desc'] = $field_config->rtfDescription();
 
           // For 'maybes', provide a link to edit the entity.
           if ($rtf_value == 'maybe') {

@@ -1,13 +1,13 @@
 <?php
 
-
 namespace Drupal\gdpr_fields\Form;
-
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 
+/**
+ * Form for GDPR field filter.
+ */
 class GdprFieldFilterForm extends FormBase {
 
   /**
@@ -46,4 +46,5 @@ class GdprFieldFilterForm extends FormBase {
     $mode = $form_state->getValue('filter') == '1' ? 'all' : 'configured';
     $form_state->setRedirect('gdpr_fields.fields_list', ['mode' => $mode]);
   }
+
 }
