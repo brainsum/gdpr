@@ -38,7 +38,9 @@ Feel free to open new issues or comment on existing ones. New ideas and patches 
 * Create an issue for your feature/fix on [drupal.org](https://www.drupal.org/project/gdpr) if it doesn't already exist
 * Fork the repo
 * Create a new branch for your feature
-    * Naming: base-branch/branch-name (e.g 8.x-1.x/my-feature-branch)
+    * Naming: base-branch/type/branch-name
+        * e.g 8.x-1.x/feature/my-feature-branch
+        * e.g 7.x-1.x/fix/typo-fixes
     * Please try to use a short and descriptive branch name
 * Create a PR
     * Please include a link to the drupal.org issue in the comments
