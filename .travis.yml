@@ -1,0 +1,66 @@
+# @file
+# Travis CI integration.
+
+git:
+  depth: 5
+
+cache:
+  directories:
+    - $HOME/.composer/cache/files
+
+language: php
+
+php:
+  - 7
+
+env:
+  global:
+    # Ensure composer is able to apply patches.
+    - COMPOSER_EXIT_ON_PATCH_FAILURE=1
+    # DRUPAL_TI Testing.
+    - SIMPLETEST_DB="mysql://root:@localhost/drupal_travis_db"
+    - SIMPLETEST_BASE_URL="http://localhost:8888"
+    # Ignore deprecation warnings.
+    - SYMFONY_DEPRECATIONS_HELPER=weak
+
+  matrix:
+    # Latest stable release
+    - DRUPAL_CORE="~8.5@alpha"
+    # Latest current dev branche
+    - DRUPAL_CORE="8.5.x-dev@dev"
+    # Latest future dev branch
+    - DRUPAL_CORE="8.6.x-dev@dev"
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env DRUPAL_CORE="8.6.x-dev@dev"
+
+mysql:
+  database: drupal_travis_db
+  username: root
+  encoding: utf8
+
+before_install:
+  # Remove xdebug. We aren't generating code coverage, and it slows down Composer.
+  - phpenv config-rm xdebug.ini || true
+  - git config --global github.accesstoken $GITHUB_OAUTH_TOKEN
+  # Track our general build directory.
+  - export DRUPAL_BUILD_ROOT="$(dirname "$TRAVIS_BUILD_DIR")"
+
+install:
+  - ./travis-ci/install.sh
+
+before_script:
+  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs --config-set installed_paths $DRUPAL_BUILD_ROOT/drupal/vendor/drupal/coder/coder_sniffer
+  - php -S localhost:8888 -t $DRUPAL_BUILD_ROOT/drupal/web &
+  - mysql -u root -e "CREATE DATABASE IF NOT EXISTS drupal_travis_db"
+
+script:
+  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs $TRAVIS_BUILD_DIR -p --standard=Drupal --colors
+  # @todo: Add ESLint
+  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpunit -c $DRUPAL_BUILD_ROOT/drupal/web/core/phpunit.xml.dist --group=gdpr
+
+notifications:
+  email: false
+  irc: "chat.freenode.net#drupal-gdpr"
