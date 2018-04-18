@@ -57,7 +57,7 @@ before_script:
   - mysql -u root -e "CREATE DATABASE IF NOT EXISTS drupal_travis_db"
 
 script:
-  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs $TRAVIS_BUILD_DIR -p --standard=Drupal --colors
+  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs $TRAVIS_BUILD_DIR -p --ignore=$TRAVIS_BUILD_DIR/README.md --standard=Drupal --colors
   # @todo: Add ESLint
   - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpunit -c $DRUPAL_BUILD_ROOT/drupal/web/core/phpunit.xml.dist --group=gdpr
 
