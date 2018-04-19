@@ -1,0 +1,7 @@
+administer gdpr settings:
+  title: 'Administer GDPR Settings'
+  restrict access: true
+
+view gdpr data summary:
+  title: 'Access GDPR Data Summary'
+  description: 'Allows users to access their data without staff involvement.'

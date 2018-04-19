@@ -1,10 +1,10 @@
 gdpr.collected_user_data:
-  path: '/user/{user}/collected-data'
+  path: '/user/{user}/gdpr'
   defaults:
     _title: 'Data stored about you'
     _controller: '\Drupal\gdpr\Controller\UserController::collectedData'
   requirements:
-    _custom_access: '\Drupal\gdpr\Controller\UserController::access'
+    _custom_access: '\Drupal\gdpr\Controller\UserController::accessCollectedData'
   options:
     parameters:
       user:
