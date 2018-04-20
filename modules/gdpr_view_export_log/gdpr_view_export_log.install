@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Install file for the GDPR Views Data Export module.
+ */
+
+/**
  * Implements hook_install().
  */
 function gdpr_view_export_log_install() {
