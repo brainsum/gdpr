@@ -17,6 +17,9 @@
     ],
     "require": {
         "drupal/core": "~8",
-        "drupal/checklistapi": "^1.0"
+        "drupal/checklistapi": "^1.0",
+        "drupal/entity_reference_revisions": "^1.4",
+        "drupal/message": "^1.0@RC",
+        "drupal/token": "^1.1"
     }
 }
