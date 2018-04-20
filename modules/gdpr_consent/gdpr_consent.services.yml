@@ -1,0 +1,4 @@
+services:
+  plugin.manager.gdpr_consent_resolver:
+    class: Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager
+    parent: default_plugin_manager

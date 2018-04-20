@@ -1,0 +1,28 @@
+uuid: 9168354c-5505-495d-bfce-382aa4f12be7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.message.user_accepted
+    - message.template.consent_agreement_accepted
+id: message.consent_agreement_accepted.user_accepted
+field_name: user_accepted
+entity_type: message
+bundle: consent_agreement_accepted
+label: 'User Accepted'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:user'
+  handler_settings:
+    include_anonymous: true
+    filter:
+      type: _none
+    target_bundles: null
+    sort:
+      field: _none
+    auto_create: false
+field_type: entity_reference
