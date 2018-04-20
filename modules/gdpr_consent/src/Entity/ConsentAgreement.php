@@ -112,6 +112,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
    * Check if agreement is explicit.
    *
    * @return bool
+   *   Whether the agreement is explicit.
    */
   public function requiresExplicitAcceptance() {
     return $this->get('mode')->value == 'explicit';

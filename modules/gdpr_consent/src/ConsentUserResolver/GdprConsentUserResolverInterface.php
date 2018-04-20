@@ -6,7 +6,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\user\Entity\User;
 
 /**
- * Interface GdprConsentUserResolverInterface
+ * Interface GdprConsentUserResolverInterface.
  */
 interface GdprConsentUserResolverInterface {
 
