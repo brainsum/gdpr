@@ -18,13 +18,13 @@ class ExportAuditListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     return [
-        'filename' => 'File Name',
-        'location' => 'Location',
-        'reason' => 'Reason',
-        'created' => 'Date Exported',
-        'expires' => 'Expires In',
-        'owner' => 'Exported By',
-      ] + parent::buildHeader();
+      'filename' => 'File Name',
+      'location' => 'Location',
+      'reason' => 'Reason',
+      'created' => 'Date Exported',
+      'expires' => 'Expires In',
+      'owner' => 'Exported By',
+    ] + parent::buildHeader();
   }
 
   /**
@@ -44,8 +44,6 @@ class ExportAuditListBuilder extends EntityListBuilder {
         $query->pager($this->limit);
       }
       return $query->execute();
-
-
     }
     else {
       return parent::getEntityIds();

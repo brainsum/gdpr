@@ -13,7 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 class AuditDeleteForm extends ContentEntityDeleteForm {
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);

@@ -1,12 +1,5 @@
 <?php
 
-use Drupal\Core\Url;
-use Drupal\gdpr_view_export_log\Entity\ExportAudit;
-use Drupal\gdpr_view_export_log\Plugin\views\display_extender\GdprExportLogDisplayExtender;
-use Drupal\views\Plugin\views\cache\CachePluginBase;
-use Drupal\views\ViewExecutable;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-
 /**
  * Implements hook_install().
  */
@@ -32,13 +25,12 @@ function gdpr_view_export_log_uninstall() {
   }
 }
 
-
 /**
  * Implements hook_schema().
  *
  * User IDs are stored in a custom table rather than an entity field.
  * This is so that they can be lazily loaded for performance reasons,
- * as we don't want to be loading thousands of users when looking up a log entry.
+ * as we don't want to be loading thousands of users when looking up a log.
  */
 function gdpr_view_export_log_schema() {
   $schema['gdpr_view_export_audit_user_ids'] = [

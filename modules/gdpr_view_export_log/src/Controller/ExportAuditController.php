@@ -4,9 +4,6 @@ namespace Drupal\gdpr_view_export_log\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
-use Drupal\gdpr_view_export_log\Entity\ExportAudit;
-use Drupal\user\Entity\User;
-
 
 /**
  * Class ExportAuditController.
@@ -41,7 +38,6 @@ class ExportAuditController extends ControllerBase {
       ->execute()
       ->fetchAll(\PDO::FETCH_ASSOC);
 
-
     $output = [
       'back' => [
         '#type' => 'link',
@@ -66,7 +62,6 @@ class ExportAuditController extends ControllerBase {
       ],
     ];
 
-
     foreach ($results as $result) {
       $output['table'][$result['user_id']]['userid'] = [
         '#markup' => $result['user_id'],
@@ -77,7 +72,6 @@ class ExportAuditController extends ControllerBase {
         '#url' => Url::fromRoute('entity.user.canonical', ['user' => $result['user_id']]),
         '#title' => $result['name'],
       ];
-
 
       $output['table'][$result['user_id']]['operations'] = [
         '#type' => 'operations',

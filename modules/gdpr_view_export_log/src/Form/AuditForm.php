@@ -14,7 +14,7 @@ use Drupal\Core\Url;
 class AuditForm extends ContentEntityForm {
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
@@ -49,7 +49,6 @@ class AuditForm extends ContentEntityForm {
     $form['actions']['submit']['#value'] = $this->t('Continue');
     return $form;
   }
-
 
   /**
    * {@inheritdoc}

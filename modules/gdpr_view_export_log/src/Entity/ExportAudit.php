@@ -5,7 +5,6 @@ namespace Drupal\gdpr_view_export_log\Entity;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
 
 /**
  * Defines the Export Audit entity.
@@ -40,10 +39,16 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  * )
  */
 class ExportAudit extends ContentEntityBase {
+
+  /**
+   * Check export display handler class.
+   *
+   * @return string
+   *   The export display handler class.
+   */
   public static function exportDisplayHandler() {
     return 'Drupal\views_data_export\Plugin\views\display\DataExport';
   }
-
 
   /**
    * {@inheritdoc}
@@ -53,7 +58,7 @@ class ExportAudit extends ContentEntityBase {
 
     $fields['location'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Location'))
-      ->setDescription(t('Where will this export be stored? (For example, a user\'s PC)'))
+      ->setDescription(t("Where will this export be stored? (For example, a user's PC)"))
       ->setRequired(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'textfield',
@@ -61,7 +66,6 @@ class ExportAudit extends ContentEntityBase {
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
-
 
     $fields['reason'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Reason'))
@@ -86,8 +90,6 @@ class ExportAudit extends ContentEntityBase {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-
-
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Authored by'))
       ->setDescription(t('The user ID of author of the audit entry.'))
@@ -96,7 +98,6 @@ class ExportAudit extends ContentEntityBase {
       ->setSetting('handler', 'default')
       ->setTranslatable(TRUE)
       ->setDisplayOptions('view', [
-        // 'label' => 'hidden',
         'type' => 'author',
       ])
       ->setDisplayOptions('form', [

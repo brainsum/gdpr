@@ -2,7 +2,6 @@
 
 namespace Drupal\gdpr_view_export_log\Form;
 
-use Drupal\Console\Bootstrap\Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\gdpr_view_export_log\Entity\ExportAudit;
@@ -72,4 +71,5 @@ class RemoveUserFromExportForm extends FormBase {
     \Drupal::messenger()->addMessage($this->t('User removed'));
     $form_state->setRedirect('gdpr_view_export_log.view_users', ['id' => $audit_entry->id()]);
   }
+
 }

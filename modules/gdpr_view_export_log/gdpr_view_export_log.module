@@ -1,9 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Module file for the GDPR Views Data Export module.
+ */
+
 use Drupal\Core\Url;
 use Drupal\gdpr_view_export_log\Entity\ExportAudit;
 use Drupal\gdpr_view_export_log\Plugin\views\display_extender\GdprExportLogDisplayExtender;
-use Drupal\views\Plugin\views\cache\CachePluginBase;
 use Drupal\views\ViewExecutable;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -26,29 +30,20 @@ function gdpr_view_export_log_toolbar_alter(&$items) {
 }
 
 /**
- * Implements hook_views_post_render().
- */
-function gdpr_view_export_log_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
-}
-
-
-/**
  * Implements hook_views_post_build().
  */
 function gdpr_view_export_log_views_post_build(ViewExecutable $view) {
   if (GdprExportLogDisplayExtender::isLoggingEnabled($view)) {
-
-
     // Logging is enabled for this view.
     // Instead of just letting it render, redirect to the audit page,
     // if we haven't been there already.
     $already_audited = \Drupal::request()
-        ->getSession()
-        ->get('gdpr_audit_id') > 0;
+      ->getSession()
+      ->get('gdpr_audit_id') > 0;
 
     if (!$already_audited) {
 
-      //@todo: Do not run in preview mode.
+      // @todo: Do not run in preview mode.
       $session = \Drupal::request()->getSession();
 
       $session->set('gdpr_export_audit_file', $view->display_handler->options["filename"]);
@@ -62,7 +57,6 @@ function gdpr_view_export_log_views_post_build(ViewExecutable $view) {
       $response->send();
     }
   }
-
 }
 
 /**
@@ -81,7 +75,7 @@ function gdpr_view_export_log_views_post_execute(ViewExecutable $view) {
       $audit_entry = ExportAudit::load($audit_entry_id);
 
       // fieldDefinition is unfortunately protected.
-      // Use reflection to get it for now
+      // Use reflection to get it for now.
       // @todo look at not using reflection in future
       $r = new ReflectionMethod('Drupal\views\Plugin\views\field\EntityField', 'getFieldDefinition');
       $r->setAccessible(TRUE);
@@ -126,9 +120,8 @@ function gdpr_view_export_log_views_post_execute(ViewExecutable $view) {
         // This is so that they can be lazily loaded for performance reasons,
         // as we don't want to be loading thousands of users
         // when looking up a log entry.
-
-        foreach($ids as $id) {
-          //@todo cache the user's name in here too?
+        foreach ($ids as $id) {
+          // @todo cache the user's name in here too?
           \Drupal::database()->insert('gdpr_view_export_audit_user_ids')
             ->fields([
               'log_id' => $audit_entry->id(),
@@ -143,4 +136,3 @@ function gdpr_view_export_log_views_post_execute(ViewExecutable $view) {
   }
 
 }
-
