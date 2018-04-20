@@ -1,0 +1,146 @@
+<?php
+
+use Drupal\Core\Url;
+use Drupal\gdpr_view_export_log\Entity\ExportAudit;
+use Drupal\gdpr_view_export_log\Plugin\views\display_extender\GdprExportLogDisplayExtender;
+use Drupal\views\Plugin\views\cache\CachePluginBase;
+use Drupal\views\ViewExecutable;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+
+/**
+ * Implements hook_toolbar_alter().
+ */
+function gdpr_view_export_log_toolbar_alter(&$items) {
+  $user = \Drupal::currentUser();
+
+  if ($user->hasPermission('create gdpr export audits')) {
+    $items['gdpr']['tray']['links']['#links']['exports'] = [
+      'title' => t('Exports'),
+      'url' => Url::fromRoute('entity.gdpr_view_export_audit.collection'),
+      'attributes' => [
+        'title' => t('Exports'),
+      ],
+      'weight' => 100,
+    ];
+  }
+}
+
+/**
+ * Implements hook_views_post_render().
+ */
+function gdpr_view_export_log_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
+}
+
+
+/**
+ * Implements hook_views_post_build().
+ */
+function gdpr_view_export_log_views_post_build(ViewExecutable $view) {
+  if (GdprExportLogDisplayExtender::isLoggingEnabled($view)) {
+
+
+    // Logging is enabled for this view.
+    // Instead of just letting it render, redirect to the audit page,
+    // if we haven't been there already.
+    $already_audited = \Drupal::request()
+        ->getSession()
+        ->get('gdpr_audit_id') > 0;
+
+    if (!$already_audited) {
+
+      //@todo: Do not run in preview mode.
+      $session = \Drupal::request()->getSession();
+
+      $session->set('gdpr_export_audit_file', $view->display_handler->options["filename"]);
+      $session->set('gdpr_export_audit_view', $view->id());
+      $session->set('gdpr_export_audit_continue', \Drupal::request()
+        ->getRequestUri());
+
+      $url = Url::fromRoute('entity.gdpr_view_export_audit.add_form')
+        ->toString();
+      $response = new RedirectResponse($url);
+      $response->send();
+    }
+  }
+
+}
+
+/**
+ * Implements hook_views_post_execute().
+ */
+function gdpr_view_export_log_views_post_execute(ViewExecutable $view) {
+  // After the view is executed, if there has been an audit entry recorded,
+  // Modify the audit to store any user IDs included in the output.
+  if (GdprExportLogDisplayExtender::isLoggingEnabled($view)) {
+    $session = \Drupal::request()->getSession();
+    $audit_entry_id = $session->get('gdpr_audit_id');
+
+    $value_accessors = [];
+
+    if ($audit_entry_id > 0) {
+      $audit_entry = ExportAudit::load($audit_entry_id);
+
+      // fieldDefinition is unfortunately protected.
+      // Use reflection to get it for now
+      // @todo look at not using reflection in future
+      $r = new ReflectionMethod('Drupal\views\Plugin\views\field\EntityField', 'getFieldDefinition');
+      $r->setAccessible(TRUE);
+
+      // Are any of the fields defined against user?
+      foreach ($view->field as $field_id => $field) {
+        // Only process entity fields.
+        if ($field->definition['class'] == 'Drupal\views\Plugin\views\field\EntityField') {
+
+          // If the field is directly defined on the user, log the ID.
+          if ($field->definition['entity_type'] == 'user') {
+            $value_accessors[] = function ($row) use ($field) {
+              return $field->getEntity($row)->id();
+            };
+          }
+
+          $field_definition = $r->invoke($field);
+
+          // If the field is a reference to the user, log the id.
+          if ($field_definition->getType() == 'entity_reference' && $field_definition->getSetting('target_type') == 'user') {
+            $value_accessors[] = function ($row) use ($field) {
+              return $field->getValue($row);
+            };
+          }
+        }
+      }
+
+      $ids = [];
+
+      foreach ($view->result as $row) {
+        foreach ($value_accessors as $accessor) {
+          $id = $accessor($row);
+          if (!in_array($id, $ids)) {
+            $ids[] = $id;
+          }
+        }
+      }
+
+      if (count($ids) > 0) {
+        $audit_entry->save();
+        // User IDs are stored in a custom table rather than an entity field.
+        // This is so that they can be lazily loaded for performance reasons,
+        // as we don't want to be loading thousands of users
+        // when looking up a log entry.
+
+        foreach($ids as $id) {
+          //@todo cache the user's name in here too?
+          \Drupal::database()->insert('gdpr_view_export_audit_user_ids')
+            ->fields([
+              'log_id' => $audit_entry->id(),
+              'user_id' => $id,
+            ])->execute();
+        }
+      }
+    }
+
+    $session->remove('gdpr_audit_id');
+
+  }
+
+}
+

@@ -1,0 +1,77 @@
+<?php
+
+use Drupal\Core\Url;
+use Drupal\gdpr_view_export_log\Entity\ExportAudit;
+use Drupal\gdpr_view_export_log\Plugin\views\display_extender\GdprExportLogDisplayExtender;
+use Drupal\views\Plugin\views\cache\CachePluginBase;
+use Drupal\views\ViewExecutable;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+
+/**
+ * Implements hook_install().
+ */
+function gdpr_view_export_log_install() {
+  $config = \Drupal::service('config.factory')->getEditable('views.settings');
+  $display_extenders = $config->get('display_extenders') ?: [];
+  $display_extenders[] = 'gdpr_view_export_logging';
+  $config->set('display_extenders', $display_extenders);
+  $config->save();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function gdpr_view_export_log_uninstall() {
+  $config = \Drupal::service('config.factory')->getEditable('views.settings');
+  $display_extenders = $config->get('display_extenders') ?: [];
+  $key = array_search('gdpr_view_export_logging', $display_extenders);
+  if ($key !== FALSE) {
+    unset($display_extenders[$key]);
+    $config->set('display_extenders', $display_extenders);
+    $config->save();
+  }
+}
+
+
+/**
+ * Implements hook_schema().
+ *
+ * User IDs are stored in a custom table rather than an entity field.
+ * This is so that they can be lazily loaded for performance reasons,
+ * as we don't want to be loading thousands of users when looking up a log entry.
+ */
+function gdpr_view_export_log_schema() {
+  $schema['gdpr_view_export_audit_user_ids'] = [
+    'description' => 'Stores when Merge Processes are happening on an entity.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'description' => 'Unique Identifier.',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'log_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The entity id of the corresponding log entry.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The ID of the user.',
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Cache of the user\'s name',
+      ],
+    ],
+    'primary key' => ['id'],
+  ];
+
+  return $schema;
+}
