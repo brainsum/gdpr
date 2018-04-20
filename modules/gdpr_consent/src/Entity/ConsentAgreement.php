@@ -2,8 +2,6 @@
 
 namespace Drupal\gdpr_consent\Entity;
 
-use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -110,6 +108,11 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     }
   }
 
+  /**
+   * Check if agreement is explicit.
+   *
+   * @return bool
+   */
   public function requiresExplicitAcceptance() {
     return $this->get('mode')->value == 'explicit';
   }
@@ -299,7 +302,6 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
       ->setSetting('handler', 'default')
       ->setTranslatable(TRUE)
       ->setDisplayOptions('view', [
-       // 'label' => 'hidden',
         'type' => 'author',
       ])
       ->setDisplayOptions('form', [
@@ -317,6 +319,12 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     return $fields;
   }
 
+  /**
+   * Get the available consent modes.
+   *
+   * @return array
+   *   Array of consent modes.
+   */
   public static function getModes() {
     return [
       'implicit' => 'Implicit',

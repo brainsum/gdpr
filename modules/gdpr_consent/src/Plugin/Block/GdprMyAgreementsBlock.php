@@ -26,4 +26,5 @@ class GdprMyAgreementsBlock extends BlockBase {
     $ctrl = new ConsentAgreementController(\Drupal::getContainer()->get('entity_field.manager'));
     return $ctrl->myAgreements($user->id());
   }
+
 }

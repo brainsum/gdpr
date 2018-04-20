@@ -66,7 +66,7 @@ interface ConsentAgreementInterface extends ContentEntityInterface, RevisionLogI
    * Sets the published status of a Consent Agreement.
    *
    * @param bool $published
-   *   TRUE to set this Consent Agreement to published, FALSE to set it to unpublished.
+   *   TRUE to set this Consent Agreement to published, FALSE to unpublished.
    *
    * @return \Drupal\gdpr_consent\Entity\ConsentAgreementInterface
    *   The called Consent Agreement entity.

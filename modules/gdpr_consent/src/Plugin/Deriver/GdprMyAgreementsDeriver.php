@@ -5,7 +5,6 @@ namespace Drupal\gdpr_consent\Plugin\Deriver;
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 
-
 /**
  * Defines the deriver for the My Agreements block.
  */

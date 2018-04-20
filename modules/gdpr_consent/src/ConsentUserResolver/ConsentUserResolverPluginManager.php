@@ -49,7 +49,6 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
     $this->alterInfo('gdpr_consent_resolver_info');
   }
 
-
   /**
    * Finds a resolver for the specified entity type/bundle.
    *
@@ -74,7 +73,6 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
     $definitions_for_bundle = array_filter($definitions_for_entity, function ($d) use ($bundle) {
       return array_key_exists('bundle', $d) && $d['bundle'] == $bundle;
     });
-
 
     if (count($definitions_for_bundle) > 0) {
       // Get first item from the array.

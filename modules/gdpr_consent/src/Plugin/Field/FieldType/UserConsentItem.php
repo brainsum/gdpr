@@ -78,7 +78,7 @@ class UserConsentItem extends FieldItemBase {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function postSave($update) {
     $should_log = FALSE;

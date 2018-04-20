@@ -18,7 +18,7 @@ use Drupal\gdpr_consent\Entity\ConsentAgreementInterface;
 interface ConsentAgreementStorageInterface extends ContentEntityStorageInterface {
 
   /**
-   * Gets a list of Consent Agreement revision IDs for a specific Consent Agreement.
+   * Gets a list of Consent Agreement revision IDs for a specific Agreement.
    *
    * @param \Drupal\gdpr_consent\Entity\ConsentAgreementInterface $entity
    *   The Consent Agreement entity.
@@ -29,7 +29,7 @@ interface ConsentAgreementStorageInterface extends ContentEntityStorageInterface
   public function revisionIds(ConsentAgreementInterface $entity);
 
   /**
-   * Gets a list of revision IDs having a given user as Consent Agreement author.
+   * Gets a list of revision IDs for a given user as Consent Agreement author.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user entity.

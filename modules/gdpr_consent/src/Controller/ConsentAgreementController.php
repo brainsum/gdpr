@@ -3,15 +3,12 @@
 namespace Drupal\gdpr_consent\Controller;
 
 use Drupal\Component\Utility\Xss;
-use Drupal\Console\Bootstrap\Drupal;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\gdpr_consent\Entity\ConsentAgreement;
-use Drupal\gdpr_consent\Entity\ConsentAgreementInterface;
-use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -29,16 +26,18 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
   private $entityFieldManager;
 
   /**
-   * The entity type manager.
+   * Constructs a ConsentAgreementController controller object.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
+   *   The entity field manager for metadata.
    */
-  //private $entityTypeManager;
-
   public function __construct(EntityFieldManagerInterface $entity_field_manager) {
     $this->entityFieldManager = $entity_field_manager;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_field.manager')
@@ -48,7 +47,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
   /**
    * Displays a Consent Agreement  revision.
    *
-   * @param int $consent_agreement_revision
+   * @param int $gdpr_consent_agreement_revision
    *   The Consent Agreement  revision ID.
    *
    * @return array
@@ -86,13 +85,13 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
   /**
    * Generates an overview table of older revisions of a Consent Agreement .
    *
-   * @param \Drupal\gdpr_consent\Entity\ConsentAgreement $agreement
-   *   A Consent Agreement  object.
+   * @param \Drupal\gdpr_consent\Entity\ConsentAgreement $gdpr_consent_agreement
+   *   A Consent Agreement object.
    *
    * @return array
    *   An array as expected by drupal_render().
    */
-  public function revisionOverview($gdpr_consent_agreement) {
+  public function revisionOverview(ConsentAgreement $gdpr_consent_agreement) {
     $agreement = ConsentAgreement::load($gdpr_consent_agreement);
     $account = $this->currentUser();
     $storage = $this->entityManager()->getStorage('gdpr_consent_agreement');
@@ -203,7 +202,16 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
     return $build;
   }
 
-  function myAgreements($user) {
+  /**
+   * Render My Agreements content.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $user
+   *   The user to show agreements for.
+   *
+   * @return array
+   *   Renderable table of user agreements.
+   */
+  public function myAgreements(AccountInterface $user) {
     $map = $this->entityFieldManager->getFieldMapByFieldType('gdpr_user_consent');
     $agreement_storage = $this->entityTypeManager()->getStorage('gdpr_consent_agreement');
     $rows = [];
@@ -227,13 +235,13 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
 
           $row[] = [
             'data' => [
-              '#markup' => $agreement->toLink($agreement->title->value, 'revision')->toString()
+              '#markup' => $agreement->toLink($agreement->title->value, 'revision')->toString(),
             ],
           ];
 
           $row[] = [
             'data' => [
-              '#markup' => $entity->{$field_name}->date
+              '#markup' => $entity->{$field_name}->date,
             ],
           ];
 
@@ -241,7 +249,6 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
         }
       }
     }
-
 
     $header = ['Agreement', 'Date Agreed'];
 

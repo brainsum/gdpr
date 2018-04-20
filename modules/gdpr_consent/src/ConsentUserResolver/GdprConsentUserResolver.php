@@ -51,4 +51,5 @@ class GdprConsentUserResolver extends Plugin {
    * @var string
    */
   public $bundle;
+
 }
