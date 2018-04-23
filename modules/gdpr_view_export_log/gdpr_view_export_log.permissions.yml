@@ -1,0 +1,2 @@
+create gdpr export audits:
+  title: 'Create audit entries for exporting views'

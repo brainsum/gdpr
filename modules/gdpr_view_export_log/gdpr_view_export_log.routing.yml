@@ -1,0 +1,21 @@
+gdpr_view_export_log.view_users:
+  path: '/admin/gdpr/export/{id}/users'
+  defaults:
+    _controller: '\Drupal\gdpr_view_export_log\Controller\ExportAuditController::viewUsers'
+  requirements:
+    _permission: 'create gdpr export audits'
+
+gdpr_view_export_log.delete_user:
+  path: '/admin/gdpr/export/{id}/users/{user_id}/remove'
+  defaults:
+    _form: '\Drupal\gdpr_view_export_log\Form\RemoveUserFromExportForm'
+  requirements:
+    _permission: 'create gdpr export audits'
+
+gdpr_view_export_log.exports_containing_user:
+  path: '/admin/gdpr/exports_containing_user/{user_id}'
+  defaults:
+    #_controller: '\Drupal\gdpr_view_export_log\Controller\ExportAuditController::viewExports'
+    _entity_list: 'gdpr_view_export_audit'
+  requirements:
+    _permission: 'create gdpr export audits'

@@ -1,0 +1,10 @@
+name: General Data Protection Regulation (GDPR) - Log View Exports
+description: Logs view exports
+core: 8.x
+type: module
+package: General Data Protection Regulation
+
+dependencies:
+  - gdpr:gdpr
+  - views_data_export:views_data_export
+  - rules:rules
