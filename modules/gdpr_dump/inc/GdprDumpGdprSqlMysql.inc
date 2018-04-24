@@ -3,9 +3,9 @@
 use Drush\Sql\Sqlmysql;
 
 /**
- * Class GdprSqlMysql.
+ * Class GdprDumpGdprSqlMysql.
  */
-class GdprSqlMysql extends Sqlmysql {
+class GdprDumpGdprSqlMysql extends Sqlmysql {
 
   /**
    * Execute a SQL dump and return the path to the resulting dump file.
@@ -73,7 +73,7 @@ class GdprSqlMysql extends Sqlmysql {
         // Don't try to rename a table if it is excluded.
         continue;
       }
-      $clone = GdprSqlDump::GDPR_TABLE_PREFIX . $table;
+      $clone = GdprDumpGdprSqlDump::GDPR_TABLE_PREFIX . $table;
       $rename = "RENAME TABLE \`$clone\` TO \`$table\`;";
       if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
         drush_print("Adding rename command: '$rename'", 0, STDERR);

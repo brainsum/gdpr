@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Class GdprSqlDump.
+ * Class GdprDumpGdprSqlDump.
  */
-class GdprSqlDump {
+class GdprDumpGdprSqlDump {
 
   const GDPR_TABLE_PREFIX = 'gdpr_clone_';
 
@@ -52,7 +52,7 @@ class GdprSqlDump {
   protected $driver;
 
   /**
-   * GdprSqlDump constructor.
+   * GdprDumpGdprSqlDump constructor.
    */
   public function __construct() {
     $this->driver = db_driver();
@@ -181,7 +181,7 @@ class GdprSqlDump {
       }
     }
     catch (Exception $e) {
-      $transaction->rollback();
+      $transaction->rollBack();
       drush_set_error('DRUSH_SQL_DUMP_FAIL', 'Table clone failed');
     }
   }
