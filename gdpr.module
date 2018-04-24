@@ -342,7 +342,7 @@ function gdpr_search_content() {
   if ($moduleHandler->moduleExists('node')) {
     $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
 
-    $connection = Database::getConnection();
+    $connection = \Drupal::database();
     // Regexp database comparisons depend on DB type.
     switch ($connection->databaseType()) {
       case 'pgsql':
