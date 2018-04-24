@@ -47,6 +47,19 @@ function gdpr_dump_drush_command() {
     ] + $options + $dbUrl,
   ];
 
+  $commands['gdpr-sanitize'] = [
+    'description' => 'Sanitize the environment.',
+    'bootstrap' => DRUSH_BOOTSTRAP_NONE,
+    'callback' => 'drush_gdpr_sanitize',
+    'drupal dependencies' => [
+      'gdpr',
+      'gdpr_dump',
+    ],
+    'examples' => [
+      'drush gdpr-sanitize' => 'Sanitize the environment',
+    ],
+  ];
+
   return $commands;
 }
 
@@ -61,6 +74,22 @@ function drush_gdpr_sql_dump() {
   $service = \Drupal::service('gdpr_dump.sql_dump');
   try {
     return $service->dump();
+  }
+  catch (\Exception $e) {
+    return drush_set_error('DRUSH_DUMP_ERROR', $e->getMessage());
+  }
+}
+
+/**
+ * Command callback for gdpr-sanitize.
+ *
+ * Sanitizes the current environment.
+ */
+function drush_gdpr_sanitize() {
+  /** @var \Drupal\gdpr_dump\Service\GdprSanitize $service */
+  $service = \Drupal::service('gdpr_dump.sanitize');
+  try {
+    $service->sanitize();
   }
   catch (\Exception $e) {
     return drush_set_error('DRUSH_DUMP_ERROR', $e->getMessage());
