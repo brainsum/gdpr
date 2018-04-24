@@ -341,8 +341,22 @@ function gdpr_search_content() {
   if ($moduleHandler->moduleExists('node')) {
     $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
 
+    $connection = \Drupal\Core\Database\Database::getConnection();
+    // Regexp database comparisons depend on DB type
+    switch ($connection->databaseType()) {
+      case 'pgsql':
+        $operator = '~*';
+        break;
+      case 'sqlite':
+        $operator = 'REGEXP';
+        break;
+      default :
+        $operator = 'RLIKE';
+    }
+
+
     $nids = \Drupal::entityQuery('node')
-      ->condition('title', $pattern, 'RLIKE')
+      ->condition('title', $pattern, $operator)
       ->execute();
 
     $node_storage = \Drupal::entityTypeManager()->getStorage('node');
