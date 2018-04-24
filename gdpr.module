@@ -360,7 +360,7 @@ function _get_logging_responsability_description() {
 function _get_gdpr_module_description() {
   $all_modules = _get_modules();
 
-  $gdpr_module_names = ['gdpr_dump', 'custom_contact_form'];
+  $gdpr_module_names = ['gdpr_dump'];
 
   $gdpr_modules_list = [
     '#theme' => 'item_list',
