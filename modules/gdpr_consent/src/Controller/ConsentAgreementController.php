@@ -249,7 +249,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
 
       foreach ($field_names as $field_name) {
 
-        $ids = \Drupal::entityQuery($entity_type)
+        $ids = $this->entityTypeManager->getStorage($entity_type)->getQuery()
           ->condition($field_name . '.user_id', $user->id())
           ->execute();
 

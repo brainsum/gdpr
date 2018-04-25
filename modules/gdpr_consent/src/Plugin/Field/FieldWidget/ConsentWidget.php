@@ -2,10 +2,15 @@
 
 namespace Drupal\gdpr_consent\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager;
 use Drupal\gdpr_consent\Entity\ConsentAgreement;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Plugin implementation of the 'gdpr_consent_widget' widget.
@@ -21,7 +26,60 @@ use Drupal\gdpr_consent\Entity\ConsentAgreement;
  *   },
  * )
  */
-class ConsentWidget extends WidgetBase {
+class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * The GDPR Consent Resolver manager.
+   *
+   * @var \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager
+   */
+  protected $gdprConsentResolverManager;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $currentUser;
+
+  /**
+   * Constructs a ConsentWidget instance.
+   *
+   * @param string $plugin_id
+   *   The plugin_id for the formatter.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
+   *   The definition of the field to which the formatter is associated.
+   * @param array $settings
+   *   The formatter settings.
+   * @param array $third_party_settings
+   *   Any third party settings settings.
+   * @param \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager $gdpr_consent_resolver_manager
+   *   The GDPR Consent Resolver manager.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current user.
+   */
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ConsentUserResolverPluginManager $gdpr_consent_resolver_manager, AccountInterface $current_user) {
+    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
+    $this->gdprConsentResolverManager = $gdpr_consent_resolver_manager;
+    $this->currentUser = $current_user;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $plugin_id,
+      $plugin_definition,
+      $configuration['field_definition'],
+      $configuration['settings'],
+      $configuration['third_party_settings'],
+      $container->get('plugin.manager.gdpr_consent_resolver'),
+      $container->get('current_user')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -32,12 +90,12 @@ class ConsentWidget extends WidgetBase {
       return [];
     }
 
-    $can_edit_anyones_consent = \Drupal::currentUser()->hasPermission('grant gdpr any consent');
-    $can_edit_own_consent = \Drupal::currentUser()->hasPermission('grant gdpr own consent');
+    $can_edit_anyones_consent = $this->currentUser->hasPermission('grant gdpr any consent');
+    $can_edit_own_consent = $this->currentUser->hasPermission('grant gdpr own consent');
     // Consenting user and current user may not be the same.
     // For example, a staff member editing consent on behalf of a user who
     // calls the office.
-    $current_user = \Drupal::currentUser();
+    $current_user = $this->currentUser;
     $consenting_user = $this->getConsentingUser($items);
 
     $agreement_id = $items->getFieldDefinition()->getSetting('target_id');
@@ -116,7 +174,7 @@ class ConsentWidget extends WidgetBase {
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
     for ($i = 0; $i < count($values); ++$i) {
       if (!isset($values[$i]['user_id_accepted'])) {
-        $values[$i]['user_id_accepted'] = \Drupal::currentUser()->id();
+        $values[$i]['user_id_accepted'] = $this->currentUser->id();
       }
       if (!isset($values[$i]['date'])) {
         $values[$i]['date'] = date('Y-m-d H:i:s');
@@ -138,9 +196,7 @@ class ConsentWidget extends WidgetBase {
    */
   private function getConsentingUser(FieldItemListInterface $items) {
     $definition = $items->getFieldDefinition();
-    /* @var \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager $plugin_manager */
-    $plugin_manager = \Drupal::service('plugin.manager.gdpr_consent_resolver');
-    $resolver = $plugin_manager->getForEntityType($definition->getTargetEntityTypeId(), $definition->getTargetBundle());
+    $resolver = $this->gdprConsentResolverManager->getForEntityType($definition->getTargetEntityTypeId(), $definition->getTargetBundle());
     $user = $resolver->resolve($items->getEntity());
     return $user;
   }
