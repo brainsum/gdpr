@@ -4,8 +4,11 @@ namespace Drupal\gdpr_consent\Controller;
 
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Render\Renderer;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\gdpr_consent\Entity\ConsentAgreement;
@@ -26,13 +29,36 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
   private $entityFieldManager;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  private $dateFormatter;
+
+  /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\Renderer
+   */
+  private $renderer;
+
+  /**
    * Constructs a ConsentAgreementController controller object.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
    *   The entity field manager for metadata.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
+   * @param \Drupal\Core\Render\Renderer $renderer
+   *   The renderer service.
    */
-  public function __construct(EntityFieldManagerInterface $entity_field_manager) {
+  public function __construct(EntityFieldManagerInterface $entity_field_manager, EntityTypeManagerInterface $entity_type_manager, DateFormatterInterface $date_formatter, Renderer $renderer) {
     $this->entityFieldManager = $entity_field_manager;
+    $this->entityTypeManager = $entity_type_manager;
+    $this->dateFormatter = $date_formatter;
+    $this->renderer = $renderer;
   }
 
   /**
@@ -40,7 +66,10 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_field.manager')
+      $container->get('entity_field.manager'),
+      $container->get('entity_type.manager'),
+      $container->get('date.formatter'),
+      $container->get('renderer')
     );
   }
 
@@ -54,10 +83,10 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    *   An array suitable for drupal_render().
    */
   public function revisionShow($gdpr_consent_agreement_revision) {
-    $gdpr_consent_agreement = $this->entityManager()
+    $gdpr_consent_agreement = $this->entityTypeManager
       ->getStorage('gdpr_consent_agreement')
       ->loadRevision($gdpr_consent_agreement_revision);
-    $view_builder = $this->entityManager()
+    $view_builder = $this->entityTypeManager
       ->getViewBuilder('gdpr_consent_agreement');
 
     return $view_builder->view($gdpr_consent_agreement);
@@ -73,12 +102,12 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    *   The page title.
    */
   public function revisionPageTitle($gdpr_consent_agreement_revision) {
-    $gdpr_consent_agreement = $this->entityManager()
+    $gdpr_consent_agreement = $this->entityTypeManager
       ->getStorage('gdpr_consent_agreement')
       ->loadRevision($gdpr_consent_agreement_revision);
     return $this->t('Revision of %title from %date', [
       '%title' => $gdpr_consent_agreement->label(),
-      '%date' => format_date($gdpr_consent_agreement->getRevisionCreationTime()),
+      '%date' => $this->dateFormatter->format($gdpr_consent_agreement->getRevisionCreationTime()),
     ]);
   }
 
@@ -94,7 +123,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
   public function revisionOverview(ConsentAgreement $gdpr_consent_agreement) {
     $agreement = ConsentAgreement::load($gdpr_consent_agreement);
     $account = $this->currentUser();
-    $storage = $this->entityManager()->getStorage('gdpr_consent_agreement');
+    $storage = $this->entityTypeManager->getStorage('gdpr_consent_agreement');
 
     $build['#title'] = $this->t('Revisions for %title', ['%title' => $agreement->title->value]);
     $header = [$this->t('Revision'), $this->t('Operations')];
@@ -118,8 +147,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
       ];
 
       // Use revision link to link to revisions that are not active.
-      $date = \Drupal::service('date.formatter')
-        ->format($revision->getRevisionCreationTime(), 'short');
+      $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
       if ($vid != $agreement->getRevisionId()) {
         $link = $this->l($date, new Url('entity.gdpr_consent_agreement.revision', [
           'gdpr_consent_agreement' => $agreement->id(),
@@ -137,7 +165,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
           '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
           '#context' => [
             'date' => $link,
-            'username' => \Drupal::service('renderer')->renderPlain($username),
+            'username' => $this->renderer->renderPlain($username),
             'message' => [
               '#markup' => $revision->getRevisionLogMessage(),
               '#allowed_tags' => Xss::getHtmlTagList(),
@@ -213,7 +241,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    */
   public function myAgreements(AccountInterface $user) {
     $map = $this->entityFieldManager->getFieldMapByFieldType('gdpr_user_consent');
-    $agreement_storage = $this->entityTypeManager()->getStorage('gdpr_consent_agreement');
+    $agreement_storage = $this->entityTypeManager->getStorage('gdpr_consent_agreement');
     $rows = [];
 
     foreach ($map as $entity_type => $fields) {
@@ -222,10 +250,10 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
       foreach ($field_names as $field_name) {
 
         $ids = \Drupal::entityQuery($entity_type)
-          ->condition($field_name . '.user_id', $user)
+          ->condition($field_name . '.user_id', $user->id())
           ->execute();
 
-        $entities = $this->entityTypeManager()->getStorage($entity_type)
+        $entities = $this->entityTypeManager->getStorage($entity_type)
           ->loadMultiple($ids);
 
         foreach ($entities as $entity) {
@@ -258,6 +286,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
         '#theme' => 'table',
         '#rows' => $rows,
         '#header' => $header,
+        '#empty' => $this->t('You have not yet given any consent.'),
       ],
     ];
     return $build;
