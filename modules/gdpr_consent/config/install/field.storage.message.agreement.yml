@@ -1,0 +1,21 @@
+uuid: 83ca8ca3-88c0-4eb4-bdbf-cadb24186abf
+langcode: en
+status: true
+dependencies:
+  module:
+    - entity_reference_revisions
+    - gdpr_consent
+    - message
+id: message.agreement
+field_name: agreement
+entity_type: message
+type: entity_reference_revisions
+settings:
+  target_type: gdpr_consent_agreement
+module: entity_reference_revisions
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,5 @@
+entity.gdpr_consent_agreement.add_form:
+  route_name: entity.gdpr_consent_agreement.add_form
+  title: 'Add Consent Agreement'
+  appears_on:
+    - entity.gdpr_consent_agreement.collection

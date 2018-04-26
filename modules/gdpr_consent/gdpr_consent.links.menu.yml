@@ -1,0 +1,7 @@
+# Task menu items definition
+entity.gdpr_consent_agreement.collection:
+  title: 'Agreements'
+  route_name: entity.gdpr_consent_agreement.collection
+  description: 'List Agreement Entities'
+  parent: system.admin_structure
+  weight: 100
