@@ -253,7 +253,7 @@ function _get_gdpr_module_description() {
 
   $renderer = \Drupal::service('renderer');
 
-  $gdpr_module_names = ['gdpr_dump', 'custom_contact_form'];
+  $gdpr_module_names = ['gdpr_dump'];
 
   $gdpr_modules_list = [
     '#theme' => 'item_list',
