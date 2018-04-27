@@ -15,11 +15,45 @@ use Drush\Sql\Sqlmysql;
 class GdprSqlMysql extends Sqlmysql {
 
   /**
+   * The config for gdpr dump.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $gdprDumpConfig;
+
+  /**
+   * An array of tables to skip.
+   *
+   * @var array
+   */
+  protected $tablesToSkip = [];
+
+  /**
+   * An array of tables to be anonymized.
+   *
+   * @var array
+   */
+  protected $tablesToAnonymize = [];
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct($db_spec = NULL) {
+    parent::__construct($db_spec);
+    $this->gdprDumpConfig = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY);
+    $this->tablesToAnonymize = $this->gdprDumpConfig->get('mapping');
+    $this->tablesToSkip = \array_keys($this->gdprDumpConfig->get('empty_tables'));
+  }
+
+  /**
    * Execute a SQL dump and return the path to the resulting dump file.
    *
    * @param string|bool $file
    *   The path where the dump file should be stored. If TRUE, generate a path
    *   based on usual backup directory and current date.
+   *
+   * @return mixed
+   *   Bool or nothing.
    */
   public function dump($file = '') {
     $file_suffix = '';
@@ -61,19 +95,12 @@ class GdprSqlMysql extends Sqlmysql {
    *   The command.
    */
   protected function createRenameCommands(array $tableSelection) {
-    // @todo: Dep.inj.
-    /** @var array $gdprOptions */
-    $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
-    $emptyTables = $gdprOptions['empty_tables'];
-    unset($gdprOptions['empty_tables']);
-    $sensitiveDataTables = \array_keys($gdprOptions);
-
     $skipTables = \array_merge($tableSelection['skip'], $tableSelection['structure']);
     $skipTables = \array_flip($skipTables);
-    $skipTables = $skipTables + $emptyTables;
+    $skipTables += $this->tablesToSkip;
 
     $command = '';
-    foreach ($sensitiveDataTables as $table) {
+    foreach (\array_keys($this->tablesToAnonymize) as $table) {
       if (\array_key_exists($table, $skipTables)) {
         // Don't try to rename a table if it is excluded.
         continue;
@@ -99,26 +126,19 @@ class GdprSqlMysql extends Sqlmysql {
    *   enclose in parenthesis.
    */
   public function dumpCmd($tableSelection) {
-    // @todo: Dep.inj.
-    /** @var array $gdprOptions */
-    $gdprOptions = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
-    $emptyTables = \array_keys($gdprOptions['empty_tables']);
-    unset($gdprOptions['empty_tables']);
-    $sensitiveDataTables = \array_keys($gdprOptions);
-
     $multipleCommands = FALSE;
     $skipTables = $tableSelection['skip'];
     $structureTables = $tableSelection['structure'];
-    $structureTables = \array_merge($emptyTables, $structureTables);
+    $structureTables = \array_merge($this->tablesToSkip, $structureTables);
     $tables = $tableSelection['tables'];
 
     $ignores = [];
     $skipTables = \array_merge($structureTables, $skipTables);
     // Skip tables with sensitive data.
-    $skipTables = \array_merge($sensitiveDataTables, $skipTables);
+    $skipTables = \array_merge(\array_keys($this->tablesToAnonymize), $skipTables);
     $dataOnly = drush_get_option('data-only');
     // The ordered-dump option is only supported by MySQL for now.
-    // @todo add documention once a hook for drush_get_option_help() is available.
+    // @todo add documentation once a hook for drush_get_option_help() is available.
     // @see drush_get_option_help() in drush.inc
     $orderedDump = drush_get_option('ordered-dump');
 
@@ -147,6 +167,7 @@ class GdprSqlMysql extends Sqlmysql {
       $exec .= ' ' . \implode(' ', $tables);
     }
     else {
+      // @todo: Maybe use --ignore-table={db.table1,db.table2,...} syntax.
       // Append the ignore-table options.
       foreach ($skipTables as $table) {
         $ignores[] = '--ignore-table=' . $this->db_spec['database'] . '.' . $table;

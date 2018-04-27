@@ -128,16 +128,19 @@ class SettingsForm extends ConfigFormBase {
       '#empty_option' => $this->t('- None -'),
     ];
 
-    $config = $this->config(self::GDPR_DUMP_CONF_KEY)->get('mapping');
+    $config = $this->config(self::GDPR_DUMP_CONF_KEY);
+    $mapping = $config->get('mapping');
+    $emptyTables = $config->get('empty_tables');
+
     /** @var array $columns */
     foreach ($this->databaseManager->getTableColumns() as $table => $columns) {
       $rows = [];
       foreach ($columns as $column) {
         $currentOptions = $anonymizationOptions;
         $checked = 0;
-        if (isset($config[$table][$column['COLUMN_NAME']])) {
+        if (isset($mapping[$table][$column['COLUMN_NAME']])) {
           $checked = 1;
-          $currentOptions['#default_value'] = $config[$table][$column['COLUMN_NAME']];
+          $currentOptions['#default_value'] = $mapping[$table][$column['COLUMN_NAME']];
         }
 
         $rows[] = [
@@ -173,7 +176,7 @@ class SettingsForm extends ConfigFormBase {
         'empty_table' => [
           '#type' => 'checkbox',
           '#title' => $this->t('Empty this table'),
-          '#default_value' => isset($config['empty_tables'][$table]) ? $config['empty_tables'][$table] : NULL,
+          '#default_value' => isset($emptyTables[$table]) ? $emptyTables[$table] : NULL,
         ],
         'columns' => [
           '#type' => 'container',
@@ -192,25 +195,28 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if ($form_state->hasValue('tables')) {
-      $config = [];
+      $mapping = [];
       /** @var array $tables */
       $tables = $form_state->getValue('tables', []);
-      $empty_tables = [];
+      $emptyTables = [];
       foreach ($tables as $table => $row) {
         if ($row['empty_table']) {
-          $empty_tables[$table] = 1;
+          $emptyTables[$table] = 1;
         }
         foreach ($row['columns']['data'] as $data) {
           if ($data['anonymize'] === 1) {
-            $config[$table][$data['name']] = $data['option'];
+            $mapping[$table][$data['name']] = $data['option'];
           }
         }
       }
 
-      $config['empty_tables'] = $empty_tables;
+      $config = $this->configFactory->getEditable(self::GDPR_DUMP_CONF_KEY);
+      $config
+        ->set('mapping', $mapping)
+        ->save();
 
-      $this->configFactory->getEditable(self::GDPR_DUMP_CONF_KEY)
-        ->set('mapping', $config)
+      $config
+        ->set('empty_tables', $emptyTables)
         ->save();
     }
 

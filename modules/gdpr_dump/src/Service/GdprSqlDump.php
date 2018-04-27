@@ -42,14 +42,14 @@ class GdprSqlDump {
    *
    * @var array
    */
-  protected $gdprOptions = [];
+  protected $tablesToAnonymize = [];
 
   /**
    * The list of tables needed to be skipped.
    *
    * @var array
    */
-  protected $skipTables = [];
+  protected $tablesToSkip = [];
 
   /**
    * The database.
@@ -99,7 +99,8 @@ class GdprSqlDump {
     GdprDatabaseManager $gdprDatabaseManager,
     AnonymizerFactory $pluginFactory
   ) {
-    $this->gdprOptions = $configFactory->get(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
+    $this->tablesToAnonymize = $configFactory->get(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
+    $this->tablesToSkip = $configFactory->get(SettingsForm::GDPR_DUMP_CONF_KEY)->get('empty_tables');
     $this->database = $database;
     $this->driver = $this->database->driver();
     $this->databaseManager = $gdprDatabaseManager;
@@ -198,7 +199,7 @@ class GdprSqlDump {
    * @throws \Exception
    */
   protected function createCloneQueryString($originalTable) {
-    if (\array_key_exists($originalTable, $this->skipTables)) {
+    if (\array_key_exists($originalTable, $this->tablesToSkip)) {
       // No need to clone tables that are excluded.
       return NULL;
     }
@@ -241,7 +242,7 @@ class GdprSqlDump {
    * @throws \Exception
    */
   protected function createTableClones() {
-    $tables = \array_keys($this->gdprOptions);
+    $tables = \array_keys($this->tablesToAnonymize);
     $transaction = $this->database->startTransaction('gdpr_clone_tables');
     foreach ($tables as $table) {
       $queryString = $this->createCloneQueryString($table);
@@ -278,8 +279,8 @@ class GdprSqlDump {
      *   Maybe do it on a table level.
      */
     /** @var array $anonymizationOptions */
-    foreach ($this->gdprOptions as $table => $anonymizationOptions) {
-      if (\array_key_exists($table, $this->skipTables)) {
+    foreach ($this->tablesToAnonymize as $table => $anonymizationOptions) {
+      if (\array_key_exists($table, $this->tablesToSkip)) {
         continue;
       }
       $selectQuery = $this->database->select($table);
@@ -328,26 +329,23 @@ class GdprSqlDump {
    */
   protected function prepare() {
     $this->cleanup();
-    $this->buildSkipTables();
+    $this->buildtablesToSkip();
     $this->createTableClones();
     $this->sanitizeData();
   }
 
   /**
-   * Builds skipTables array.
+   * Builds tablesToSkip array.
    */
-  protected function buildSkipTables() {
-    $emptyTables = $this->gdprOptions['empty_tables'];
-    unset($this->gdprOptions['empty_tables']);
-
+  protected function buildtablesToSkip() {
     // Get table expanded selection.
     $sql = $this->getInstance();
     $table_selection = $sql->get_expanded_table_selection();
-    $skipTables = \array_merge($table_selection['skip'], $table_selection['structure']);
-    $skipTables = \array_flip($skipTables);
-    $skipTables = $skipTables + $emptyTables;
+    $tablesToSkip = \array_merge($table_selection['skip'], $table_selection['structure']);
+    $tablesToSkip = \array_flip($tablesToSkip);
+    $tablesToSkip = $tablesToSkip + $this->tablesToSkip;
 
-    $this->skipTables = $skipTables;
+    $this->tablesToSkip = $tablesToSkip;
   }
 
   /**
@@ -358,7 +356,7 @@ class GdprSqlDump {
    */
   protected function cleanup() {
     $transaction = $this->database->startTransaction('gdpr_drop_table');
-    foreach (\array_keys($this->gdprOptions) as $table) {
+    foreach (\array_keys($this->tablesToAnonymize) as $table) {
       $gdprTable = self::GDPR_TABLE_PREFIX . $table;
       $this->database->schema()->dropTable($gdprTable);
     }
