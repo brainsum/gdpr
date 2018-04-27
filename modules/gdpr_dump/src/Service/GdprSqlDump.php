@@ -2,10 +2,10 @@
 
 namespace Drupal\gdpr_dump\Service;
 
+use Drupal\anonymizer\Anonymizer\AnonymizerFactory;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\gdpr_dump\Form\SettingsForm;
-use Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory;
 use Drush\Sql\SqlException;
 
 /* @todo:
@@ -68,7 +68,7 @@ class GdprSqlDump {
   /**
    * The Sanitizer plugin factory.
    *
-   * @var \Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory
+   * @var \Drupal\anonymizer\Anonymizer\AnonymizerFactory
    */
   protected $pluginFactory;
 
@@ -90,14 +90,14 @@ class GdprSqlDump {
    *   The database.
    * @param \Drupal\gdpr_dump\Service\GdprDatabaseManager $gdprDatabaseManager
    *   The GDPR database manager.
-   * @param \Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory $pluginFactory
-   *   The GDPR plugin factory.
+   * @param \Drupal\anonymizer\Anonymizer\AnonymizerFactory $pluginFactory
+   *   The anonymizer plugin factory.
    */
   public function __construct(
     ConfigFactoryInterface $configFactory,
     Connection $database,
     GdprDatabaseManager $gdprDatabaseManager,
-    GdprSanitizerFactory $pluginFactory
+    AnonymizerFactory $pluginFactory
   ) {
     $this->gdprOptions = $configFactory->get(SettingsForm::GDPR_DUMP_CONF_KEY)->get('mapping');
     $this->database = $database;
@@ -308,7 +308,7 @@ class GdprSqlDump {
            * Also add a way to make exceptions
            * e.g option for 'don't alter uid 1 name', etc.
            */
-          $row[$column] = $this->pluginFactory->get($pluginId)->sanitize($row[$column]);
+          $row[$column] = $this->pluginFactory->get($pluginId)->anonymize($row[$column]);
         }
         $insertQuery->values($row);
       }

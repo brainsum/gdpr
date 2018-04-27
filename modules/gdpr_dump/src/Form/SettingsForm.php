@@ -2,11 +2,11 @@
 
 namespace Drupal\gdpr_dump\Form;
 
+use Drupal\anonymizer\Anonymizer\AnonymizerPluginManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\gdpr_dump\Sanitizer\GdprSanitizerPluginManager;
 use Drupal\gdpr_dump\Service\GdprDatabaseManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -34,9 +34,9 @@ class SettingsForm extends ConfigFormBase {
   protected $databaseManager;
 
   /**
-   * The plugin manager for GDPR Sanitizers.
+   * The plugin manager for anonymizers.
    *
-   * @var \Drupal\gdpr_dump\Sanitizer\GdprSanitizerPluginManager
+   * @var \Drupal\anonymizer\Anonymizer\AnonymizerPluginManager
    */
   protected $pluginManager;
 
@@ -47,8 +47,8 @@ class SettingsForm extends ConfigFormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('database'),
-      $container->get('plugin.manager.gdpr_sanitizer'),
-      $container->get('gdpr_dump.database_manager')
+      $container->get('plugin.manager.gdpr_anonymizer'),
+      $container->get('plugin.manager.anonymizer')
     );
   }
 
@@ -59,15 +59,15 @@ class SettingsForm extends ConfigFormBase {
    *   The config factory.
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
-   * @param \Drupal\gdpr_dump\Sanitizer\GdprSanitizerPluginManager $pluginManager
-   *   The plugin manager for GDPR Sanitizers.
+   * @param \Drupal\anonymizer\Anonymizer\AnonymizerPluginManager $pluginManager
+   *   The plugin manager for GDPR anonymizers.
    * @param \Drupal\gdpr_dump\Service\GdprDatabaseManager $gdprDatabaseManager
    *   Database manager service.
    */
   public function __construct(
     ConfigFactoryInterface $configFactory,
     Connection $database,
-    GdprSanitizerPluginManager $pluginManager,
+    AnonymizerPluginManager $pluginManager,
     GdprDatabaseManager $gdprDatabaseManager
   ) {
     parent::__construct($configFactory);
@@ -108,7 +108,6 @@ class SettingsForm extends ConfigFormBase {
       '#type' => 'container',
     ];
 
-    /** @var \Drupal\gdpr_dump\Sanitizer\GdprSanitizerPluginManager $pluginManager */
     $plugins = [];
     foreach ($this->pluginManager->getDefinitions() as $definition) {
       $plugins[$definition['id']] = $definition['label'];
@@ -121,9 +120,9 @@ class SettingsForm extends ConfigFormBase {
     /* @todo
      * UX
      */
-    $sanitationOptions = [
+    $anonymizationOptions = [
       '#type' => 'select',
-      '#title' => $this->t('Sanitation plugin'),
+      '#title' => $this->t('Anonymization plugin'),
       '#options' => $plugins,
       '#empty_value' => 'none',
       '#empty_option' => $this->t('- None -'),
@@ -134,7 +133,7 @@ class SettingsForm extends ConfigFormBase {
     foreach ($this->databaseManager->getTableColumns() as $table => $columns) {
       $rows = [];
       foreach ($columns as $column) {
-        $currentOptions = $sanitationOptions;
+        $currentOptions = $anonymizationOptions;
         $checked = 0;
         if (isset($config[$table][$column['COLUMN_NAME']])) {
           $checked = 1;
@@ -147,9 +146,9 @@ class SettingsForm extends ConfigFormBase {
             '#type' => 'value',
             '#value' => $column['COLUMN_NAME'],
           ],
-          'sanitize' => [
+          'anonymize' => [
             '#type' => 'checkbox',
-            '#title' => $this->t('Sanitize <strong>@field_name</strong>?', [
+            '#title' => $this->t('Anonymize <strong>@field_name</strong>?', [
               '@field_name' => $column['COLUMN_NAME'],
             ]),
             '#default_value' => $checked,
@@ -202,7 +201,7 @@ class SettingsForm extends ConfigFormBase {
           $empty_tables[$table] = 1;
         }
         foreach ($row['columns']['data'] as $data) {
-          if ($data['sanitize'] === 1) {
+          if ($data['anonymize'] === 1) {
             $config[$table][$data['name']] = $data['option'];
           }
         }
