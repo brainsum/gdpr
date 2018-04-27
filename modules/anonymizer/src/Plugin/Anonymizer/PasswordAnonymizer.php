@@ -3,7 +3,7 @@
 namespace Drupal\anonymizer\Plugin\Anonymizer;
 
 use Drupal\anonymizer\Anonymizer\AnonymizerBase;
-use Drupal\Component\Utility\Random;
+use Drupal\anonymizer\Service\FakerServiceInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Password\PasswordInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,12 +21,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class PasswordAnonymizer extends AnonymizerBase {
 
-  /**
-   * An instance of Random.
-   *
-   * @var \Drupal\Component\Utility\Random
-   */
-  protected $random;
+  const MIN_PASSWORD_LENGTH = 10;
+  const MAX_PASSWORD_LENGTH = 20;
 
   /**
    * The password service.
@@ -48,7 +44,8 @@ class PasswordAnonymizer extends AnonymizerBase {
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('password')
+      $container->get('password'),
+      $container->get('anonymizer.faker')
     );
   }
 
@@ -63,16 +60,18 @@ class PasswordAnonymizer extends AnonymizerBase {
    *   The plugin definition.
    * @param \Drupal\Core\Password\PasswordInterface $password
    *   The password service.
+   * @param \Drupal\anonymizer\Service\FakerServiceInterface $faker
+   *   The faker service.
    */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    PasswordInterface $password
+    PasswordInterface $password,
+    FakerServiceInterface $faker
   ) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $faker);
     $this->password = $password;
-    $this->random = new Random();
   }
 
   /**
@@ -80,7 +79,7 @@ class PasswordAnonymizer extends AnonymizerBase {
    */
   public function anonymize($input, FieldItemListInterface $field = NULL) {
     // @todo: Performance test for lots of data.
-    return $this->password->hash($this->random->word(8));
+    return $this->password->hash($this->faker->generator()->password(self::MIN_PASSWORD_LENGTH, self::MAX_PASSWORD_LENGTH));
   }
 
 }

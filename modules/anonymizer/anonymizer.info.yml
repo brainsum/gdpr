@@ -1,5 +1,5 @@
 name: Anonymizer
-description: Provides ways of anonymizing data.
+description: Provides ways to anonymize data.
 core: 8.x
 type: module
 package: General Data Protection Regulation

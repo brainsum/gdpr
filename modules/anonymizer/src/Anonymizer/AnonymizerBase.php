@@ -2,6 +2,7 @@
 
 namespace Drupal\anonymizer\Anonymizer;
 
+use Drupal\anonymizer\Service\FakerServiceInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
@@ -15,6 +16,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 abstract class AnonymizerBase extends PluginBase implements AnonymizerInterface, ContainerFactoryPluginInterface {
 
   use ContainerAwareTrait;
+
+  /**
+   * The faker service.
+   *
+   * @var \Drupal\anonymizer\Service\FakerServiceInterface
+   */
+  protected $faker;
 
   /**
    * Creates an instance of the plugin.
@@ -40,8 +48,31 @@ abstract class AnonymizerBase extends PluginBase implements AnonymizerInterface,
     return new static(
       $configuration,
       $plugin_id,
-      $plugin_definition
+      $plugin_definition,
+      $container->get('anonymizer.faker')
     );
+  }
+
+  /**
+   * PasswordAnonymizer constructor.
+   *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
+   * @param \Drupal\anonymizer\Service\FakerServiceInterface $faker
+   *   The faker service.
+   */
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    FakerServiceInterface $faker
+  ) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->faker = $faker;
   }
 
 }

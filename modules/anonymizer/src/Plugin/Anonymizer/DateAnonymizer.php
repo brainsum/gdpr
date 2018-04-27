@@ -22,7 +22,7 @@ class DateAnonymizer extends AnonymizerBase {
    * {@inheritdoc}
    */
   public function anonymize($input, FieldItemListInterface $field = NULL) {
-    return '1000-01-01';
+    return $this->faker->generator()->date();
   }
 
 }

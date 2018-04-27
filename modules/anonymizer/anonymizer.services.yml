@@ -7,3 +7,6 @@ services:
     class: \Drupal\anonymizer\Anonymizer\AnonymizerFactory
     arguments:
       - '@plugin.manager.anonymizer'
+
+  anonymizer.faker:
+    class: \Drupal\anonymizer\Service\FakerService
