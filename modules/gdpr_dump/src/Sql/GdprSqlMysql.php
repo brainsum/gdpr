@@ -43,13 +43,11 @@ class GdprSqlMysql extends Sqlmysql {
 
     // Avoid the php memory of the $output array in drush_shell_exec().
     if (drush_op_system($cmd)) {
-      if ($file) {
-        drush_log(dt('Database dump saved to !path', ['!path' => $file]), LogLevel::SUCCESS);
-        drush_backend_set_result($file);
-      }
-    }
-    else {
       return drush_set_error('DRUSH_SQL_DUMP_FAIL', 'Database dump failed');
+    }
+    if ($file) {
+      drush_log(dt('Database dump saved to !path', ['!path' => $file]), LogLevel::SUCCESS);
+      drush_backend_set_result($file);
     }
   }
 
