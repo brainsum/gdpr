@@ -76,13 +76,7 @@ class PasswordAnonymizer extends AnonymizerBase {
   }
 
   /**
-   * Return the anonymized input.
-   *
-   * @var int|string $input
-   *   The input.
-   *
-   * @return int|string
-   *   The sanitized input.
+   * {@inheritdoc}
    */
   public function anonymize($input, FieldItemListInterface $field = NULL) {
     // @todo: Performance test for lots of data.

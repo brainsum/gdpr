@@ -277,8 +277,8 @@ class GdprSqlDump {
      *   Prefetch the required amount of data from remote APIs.
      *   Maybe do it on a table level.
      */
-    /** @var array $sanitationOptions */
-    foreach ($this->gdprOptions as $table => $sanitationOptions) {
+    /** @var array $anonymizationOptions */
+    foreach ($this->gdprOptions as $table => $anonymizationOptions) {
       if (\array_key_exists($table, $this->skipTables)) {
         continue;
       }
@@ -297,7 +297,7 @@ class GdprSqlDump {
       $insertQuery->fields($tableColumns);
 
       while ($row = $oldRows->fetchAssoc()) {
-        foreach ($sanitationOptions as $column => $pluginId) {
+        foreach ($anonymizationOptions as $column => $pluginId) {
           /* @todo
            * Maybe it would be better to use 'per table' sanitation,
            * so username, email, etc can be the same.

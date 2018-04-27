@@ -43,33 +43,14 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
   protected $currentUser;
 
   /**
-   * Constructs a ConsentWidget instance.
-   *
-   * @param string $plugin_id
-   *   The plugin_id for the formatter.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
-   *   The definition of the field to which the formatter is associated.
-   * @param array $settings
-   *   The formatter settings.
-   * @param array $third_party_settings
-   *   Any third party settings settings.
-   * @param \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager $gdpr_consent_resolver_manager
-   *   The GDPR Consent Resolver manager.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
-   */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ConsentUserResolverPluginManager $gdpr_consent_resolver_manager, AccountInterface $current_user) {
-    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-    $this->gdprConsentResolverManager = $gdpr_consent_resolver_manager;
-    $this->currentUser = $current_user;
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(
+    ContainerInterface $container,
+    array $configuration,
+    $plugin_id,
+    $plugin_definition
+  ) {
     return new static(
       $plugin_id,
       $plugin_definition,
@@ -82,6 +63,38 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
   }
 
   /**
+   * Constructs a ConsentWidget instance.
+   *
+   * @param string $plugin_id
+   *   The plugin_id for the formatter.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
+   *   The definition of the field to which the formatter is associated.
+   * @param array $settings
+   *   The formatter settings.
+   * @param array $third_party_settings
+   *   Any third party settings settings.
+   * @param \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager $gdprConsentResolverManager
+   *   The GDPR Consent Resolver manager.
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
+   *   The current user.
+   */
+  public function __construct(
+    $plugin_id,
+    $plugin_definition,
+    FieldDefinitionInterface $field_definition,
+    array $settings,
+    array $third_party_settings,
+    ConsentUserResolverPluginManager $gdprConsentResolverManager,
+    AccountInterface $currentUser
+  ) {
+    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
+    $this->gdprConsentResolverManager = $gdprConsentResolverManager;
+    $this->currentUser = $currentUser;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
@@ -90,39 +103,43 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
       return [];
     }
 
-    $can_edit_anyones_consent = $this->currentUser->hasPermission('grant gdpr any consent');
-    $can_edit_own_consent = $this->currentUser->hasPermission('grant gdpr own consent');
+    $canEditAnyonesConsent = $this->currentUser->hasPermission('grant gdpr any consent');
+    $canEditOwnConsent = $this->currentUser->hasPermission('grant gdpr own consent');
     // Consenting user and current user may not be the same.
     // For example, a staff member editing consent on behalf of a user who
     // calls the office.
-    $current_user = $this->currentUser;
-    $consenting_user = $this->getConsentingUser($items);
+    $consentingUser = $this->getConsentingUser($items);
 
-    $agreement_id = $items->getFieldDefinition()->getSetting('target_id');
+    $agreementId = $items->getFieldDefinition()->getSetting('target_id');
 
-    if ($agreement_id == '') {
+    if ($agreementId === '') {
       // Don't display if an agreement hasn't
       // been configured for this field yet.
       return [];
     }
 
-    if (!$can_edit_anyones_consent && $consenting_user->id() != $current_user->id()) {
+    if (!$canEditAnyonesConsent && $consentingUser->id() !== $this->currentUser->id()) {
       // Abort if the current user does not have permission
       // to edit other user's consent and we're editing another user.
       return [];
     }
 
-    if (!$can_edit_own_consent && $consenting_user->id() == $current_user->id()) {
+    if (!$canEditOwnConsent && $consentingUser->id() === $this->currentUser->id()) {
       // Abort if the current user cannot edit their own consent.
       return [];
     }
 
-    $agreement = ConsentAgreement::load($agreement_id);
+    $agreement = ConsentAgreement::load($agreementId);
+
+    if (NULL === $agreement) {
+      return [];
+    }
+
     $item = $items[$delta];
 
     $element['target_id'] = [
       '#type' => 'hidden',
-      '#default_value' => $agreement_id,
+      '#default_value' => $agreementId,
     ];
 
     $element['target_revision_id'] = [
@@ -135,7 +152,7 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
       '#title' => $agreement->get('description')->value,
       '#description' => $agreement->get('long_description')->value,
       '#required' => $items->getFieldDefinition()->isRequired(),
-      '#default_value' => isset($item->agreed) && $item->agreed == TRUE,
+      '#default_value' => isset($item->agreed) && ((bool) $item->agreed === TRUE),
       '#attributes' => ['class' => ['gdpr_consent_agreement']],
       '#attached' => [
         'library' => [
@@ -156,7 +173,7 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
     }
 
     // Only show the notes field if the user has permission.
-    if ($can_edit_anyones_consent) {
+    if ($canEditAnyonesConsent) {
       $element['notes'] = [
         '#type' => 'textarea',
         '#title' => 'GDPR Consent Notes',
@@ -172,14 +189,16 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
    * {@inheritdoc}
    */
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
-    for ($i = 0; $i < count($values); ++$i) {
-      if (!isset($values[$i]['user_id_accepted'])) {
-        $values[$i]['user_id_accepted'] = $this->currentUser->id();
+    foreach ($values as &$value) {
+      if (!isset($value['user_id_accepted'])) {
+        $value['user_id_accepted'] = $this->currentUser->id();
       }
-      if (!isset($values[$i]['date'])) {
-        $values[$i]['date'] = date('Y-m-d H:i:s');
+      if (!isset($value['date'])) {
+        $value['date'] = \date('Y-m-d H:i:s');
       }
     }
+    unset($value);
+
     return $values;
   }
 
@@ -197,8 +216,7 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
   private function getConsentingUser(FieldItemListInterface $items) {
     $definition = $items->getFieldDefinition();
     $resolver = $this->gdprConsentResolverManager->getForEntityType($definition->getTargetEntityTypeId(), $definition->getTargetBundle());
-    $user = $resolver->resolve($items->getEntity());
-    return $user;
+    return $resolver->resolve($items->getEntity());
   }
 
 }

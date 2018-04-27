@@ -7,7 +7,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 
 /**
- * Class GdprSanitizerPluginManager.
+ * Class ConsentUserResolverPluginManager.
  *
  * @package Drupal\gdpr_consent\Resolver
  */
@@ -22,7 +22,7 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
   protected $resolvers;
 
   /**
-   * Constructs a GdprSanitizerPluginManager object.
+   * Constructs a ConsentUserResolverPluginManager object.
    *
    * @param \Traversable $namespaces
    *   An object that implements \Traversable which contains the root paths
@@ -52,7 +52,7 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
   /**
    * Finds a resolver for the specified entity type/bundle.
    *
-   * @param string $entity_type
+   * @param string $entityType
    *   The entity type.
    * @param string $bundle
    *   The bundle.
@@ -62,37 +62,38 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
    *
    * @throws \Exception
    */
-  public function getForEntityType($entity_type, $bundle) {
+  public function getForEntityType($entityType, $bundle) {
     $definitions = $this->getDefinitions();
 
     // Get all plugins that act on the entity type.
-    $definitions_for_entity = array_filter($definitions, function ($d) use ($entity_type) {
-      return $d['entityType'] == $entity_type;
+    $definitionsForEntity = \array_filter($definitions, function ($definition) use ($entityType) {
+      return $definition['entityType'] === $entityType;
     });
 
-    $definitions_for_bundle = array_filter($definitions_for_entity, function ($d) use ($bundle) {
-      return array_key_exists('bundle', $d) && $d['bundle'] == $bundle;
+    $definitionsForBundle = array_filter($definitionsForEntity, function ($definition) use ($bundle) {
+      return array_key_exists('bundle', $definition) && $definition['bundle'] === $bundle;
     });
 
-    if (count($definitions_for_bundle) > 0) {
+    $definition = NULL;
+    if (\count($definitionsForBundle) > 0) {
       // Get first item from the array.
-      $definition = reset($definitions_for_bundle);
+      $definition = \reset($definitionsForBundle);
     }
-    elseif (count($definitions_for_entity) > 0) {
+    elseif (\count($definitionsForEntity) > 0) {
       // None matched for bundle.
       // Find any with no bundle.
-      $definitions_for_bundle = array_filter($definitions_for_entity, function ($d) {
-        return !array_key_exists('bundle', $d) || $d['bundle'] == '';
+      $definitionsForBundle = array_filter($definitionsForEntity, function ($definition) {
+        return !array_key_exists('bundle', $definition) || $definition['bundle'] === '';
       });
 
-      if (count($definitions_for_bundle) > 0) {
+      if (\count($definitionsForBundle) > 0) {
         // Get first item from array.
-        $definition = reset($definitions_for_bundle);
+        $definition = \reset($definitionsForBundle);
       }
     }
 
-    if (!isset($definition)) {
-      throw new \Exception("Could not determine user ID for entity type $entity_type. Please ensure there is a resolver registered.");
+    if ($definition === NULL) {
+      throw new \Exception("Could not determine user ID for entity type $entityType. Please ensure there is a resolver registered.");
     }
 
     return $this->createInstance($definition['id']);
