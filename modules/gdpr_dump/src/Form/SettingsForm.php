@@ -47,8 +47,8 @@ class SettingsForm extends ConfigFormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('database'),
-      $container->get('plugin.manager.gdpr_anonymizer'),
-      $container->get('plugin.manager.anonymizer')
+      $container->get('plugin.manager.anonymizer'),
+      $container->get('gdpr_dump.database_manager')
     );
   }
 
@@ -60,7 +60,7 @@ class SettingsForm extends ConfigFormBase {
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
    * @param \Drupal\anonymizer\Anonymizer\AnonymizerPluginManager $pluginManager
-   *   The plugin manager for GDPR anonymizers.
+   *   The plugin manager for anonymizers.
    * @param \Drupal\gdpr_dump\Service\GdprDatabaseManager $gdprDatabaseManager
    *   Database manager service.
    */

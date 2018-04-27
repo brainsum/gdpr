@@ -36,7 +36,7 @@ class AnonymizerPluginManager extends DefaultPluginManager {
     ModuleHandlerInterface $moduleHandler
   ) {
     parent::__construct(
-      'Plugin/Anonymizer/Anonymizer',
+      'Plugin/Anonymizer',
       $namespaces,
       $moduleHandler,
       AnonymizerInterface::class,
