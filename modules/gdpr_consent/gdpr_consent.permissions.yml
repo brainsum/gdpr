@@ -1,8 +1,8 @@
 manage gdpr agreements:
-  title: 'Manage GDPR Agreements'
+  title: 'Manage consent agreements'
 
 grant gdpr any consent:
-  title: 'Grant Any Consent'
+  title: 'Grant any consent'
 
 grant gdpr own consent:
-  title: 'Grant Own Consent'
+  title: 'Grant own consent'

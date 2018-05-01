@@ -202,7 +202,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
       ->setRevisionable(TRUE)
-      ->setDescription(t('Agreement Title'))
+      ->setDescription(t('Agreement title.'))
       ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'type' => 'textfield',
@@ -215,7 +215,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['mode'] = BaseFieldDefinition::create('list_string')
-      ->setLabel(t('Agreement Type'))
+      ->setLabel(t('Agreement type'))
       ->setRevisionable(TRUE)
       ->setDescription(t('Whether consent is implicit or explicit. Set to "Explicit" if the user needs to explicitly agree, otherwise "Implicit".'))
       ->setDefaultValue('explicit')
@@ -247,9 +247,9 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['long_description'] = BaseFieldDefinition::create('string_long')
-      ->setLabel(t('Long Description'))
+      ->setLabel(t('Long description'))
       ->setRevisionable(TRUE)
-      ->setDescription(t('Text shown when the user clicks for more details'))
+      ->setDescription(t('Text shown when the user clicks for more details.'))
       ->setDisplayOptions('view', [
         'type' => 'textarea',
       ])
