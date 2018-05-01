@@ -328,8 +328,8 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
    */
   public static function getModes() {
     return [
-      'implicit' => 'Implicit',
-      'explicit' => 'Explicit',
+      'implicit' => t('Implicit'),
+      'explicit' => t('Explicit'),
     ];
   }
 
