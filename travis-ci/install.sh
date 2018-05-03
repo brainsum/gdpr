@@ -12,8 +12,8 @@ composer create-project drupal-composer/drupal-project:8.x-dev $DRUPAL_BUILD_ROO
 cd $DRUPAL_BUILD_ROOT/drupal
 
 # Set our drupal core version.
-composer require drupal/core $DRUPAL_CORE --no-update
-composer require drupal/coder --no-update --dev
+composer require --no-update drupal/core $DRUPAL_CORE
+composer require --dev --no-update drupal/coder wimg/php-compatibility jakub-onderka/php-parallel-lint jakub-onderka/php-console-highlighter
 
 # We do not need drupal console and drush (required by drupal-project) for tests.
 composer remove drupal/console drush/drush --no-update
