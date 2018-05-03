@@ -74,7 +74,7 @@ class GdprField {
    * @param string $name
    *   Field name.
    */
-  public function __construct(string $bundle, string $name) {
+  public function __construct($bundle, $name) {
     $this->bundle = $bundle;
     $this->name = $name;
   }

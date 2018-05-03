@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\gdpr_fields\Entity\GdprField;
 use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -70,8 +69,11 @@ class GdprFieldSettingsForm extends FormBase {
    * @return \Drupal\gdpr_fields\Entity\GdprField
    *   Field metadata.
    */
-  private static function getConfig($entity_type, $bundle, $field_name): GdprField {
-    $config = GdprFieldConfigEntity::load($entity_type) ?? GdprFieldConfigEntity::create(['id' => $entity_type]);
+  private static function getConfig($entity_type, $bundle, $field_name) {
+    $config = GdprFieldConfigEntity::load($entity_type);
+    if (NULL === $config) {
+      $config = GdprFieldConfigEntity::create(['id' => $entity_type]);
+    }
     $field_config = $config->getField($bundle, $field_name);
     return $field_config;
   }
@@ -100,7 +102,10 @@ class GdprFieldSettingsForm extends FormBase {
    *   The config entity.
    */
   private static function setConfig($entity_type, $bundle, $field_name, $enabled, $rta, $rtf, $anonymizer, $notes) {
-    $config = GdprFieldConfigEntity::load($entity_type) ?? GdprFieldConfigEntity::create(['id' => $entity_type]);
+    $config = GdprFieldConfigEntity::load($entity_type);
+    if (NULL === $config) {
+      $config = GdprFieldConfigEntity::create(['id' => $entity_type]);
+    }
     $config->setField($bundle, $field_name, [
       'enabled' => $enabled,
       'rta' => $rta,

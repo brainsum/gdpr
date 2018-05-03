@@ -3,7 +3,6 @@
 namespace Drupal\gdpr_consent\ConsentUserResolver;
 
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\user\Entity\User;
 
 /**
  * Interface GdprConsentUserResolverInterface.
@@ -19,6 +18,6 @@ interface GdprConsentUserResolverInterface {
    * @return \Drupal\user\Entity\User
    *   The user
    */
-  public function resolve(EntityInterface $entity) : User;
+  public function resolve(EntityInterface $entity);
 
 }

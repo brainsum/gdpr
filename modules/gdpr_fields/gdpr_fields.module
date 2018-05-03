@@ -73,8 +73,13 @@ function gdpr_fields_form_field_config_edit_form_alter(&$form, FormStateInterfac
 function gdpr_fields_form_field_config_edit_form_submit(array $form, FormStateInterface $form_state) {
   /* @var \Drupal\Core\Field\FieldConfigInterface $field */
   $field = $form_state->getFormObject()->getEntity();
+  $entity_type = $field->getTargetEntityTypeId();
 
-  $config = GdprFieldConfigEntity::load($field->getTargetEntityTypeId()) ?? GdprFieldConfigEntity::create(['id' => $field->getTargetEntityTypeId()]);
+  $config = GdprFieldConfigEntity::load($entity_type);
+  if (NULL === $config) {
+    $config = GdprFieldConfigEntity::create(['id' => $entity_type]);
+  }
+
   $config->setField(
     $field->getTargetBundle(),
     $field->getName(), [
