@@ -17,6 +17,11 @@ function gdpr_fields_toolbar_alter(&$items) {
   $user = \Drupal::currentUser();
 
   if ($user->hasPermission('view gdpr fields')) {
+    // Root menu url.
+    if (empty($items['gdpr']['tab']['#url'])) {
+      $items['gdpr']['tab']['#url'] = Url::fromRoute('gdpr_fields.fields_list');
+    }
+
     $items['gdpr']['tray']['links']['#links']['fields'] = [
       'title' => t('Field list'),
       'url' => Url::fromRoute('gdpr_fields.fields_list'),
