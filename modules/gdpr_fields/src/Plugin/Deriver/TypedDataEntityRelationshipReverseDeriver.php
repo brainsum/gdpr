@@ -39,6 +39,7 @@ class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelations
           $this->derivatives[$derivative_id]['source_entity_type'] = $base_definition->getConstraint('EntityType');
         }
 
+        // @todo: Proper error handling when target_entity_type is not set.
         $target_data_type = 'entity:' . $this->derivatives[$derivative_id]['target_entity_type'];
         $context_definition = new ContextDefinition($target_data_type, $this->typedDataManager->createDataDefinition($target_data_type));
         // Add the constraints of the base definition to the context definition.

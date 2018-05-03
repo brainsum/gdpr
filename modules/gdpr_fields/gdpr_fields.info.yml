@@ -6,4 +6,5 @@ package: General Data Protection Regulation
 
 dependencies:
   - gdpr:gdpr
+  - gdpr:anonymizer
   - ctools:ctools (>=8.x-3.0-beta1)

@@ -211,7 +211,7 @@ class GdprFieldSettingsForm extends FormBase {
     $config = static::getConfig($entity_type, $bundle_name, $field_name);
 
     /* @var \Drupal\anonymizer\Anonymizer\AnonymizerFactory $anonymizer_factory */
-    $anonymizer_factory = \Drupal::service('gdpr_dump.anonymizer_factory');
+    $anonymizer_factory = \Drupal::service('anonymizer.anonymizer_factory');
     $anonymizer_definitions = $anonymizer_factory->getDefinitions();
 
     $form['gdpr_enabled'] = [
