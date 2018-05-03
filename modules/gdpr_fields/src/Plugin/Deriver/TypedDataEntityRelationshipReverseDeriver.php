@@ -23,8 +23,17 @@ class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelations
     if (method_exists($property_definition, 'getType') && $property_definition->getType() == 'entity_reference') {
       parent::generateDerivativeDefinition($base_plugin_definition, $data_type_id, $data_type_definition, $base_definition, $property_name, $property_definition);
 
+      $bundle_info = $base_definition->getConstraint('Bundle');
+      if ($bundle_info && array_filter($bundle_info) && $base_definition->getConstraint('EntityType')) {
+        $base_data_type =  'entity:' . $base_definition->getConstraint('EntityType');
+      }
+      // Otherwise, just use the raw data type identifier.
+      else {
+        $base_data_type = $data_type_id;
+      }
+
       // Provide the entity type.
-      $derivative_id = $data_type_id . ':' . $property_name;
+      $derivative_id = $base_data_type . ':' . $property_name;
       if (isset($this->derivatives[$derivative_id])) {
         if ($base_definition->getConstraint('EntityType')) {
           $this->derivatives[$derivative_id]['source_entity_type'] = $base_definition->getConstraint('EntityType');
