@@ -4,11 +4,32 @@ namespace Drupal\gdpr_fields\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Form for GDPR field filter.
  */
 class GdprFieldFilterForm extends FormBase {
+
+  /**
+   * GdprFieldFilterForm constructor.
+   *
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   *   The current route.
+   */
+  public function __construct(RouteMatchInterface $route_match) {
+    $this->routeMatch = $route_match;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('current_route_match.manager')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -21,7 +42,7 @@ class GdprFieldFilterForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $filter_value = \Drupal::routeMatch()->getParameter('mode') == 'all' ? 1 : 0;
+    $filter_value = $this->routeMatch->getParameter('mode') == 'all' ? 1 : 0;
 
     $form['filter'] = [
       '#type' => 'checkbox',

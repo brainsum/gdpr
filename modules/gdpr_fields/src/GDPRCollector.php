@@ -57,11 +57,10 @@ class GDPRCollector {
   public function getEntities(array &$entity_list, $entity_type = 'user', $bundle_id = NULL) {
     $definition = $this->entityTypeManager->getDefinition($entity_type);
 
+    // @todo Add way of excluding irrelevant entity types.
     if ($definition instanceof ConfigEntityTypeInterface) {
       return;
     }
-
-    // @todo Add way of excluding irrelevant entity types.
 
     if (!$bundle_id) {
       if ($definition->getBundleEntityType()) {
@@ -121,11 +120,10 @@ class GDPRCollector {
   public function getValueEntities(array &$entity_list, $entity_type, EntityInterface $entity) {
     $definition = $this->entityTypeManager->getDefinition($entity_type);
 
+    // @todo Add way of excluding irrelevant entity types.
     if ($definition instanceof ConfigEntityTypeInterface) {
       return;
     }
-
-    // @todo Add way of excluding irrelevant entity types.
 
     // Check for recursion.
     if (isset($entity_list[$entity_type][$entity->id()])) {

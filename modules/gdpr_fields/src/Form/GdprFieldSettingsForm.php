@@ -6,6 +6,7 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\gdpr_fields\Entity\GdprField;
 use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -36,10 +37,13 @@ class GdprFieldSettingsForm extends FormBase {
    *   Entity field manager.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   Entity type manager.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
-  public function __construct(EntityFieldManagerInterface $entity_field_manager, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityFieldManagerInterface $entity_field_manager, EntityTypeManagerInterface $entity_type_manager, MessengerInterface $messenger) {
     $this->entityFieldManager = $entity_field_manager;
     $this->entityTypeManager = $entity_type_manager;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -48,7 +52,8 @@ class GdprFieldSettingsForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_field.manager'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('messenger')
     );
   }
 
@@ -304,7 +309,7 @@ class GdprFieldSettingsForm extends FormBase {
     );
 
     $config->save();
-    \Drupal::messenger()->addMessage('Field settings saved.');
+    $this->messenger->addMessage('Field settings saved.');
     $form_state->setRedirect('gdpr_fields.fields_list');
   }
 

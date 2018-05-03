@@ -25,7 +25,7 @@ class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelations
 
       $bundle_info = $base_definition->getConstraint('Bundle');
       if ($bundle_info && array_filter($bundle_info) && $base_definition->getConstraint('EntityType')) {
-        $base_data_type =  'entity:' . $base_definition->getConstraint('EntityType');
+        $base_data_type = 'entity:' . $base_definition->getConstraint('EntityType');
       }
       // Otherwise, just use the raw data type identifier.
       else {

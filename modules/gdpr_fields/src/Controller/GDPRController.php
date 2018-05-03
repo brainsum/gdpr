@@ -101,15 +101,15 @@ class GDPRController extends ControllerBase {
     $table = [
       '#type' => 'table',
       '#header' => [
-        t('Name'),
-        t('Type'),
-        t('Right to access'),
-        t('Right to be forgotten'),
-        t('Notes'),
+        $this->t('Name'),
+        $this->t('Type'),
+        $this->t('Right to access'),
+        $this->t('Right to be forgotten'),
+        $this->t('Notes'),
         '',
       ],
       '#sticky' => TRUE,
-      '#empty' => t('There are no GDPR fields for this entity.'),
+      '#empty' => $this->t('There are no GDPR fields for this entity.'),
     ];
 
     $i = 0;

@@ -31,17 +31,12 @@ function gdpr_fields_toolbar_alter(&$items) {
 /**
  * Implements hook_form_FORM_ID_alter().
  *
- * @todo Find a better way of editing field GDPR settings as lots of fields are not UI configurable.
  * @todo Check user edit permission for GDPR fields.
  */
 function gdpr_fields_form_field_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-
-  /* @var \Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory $sanitizer_factory */
-  $sanitizer_factory = \Drupal::service('gdpr_dump.sanitizer_factory');
-  $sanitizer_definitions = $sanitizer_factory->getDefinitions();
   /* @var \Drupal\Core\Field\FieldConfigInterface $field */
-  $field = $form_state->getFormObject()->getEntity();
   // @todo Check that target entity is a content entity.
+  $field = $form_state->getFormObject()->getEntity();
 
   // Do not add GDPR settings to the GDPR Consent Agreement form.
   if ($field->getType() == 'gdpr_user_consent') {
@@ -73,7 +68,6 @@ function gdpr_fields_form_field_config_edit_form_alter(&$form, FormStateInterfac
 function gdpr_fields_form_field_config_edit_form_submit(array $form, FormStateInterface $form_state) {
   /* @var \Drupal\Core\Field\FieldConfigInterface $field */
   $field = $form_state->getFormObject()->getEntity();
-  $form_fields = &$form_state->getValues();
 
   $config = GdprFieldConfigEntity::load($field->getTargetEntityTypeId()) ?? GdprFieldConfigEntity::create(['id' => $field->getTargetEntityTypeId()]);
   $config->setField(
