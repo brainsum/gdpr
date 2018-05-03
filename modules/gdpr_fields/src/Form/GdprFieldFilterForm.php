@@ -27,7 +27,7 @@ class GdprFieldFilterForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('current_route_match.manager')
+      $container->get('current_route_match')
     );
   }
 
