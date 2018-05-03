@@ -43,11 +43,11 @@ class GdprField {
   public $rta = 'no';
 
   /**
-   * Sanitizer to use on this field.
+   * Anonymizer to use on this field.
    *
    * @var string
    */
-  public $sanitizer = '';
+  public $anonymizer = '';
 
   /**
    * Notes.
@@ -93,7 +93,7 @@ class GdprField {
     $field->rtf = $values['rtf'];
     $field->rta = $values['rta'];
     $field->enabled = $values['enabled'];
-    $field->sanitizer = $values['sanitizer'];
+    $field->anonymizer = $values['anonymizer'];
     $field->notes = $values['notes'];
     $field->configured = TRUE;
     return $field;

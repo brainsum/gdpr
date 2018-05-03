@@ -46,7 +46,7 @@ class GdprFieldConfigEntity extends ConfigEntityBase {
    * @param string $field_name
    *   Field.
    * @param array $values
-   *   Additional values. Keys should be enabled, rtf, rta, sanitizer, notes.
+   *   Additional values. Keys should be enabled, rtf, rta, anonymizer, notes.
    *
    * @return $this
    */

@@ -91,21 +91,21 @@ class GdprFieldSettingsForm extends FormBase {
    *   Right to Access setting.
    * @param string $rtf
    *   Right to be forgotten.
-   * @param string $sanitizer
-   *   Sanitizer to use.
+   * @param string $anonymizer
+   *   Anonymizer to use.
    * @param string $notes
    *   Notes.
    *
    * @return \Drupal\gdpr_fields\Entity\GdprFieldConfigEntity
    *   The config entity.
    */
-  private static function setConfig($entity_type, $bundle, $field_name, $enabled, $rta, $rtf, $sanitizer, $notes) {
+  private static function setConfig($entity_type, $bundle, $field_name, $enabled, $rta, $rtf, $anonymizer, $notes) {
     $config = GdprFieldConfigEntity::load($entity_type) ?? GdprFieldConfigEntity::create(['id' => $entity_type]);
     $config->setField($bundle, $field_name, [
       'enabled' => $enabled,
       'rta' => $rta,
       'rtf' => $rtf,
-      'sanitizer' => $sanitizer,
+      'anonymizer' => $anonymizer,
       'notes' => $notes,
     ]);
     return $config;
@@ -210,9 +210,9 @@ class GdprFieldSettingsForm extends FormBase {
   public static function buildFormFields(array &$form, $entity_type = NULL, $bundle_name = NULL, $field_name = NULL) {
     $config = static::getConfig($entity_type, $bundle_name, $field_name);
 
-    /* @var \Drupal\gdpr_dump\Sanitizer\GdprSanitizerFactory $sanitizer_factory */
-    $sanitizer_factory = \Drupal::service('gdpr_dump.sanitizer_factory');
-    $sanitizer_definitions = $sanitizer_factory->getDefinitions();
+    /* @var \Drupal\anonymizer\Anonymizer\AnonymizerFactory $anonymizer_factory */
+    $anonymizer_factory = \Drupal::service('gdpr_dump.anonymizer_factory');
+    $anonymizer_definitions = $anonymizer_factory->getDefinitions();
 
     $form['gdpr_enabled'] = [
       '#type' => 'checkbox',
@@ -257,15 +257,15 @@ class GdprFieldSettingsForm extends FormBase {
       ],
     ];
 
-    $sanitizer_options = ['' => ''] + array_map(function ($s) {
+    $anonymizer_options = ['' => ''] + array_map(function ($s) {
         return $s['label'];
-    }, $sanitizer_definitions);
+    }, $anonymizer_definitions);
 
-    $form['gdpr_sanitizer'] = [
+    $form['gdpr_anonymizer'] = [
       '#type' => 'select',
-      '#title' => t('Sanitizer to use'),
-      '#options' => $sanitizer_options,
-      '#default_value' => $config->sanitizer,
+      '#title' => t('Anonymizer to use'),
+      '#options' => $anonymizer_options,
+      '#default_value' => $config->anonymizer,
       '#states' => [
         'visible' => [
           ':input[name="gdpr_enabled"]' => ['checked' => TRUE],
@@ -304,7 +304,7 @@ class GdprFieldSettingsForm extends FormBase {
       $form_state->getValue('gdpr_enabled'),
       $form_state->getValue('gdpr_rta'),
       $form_state->getValue('gdpr_rtf'),
-      $form_state->getValue('gdpr_sanitizer'),
+      $form_state->getValue('gdpr_anonymizer'),
       $form_state->getValue('gdpr_notes')
     );
 

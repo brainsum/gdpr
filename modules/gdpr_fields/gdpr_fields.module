@@ -76,7 +76,7 @@ function gdpr_fields_form_field_config_edit_form_submit(array $form, FormStateIn
       'enabled' => $form_state->getValue('gdpr_enabled'),
       'rta' => $form_state->getValue('gdpr_rta'),
       'rtf' => $form_state->getValue('gdpr_rtf'),
-      'sanitizer' => $form_state->getValue('gdpr_sanitizer'),
+      'anonymizer' => $form_state->getValue('gdpr_anonymizer'),
       'notes' => $form_state->getValue('gdpr_notes'),
     ]
   );

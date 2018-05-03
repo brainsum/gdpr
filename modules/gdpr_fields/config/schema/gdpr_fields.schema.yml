@@ -24,7 +24,7 @@ gdpr_fields.gdpr_fields_config.*:
               type: string
             rtf:
               type: string
-            sanitizer:
+            anonymizer:
               type: string
             notes:
               type: string
