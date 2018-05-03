@@ -1,0 +1,30 @@
+gdpr_fields.gdpr_fields_config.*:
+  type: config_entity
+  label: 'GDPR Field Config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    bundles:
+      type: sequence
+      label: 'Entity Bundles'
+      sequence:
+        type: sequence
+        label: 'Fields'
+        sequence:
+          type: mapping
+          mapping:
+            bundle:
+              type: string
+            name:
+              type: string
+            enabled:
+              type: boolean
+            rta:
+              type: string
+            rtf:
+              type: string
+            anonymizer:
+              type: string
+            notes:
+              type: string

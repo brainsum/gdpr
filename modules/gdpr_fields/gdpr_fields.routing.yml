@@ -1,0 +1,15 @@
+gdpr_fields.fields_list:
+  path: '/admin/reports/fields/gdpr-fields/{mode}'
+  defaults:
+    _controller: '\Drupal\gdpr_fields\Controller\GDPRController::fieldsList'
+    _title: 'Used in GDPR'
+    mode: 'all'
+  requirements:
+    _permission: 'view gdpr fields'
+
+gdpr_fields.edit_field:
+  path: '/admin/gdpr/fields/{entity_type}/{bundle_name}/{field_name}'
+  defaults:
+    _form: 'Drupal\gdpr_fields\Form\GdprFieldSettingsForm'
+  requirements:
+    _permission: 'view gdpr fields'
