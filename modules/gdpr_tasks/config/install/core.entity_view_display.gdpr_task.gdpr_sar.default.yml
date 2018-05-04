@@ -1,0 +1,64 @@
+uuid: 5a0777c8-0adc-4245-b1d2-9361cfea7062
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.gdpr_task.gdpr_sar.manual_data
+    - field.field.gdpr_task.gdpr_sar.sar_export
+    - gdpr_tasks.gdpr_task_type.gdpr_sar
+  module:
+    - file
+    - options
+    - user
+_core:
+  default_config_hash: Iqo94n1T957Bb8Qw1BPLcM679fLMl83eGGGZsiqEvOg
+id: gdpr_task.gdpr_sar.default
+targetEntityType: gdpr_task
+bundle: gdpr_sar
+mode: default
+content:
+  notes:
+    type: basic_string
+    region: content
+    weight: 7
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+  processed_by:
+    type: author
+    weight: 6
+    region: content
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+  requested_by:
+    label: inline
+    type: author
+    weight: 5
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  sar_export:
+    type: file_default
+    weight: 2
+    region: content
+    label: inline
+    settings:
+      use_description_as_link_text: true
+    third_party_settings: {  }
+  status:
+    type: list_default
+    weight: 1
+    region: content
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+  user_id:
+    label: inline
+    type: author
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  manual_data: true
