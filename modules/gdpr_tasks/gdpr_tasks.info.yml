@@ -8,3 +8,4 @@ dependencies:
   - gdpr:gdpr
   - gdpr:anonymizer
   - gdpr:gdpr_fields
+  - entity:entity

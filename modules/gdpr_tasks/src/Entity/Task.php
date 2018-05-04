@@ -146,8 +146,7 @@ class Task extends ContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function label() {
-    $label = t('Task @id', ['@id' => $this->id()]);
-    return $label;
+    return t('Task @id', ['@id' => $this->id()]);
   }
 
   /**
@@ -285,8 +284,8 @@ class Task extends ContentEntityBase implements TaskInterface {
    */
   public static function getStatuses() {
     return [
-      'requested' => 'Requested',
-      'closed' => 'Closed',
+      'requested' => t('Requested'),
+      'closed' => t('Closed'),
     ];
   }
 
