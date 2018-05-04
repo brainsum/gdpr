@@ -99,7 +99,7 @@ class TaskActionsForm extends ContentEntityForm {
   /**
    * Performs the SAR export.
    */
-  private function doSarExport(FormStateInterface $form_state): void {
+  private function doSarExport(FormStateInterface $form_state) {
     $entity = $this->entity;
     $manual = $form_state->getValue(['manual_data', 0, 'value']);
 

@@ -11,6 +11,7 @@ use Symfony\Component\EventDispatcher\Event;
  * @package Drupal\gdpr_tasks\Event
  */
 class RightToAccessCompleteEvent extends Event {
+
   const EVENT_NAME = 'gdpr_tasks.rules_rta_complete';
 
   /**
@@ -35,7 +36,7 @@ class RightToAccessCompleteEvent extends Event {
    * @param string $link
    *   The link to the download.
    */
-  public function __construct(AccountInterface $user, string $link) {
+  public function __construct(AccountInterface $user, $link) {
     $this->user = $user;
     $this->link = $link;
   }
