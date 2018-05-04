@@ -1,0 +1,15 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.gdpr_task.gdpr_remove.removal_log
+    - gdpr_tasks.gdpr_task_type.gdpr_remove
+third_party_settings: {  }
+id: gdpr_task.gdpr_remove.default
+targetEntityType: gdpr_task
+bundle: gdpr_remove
+mode: default
+content: {  }
+hidden:
+  status: true
+  user_id: true

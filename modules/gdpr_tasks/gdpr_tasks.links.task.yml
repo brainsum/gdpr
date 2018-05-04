@@ -1,0 +1,32 @@
+gdpr_tasks.summary:
+  route_name: gdpr_tasks.summary
+  title: 'GDPR Summary'
+  base_route: gdpr_tasks.summary
+
+view.gdpr_tasks_my_data_requests.page_1:
+  title: 'My data requests'
+  parent_id: gdpr.collected_user_data
+  route_name: view.gdpr_tasks_my_data_requests.page_1
+  base_route: entity.user.canonical
+
+entity.gdpr_task.collection:
+  title: 'Tasks'
+  route_name: entity.gdpr_task.collection
+  base_route: entity.gdpr_task.collection
+
+entity.gdpr_task_type.collection:
+  title: 'Task Types'
+  route_name: entity.gdpr_task_type.collection
+  base_route: entity.gdpr_task.collection
+
+# Task routing definition
+entity.gdpr_task.canonical:
+  route_name: entity.gdpr_task.canonical
+  base_route: entity.gdpr_task.canonical
+  title: 'View'
+
+entity.gdpr_task.delete_form:
+  route_name:  entity.gdpr_task.delete_form
+  base_route:  entity.gdpr_task.canonical
+  title: Delete
+  weight: 10

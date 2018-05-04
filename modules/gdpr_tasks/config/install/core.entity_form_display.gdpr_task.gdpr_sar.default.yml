@@ -1,0 +1,25 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.gdpr_task.gdpr_sar.manual_data
+    - field.field.gdpr_task.gdpr_sar.sar_export
+    - gdpr_tasks.gdpr_task_type.gdpr_sar
+third_party_settings: {  }
+id: gdpr_task.gdpr_sar.default
+targetEntityType: gdpr_task
+bundle: gdpr_sar
+mode: default
+content:
+  manual_data:
+    type: string_textarea
+    weight: 0
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  sar_export: true
+  status: true
+  user_id: true

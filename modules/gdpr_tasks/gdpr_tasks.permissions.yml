@@ -1,0 +1,32 @@
+view gdpr data summary:
+  title: 'Access GDPR Data Summary'
+  description: 'Allows users to access their data without staff involvement'
+
+create gdpr tasks:
+  title: 'Create GDPR tasks'
+
+view gdpr tasks:
+  title: 'View GDPR tasks'
+  description: 'Allow a user to view completed tasks that they requested'
+
+#edit gdpr tasks:
+#  title: 'Edit GDPR tasks'
+add task entities:
+  title: 'Create new Task entities'
+
+administer task entities:
+  title: 'Administer Task entities'
+  description: 'Allow to access the administration form to configure Task entities.'
+  restrict access: true
+
+delete task entities:
+  title: 'Delete Task entities'
+  description: 'Allows staff to delete GDPR tasks'
+
+edit task entities:
+  title: 'Edit Task entities'
+  description: 'Allows staff to edit GDPR tasks'
+
+view task entities:
+  title: 'View Task entities'
+  description: 'Allows staff to view the list of GDPR tasks'
