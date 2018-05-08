@@ -30,7 +30,8 @@
     "extra": {
         "patches": {
             "drupal/ctools": {
-                "#2951267: Bundle specific fields not derived correctly in entity reference relationships": "https://www.drupal.org/files/issues/2951267-2.patch"
+                "#2951267: Bundle specific fields not derived correctly in entity reference relationships": "https://www.drupal.org/files/issues/2951267-2.patch",
+                "#2866323: Fatal error on empty entity reference relationship": "https://www.drupal.org/files/issues/2866323-fix_entity_relationship_with_no_value.patch"
             }
         }
     }
