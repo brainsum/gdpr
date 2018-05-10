@@ -9,3 +9,4 @@ dependencies:
   - token:token
   - message:message
   - entity_reference_revisions:entity_reference_revisions
+  - drupal:views
