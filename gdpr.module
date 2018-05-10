@@ -516,7 +516,7 @@ function gdpr_toolbar() {
         '#url' => '',
         '#attributes' => [
           'title' => t('GDPR'),
-          'class' => ['toolbar-icon', 'toolbar-icon-shortcut'],
+          'class' => ['toolbar-icon', 'toolbar-icon-gdpr'],
         ],
       ],
       'tray' => [
@@ -529,11 +529,9 @@ function gdpr_toolbar() {
         ],
       ],
       '#weight' => -10,
-      '#attached' => [
-        'library' => [
-          'shortcut/drupal.shortcut',
-        ],
-      ],
+      // @todo: Attach custom lib with custom icons.
+      // Previously used: shortcut/drupal.shortcut.
+      '#attached' => [],
     ];
   }
 
