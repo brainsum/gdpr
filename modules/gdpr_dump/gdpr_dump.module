@@ -195,6 +195,7 @@ function gdpr_dump_ctools_plugin_type() {
  * Helper function for listing gdpr sanitizer plugins.
  */
 function gdpr_dump_get_sanitizer_plugins($id = NULL) {
+  ctools_include('plugins');
   return ctools_get_plugins('gdpr_dump', 'sanitizer', $id);
 }
 

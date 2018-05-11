@@ -55,6 +55,7 @@ class GdprDumpGdprSqlDump {
    * GdprDumpGdprSqlDump constructor.
    */
   public function __construct() {
+    ctools_include('plugins');
     $this->driver = db_driver();
     $this->plugins = ctools_get_plugins('gdpr_dump', 'sanitizer');
     $this->gdprOptions = variable_get('gdpr_dump_table_map', []);
