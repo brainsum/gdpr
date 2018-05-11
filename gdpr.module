@@ -302,7 +302,12 @@ function gdpr_collected_user_data_access(\stdClass $user) {
  *   Keys are data machine names, and values the collected data itself.
  */
 function gdpr_get_user_data(\stdClass $user) {
+  $user_data = [];
   foreach ($user as $key => $value) {
+    if (empty($value)) {
+      continue;
+    }
+
     if (is_scalar($value)) {
       $user_data[$key] = $value;
     }
@@ -315,7 +320,7 @@ function gdpr_get_user_data(\stdClass $user) {
         }
       }
       if ($scalar_list) {
-        $user_data[$key] = implode(", ", $value);
+        $user_data[$key] = implode(', ', $value);
       }
     }
   }
