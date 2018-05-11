@@ -2,6 +2,7 @@
 
 namespace Drupal\gdpr_tasks;
 
+use Drupal\anonymizer\Anonymizer\AnonymizerFactory;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityInterface;
@@ -72,7 +73,7 @@ class Anonymizer {
   /**
    * Anonymizer constructor.
    */
-  public function __construct(GDPRCollector $collector, Connection $db, EntityTypeManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, AccountProxyInterface $current_user, GdprAnonymizerFactory $anonymizer_factory, ConfigFactoryInterface $config_factory) {
+  public function __construct(GDPRCollector $collector, Connection $db, EntityTypeManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, AccountProxyInterface $current_user, AnonymizerFactory $anonymizer_factory, ConfigFactoryInterface $config_factory) {
     $this->collector = $collector;
     $this->db = $db;
     $this->entityTypeManager = $entity_manager;
