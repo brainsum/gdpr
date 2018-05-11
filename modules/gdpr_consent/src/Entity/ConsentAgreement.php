@@ -24,6 +24,7 @@ use Drupal\user\UserInterface;
  *   handlers = {
  *     "storage" = "Drupal\gdpr_consent\ConsentAgreementStorage",
  *     "list_builder" = "Drupal\gdpr_consent\Entity\ConsentAgreementListBuilder",
+ *     "views_data" = "Drupal\views\EntityViewsData",
  *     "route_provider" = {
  *       "html" = "Drupal\gdpr_consent\ConsentAgreementHtmlRouteProvider"
  *     },

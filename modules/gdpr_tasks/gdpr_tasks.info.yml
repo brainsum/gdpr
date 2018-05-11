@@ -9,5 +9,6 @@ dependencies:
   - gdpr:anonymizer
   - gdpr:gdpr_fields
   - entity:entity
+  - drupal:file
   - drupal:views
   - drupal:options

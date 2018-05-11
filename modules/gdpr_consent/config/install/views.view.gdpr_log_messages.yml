@@ -247,13 +247,10 @@ display:
           delta_first_last: false
           multi_type: separator
           separator: ', '
-          field_api_classes: 0
-          date_format: fallback
-          custom_date_format: ''
-          timezone: ''
+          field_api_classes: false
           entity_type: message
           entity_field: created
-          plugin_id: date
+          plugin_id: field
         uid:
           id: uid
           table: message_field_data

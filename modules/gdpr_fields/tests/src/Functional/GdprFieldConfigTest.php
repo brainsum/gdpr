@@ -14,7 +14,15 @@ class GdprFieldConfigTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['gdpr', 'gdpr_fields', 'anonymizer', 'ctools'];
+  public static $modules = [
+    'gdpr',
+    'gdpr_fields',
+    'gdpr_tasks',
+    'gdpr_consent',
+    'anonymizer',
+    'ctools',
+    'file',
+  ];
 
   /**
    * Testing admin user.
