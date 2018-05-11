@@ -154,17 +154,11 @@ class SettingsForm extends ConfigFormBase {
             '#title' => $this->t('Anonymize <strong>@field_name</strong>?', [
               '@field_name' => $column['COLUMN_NAME'],
             ]),
+            '#description' => $this->t('<b>Field type: </b>@field_type<br><b>Field comment: </b>@field_comment', [
+              '@field_type' => $column['DATA_TYPE'],
+              '@field_comment' => empty($column['COLUMN_COMMENT']) ? '-' : $column['COLUMN_COMMENT'],
+            ]),
             '#default_value' => $checked,
-          ],
-          'type' => [
-            '#type' => 'item',
-            '#markup' => $column['DATA_TYPE'],
-            '#title' => $this->t('Field type'),
-          ],
-          'comment' => [
-            '#type' => 'item',
-            '#markup' => empty($column['COLUMN_COMMENT']) ? '-' : $column['COLUMN_COMMENT'],
-            '#title' => $this->t('Field comment'),
           ],
           'option' => $currentOptions,
         ];
