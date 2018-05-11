@@ -102,9 +102,16 @@ function gdpr_checklistapi_checklist_items() {
     }
 
     $content_discovery_description = \Drupal::service('renderer')->renderPlain($description);
+    if ($node->isPublished()) {
+      $privacy_policy_description = t('This one looks good to go, but you need to verify that it has real and relevant content.');
+    }
+    else {
+      $privacy_policy_description = t('We could not find a <em>published</em> “Privacy Policy” page.');
+    }
   }
   else {
     $content_discovery_description = t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum".');
+    $privacy_policy_description = t('Please verify manually that such content of similar titles exists and has been published.');
   }
   $items = [
     'getting_started' => [
@@ -144,11 +151,11 @@ function gdpr_checklistapi_checklist_items() {
     ],
     'content_related_suggestions' => [
       '#title' => t('Content related suggestions'),
-      '#description' => t('<p>Automated search performed on uploaded content of site.</p>')
+      '#description' => t('<p>Automated search performed on content of site.</p>')
       . $content_discovery_description,
       'privacy_policy_page' => [
-        '#title' => t('I have checked through the uploaded content and verified that a page containing <em>Privacy Policy</em> exists and has been published to this site.'),
-        '#description' => t('Please verify manually that such content of similar titles exists and has been published.'),
+        '#title' => t("I have checked through the site's content and verified that a page containing <em>Privacy Policy</em> exists and has been published to this site."),
+        '#description' => $privacy_policy_description,
       ],
       'privacy_policy_published' => [
         '#title' => t('I confirm the existing "Privacy Policy" or similar page has been published.'),
