@@ -68,6 +68,7 @@ class GdprDatabaseManager {
     // @todo: How cross-driver is this?
     $query = $this->database->select('information_schema.columns', 'columns');
     $query->fields('columns', ['COLUMN_NAME', 'DATA_TYPE', 'COLUMN_COMMENT']);
+    $query->condition('TABLE_SCHEMA', $this->database->getConnectionOptions()['database']);
     $query->condition('TABLE_NAME', $table);
     return $query->execute();
   }
@@ -86,6 +87,7 @@ class GdprDatabaseManager {
   public function fetchColumnNames($table) {
     $query = $this->database->select('information_schema.columns', 'columns');
     $query->fields('columns', ['COLUMN_NAME']);
+    $query->condition('TABLE_SCHEMA', $this->database->getConnectionOptions()['database']);
     $query->condition('TABLE_NAME', $table);
     $result = $query->execute();
     if (NULL === $result) {
