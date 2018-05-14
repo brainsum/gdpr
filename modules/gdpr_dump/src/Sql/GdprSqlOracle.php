@@ -12,7 +12,7 @@ use Drush\Sql\Sqloracle;
 class GdprSqlOracle extends Sqloracle {
 
   /**
-   * Probably Oracle needs to override dump() entirely - http://stackoverflow.com/questions/2236615/oracle-can-imp-exp-go-to-stdin-stdout.
+   * {@inheritdoc}
    */
   public function dumpCmd($table_selection) {
     $exec = 'exp ' . $this->creds();

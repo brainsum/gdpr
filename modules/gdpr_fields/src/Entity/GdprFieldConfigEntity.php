@@ -73,17 +73,17 @@ class GdprFieldConfigEntity extends ConfigEntityBase {
    *   Field metadata.
    */
   public function getField($bundle, $field_name) {
-    $bundle_fields = array_filter($this->bundles, function ($key) use ($bundle) {
+    $bundle_fields = \array_filter($this->bundles, function ($key) use ($bundle) {
       return $key == $bundle;
-    }, ARRAY_FILTER_USE_KEY);
+    }, \array_filter_USE_KEY);
 
-    if (count($bundle_fields)) {
-      $result = array_filter($bundle_fields[$bundle], function ($f) use ($field_name) {
+    if (\count($bundle_fields)) {
+      $result = \array_filter($bundle_fields[$bundle], function ($f) use ($field_name) {
         return $f['name'] == $field_name;
       });
 
-      if (count($result)) {
-        return GdprField::create(reset($result));
+      if (\count($result)) {
+        return GdprField::create(\reset($result));
       }
     }
 

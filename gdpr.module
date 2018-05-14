@@ -117,7 +117,7 @@ function gdpr_checklistapi_checklist_items() {
     'getting_started' => [
       '#title' => t('Getting Started'),
       '#description' => t("<p>To begin your self-assessment process, it's highly recommended to take the following steps:</p>"),
-      'responsability_agreement' => [
+      'responsibility_agreement' => [
         '#title' => t("Yes, I agree that by using the <em>GDPR</em> module, I'm still accountable for personal data handling performed on the site."),
         '#description' => t('Responsibility Agreement: before the site owner starts the checklist process, they should acknowledge that installing and using this module pack does not mean sharing responsibility. Neither the Drupal Community nor module maintainers can guarantee full compliance with the GDPR regulations in case of a potential control.'),
       ],
@@ -222,7 +222,7 @@ function gdpr_checklistapi_checklist_items() {
         '#title' => t('I declare that I am able to notify the supervisory authority within 72 hours in the case of a personal data breach'),
         '#description' => t('Referring to Article 33 of the regulation, site owner/maintainer as a data controller must have a contingency plan in place in the event of any personal data breach incident.'),
       ],
-      'logging_responsability' => [
+      'logging_responsibility' => [
         '#title' => t('I confirm that I have understood that the responsibility of personal data logging is dependent on the size of my organisation as described below:'),
         '#description' => _get_logging_responsability_description(),
       ],
@@ -232,7 +232,7 @@ function gdpr_checklistapi_checklist_items() {
 }
 
 /**
- * Returns a HTML makrup for logging_responsability checkpoint description.
+ * Returns a HTML markup for logging_responsibility checkpoint description.
  *
  * @return string
  *   HTML markup string
@@ -241,7 +241,7 @@ function _get_logging_responsability_description() {
   $logging_items = [
     '#theme' => 'item_list',
     '#items' => [
-      t('Has fewer than 250 employees the processing it carries out is likely no result in a risk to the rights and freedoms of data subjects, the processing is only occasional and the processing does not includes special categories of data (Article 30/5) and as such my organisation is not required to create records of processing acitivities'),
+      t('Has fewer than 250 employees the processing it carries out is likely no result in a risk to the rights and freedoms of data subjects, the processing is only occasional and the processing does not includes special categories of data (Article 30/5) and as such my organisation is not required to create records of processing activities'),
       t('My organisation has 250 or more employees and records of processing activities have been prepared according to Article 30 of the regulation'),
     ],
   ];
@@ -250,7 +250,7 @@ function _get_logging_responsability_description() {
 }
 
 /**
- * Returns a HTML makrup for gdpr_modules checkpoint description.
+ * Returns a HTML markup for gdpr_modules checkpoint description.
  *
  * @return string
  *   HTML markup string
@@ -339,6 +339,8 @@ function _get_module_statuses() {
  *
  * @return array
  *   Nodes array
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
  */
 function gdpr_search_content() {
   // TODO: Localization.
@@ -375,7 +377,7 @@ function gdpr_search_content() {
 }
 
 /**
- * Returns a HTML makrup for data_collecting modules checkpoint description.
+ * Returns a HTML markup for data_collecting modules checkpoint description.
  *
  * @param string $type
  *   Type of modules to search for.
@@ -425,7 +427,7 @@ function _get_module_list($type) {
  * Returns array of module machine_names by type.
  *
  * @param string $type
- *   The type of modules to swarch for.
+ *   The type of modules to search for.
  *
  * @return array
  *   Array of module machine_names

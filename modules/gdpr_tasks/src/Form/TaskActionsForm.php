@@ -98,6 +98,14 @@ class TaskActionsForm extends ContentEntityForm {
 
   /**
    * Performs the SAR export.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   private function doSarExport(FormStateInterface $form_state) {
     $entity = $this->entity;
@@ -120,7 +128,7 @@ class TaskActionsForm extends ContentEntityForm {
 
     /* @var \Drupal\gdpr_tasks\TaskManager $task_manager */
     $destination = $this->taskManager->toCsv($inc, $dirname);
-    $export = file_get_contents($destination);
+    $export = \file_get_contents($destination);
 
     $export .= $manual;
 
@@ -132,6 +140,17 @@ class TaskActionsForm extends ContentEntityForm {
 
   /**
    * Performs the removal request.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   Errors array.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
    */
   private function doRemoval(FormStateInterface $form_state) {
     /* @var $entity \Drupal\gdpr_tasks\Entity\Task */
@@ -139,7 +158,7 @@ class TaskActionsForm extends ContentEntityForm {
     $email = $entity->getOwner()->getEmail();
     $errors = $this->anonymizer->run($entity);
 
-    if (count($errors) == 0) {
+    if (\count($errors) === 0) {
       $this->eventDispatcher->dispatch(RightToBeForgottenCompleteEvent::EVENT_NAME, new RightToBeForgottenCompleteEvent($email));
     }
 
@@ -181,7 +200,7 @@ class TaskActionsForm extends ContentEntityForm {
       $errors = $this->doRemoval($form_state);
       // Removals may have generated errors.
       // If this happens, combine the error messages and display them.
-      if (count($errors) > 0) {
+      if (\count($errors) > 0) {
         $should_save = FALSE;
         $this->messenger()->addError(implode(' ', $errors));
         $form_state->setRebuild();

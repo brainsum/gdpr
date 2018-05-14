@@ -3,7 +3,9 @@
 namespace Drupal\gdpr_fields\Plugin\Deriver;
 
 use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\TypedData\DataDefinitionInterface;
+use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\ctools\Plugin\Deriver\TypedDataEntityRelationshipDeriver;
 
 /**
@@ -14,23 +16,36 @@ class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelations
   /**
    * {@inheritdoc}
    */
-  protected $label = '@property Entity referencing @base';
+  public function __construct(
+    TypedDataManagerInterface $typed_data_manager,
+    TranslationInterface $string_translation
+  ) {
+    parent::__construct($typed_data_manager, $string_translation);
+    $this->label = '@property Entity referencing @base';
+  }
 
   /**
    * {@inheritdoc}
    */
-  protected function generateDerivativeDefinition($base_plugin_definition, $data_type_id, $data_type_definition, DataDefinitionInterface $base_definition, $property_name, DataDefinitionInterface $property_definition) {
-    if (method_exists($property_definition, 'getType') && $property_definition->getType() == 'entity_reference') {
+  protected function generateDerivativeDefinition(
+    $base_plugin_definition,
+    $data_type_id,
+    $data_type_definition,
+    DataDefinitionInterface $base_definition,
+    $property_name,
+    DataDefinitionInterface $property_definition
+  ) {
+    if (\method_exists($property_definition, 'getType') && 'entity_reference' === $property_definition->getType()) {
       parent::generateDerivativeDefinition($base_plugin_definition, $data_type_id, $data_type_definition, $base_definition, $property_name, $property_definition);
 
       // @todo Handle entity revision relationships.
-      list($data_entity_type) = explode(':', $data_type_id);
-      if ($data_entity_type == 'entity_revision') {
+      list($data_entity_type) = \explode(':', $data_type_id);
+      if ('entity_revision' === $data_entity_type) {
         return;
       }
 
       $bundle_info = $base_definition->getConstraint('Bundle');
-      if ($bundle_info && array_filter($bundle_info) && $base_definition->getConstraint('EntityType')) {
+      if ($bundle_info && \array_filter($bundle_info) && $base_definition->getConstraint('EntityType')) {
         $base_data_type = 'entity:' . $base_definition->getConstraint('EntityType');
       }
       // Otherwise, just use the raw data type identifier.

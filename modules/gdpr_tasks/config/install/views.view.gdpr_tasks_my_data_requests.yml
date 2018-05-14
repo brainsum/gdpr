@@ -9,7 +9,7 @@ dependencies:
     - gdpr_tasks
     - user
 id: gdpr_tasks_my_data_requests
-label: 'GDRP User Data Requests'
+label: 'GDPR User Data Requests'
 module: views
 description: ''
 tag: ''

@@ -6,6 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\gdpr_fields\GDPRCollector;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\gdpr_fields\Form\GdprFieldFilterForm;
 
 /**
  * Returns responses for GDPR Field routes.
@@ -41,39 +42,45 @@ class GDPRController extends ControllerBase {
   /**
    * Lists all fields with GDPR sensitivity.
    *
+   * @param string $mode
+   *   The list mode.
+   *
    * @return array
    *   The Views plugins report page.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function fieldsList($mode) {
     $output = [];
     $entities = [];
-    $include_not_configured = $mode == 'all';
+    $includeNotConfigured = ($mode === 'all');
     $this->collector->getEntities($entities);
 
-    $output['filter'] = $this->formBuilder()->getForm('Drupal\gdpr_fields\Form\GdprFieldFilterForm');
+    $output['filter'] = $this->formBuilder()->getForm(GdprFieldFilterForm::class);
     $output['#attached']['library'][] = 'gdpr_fields/field-list';
 
-    foreach ($entities as $entity_type => $bundles) {
-      $output[$entity_type] = [
+    foreach ($entities as $entityType => $bundles) {
+      $output[$entityType] = [
         '#type' => 'details',
-        '#title' => $entity_type,
+        '#title' => $entityType,
         '#open' => TRUE,
       ];
 
-      if (count($bundles) > 1) {
+      if (\count($bundles) > 1) {
         foreach ($bundles as $bundle_id) {
-          $output[$entity_type][$bundle_id] = [
+          $output[$entityType][$bundle_id] = [
             '#type' => 'details',
             '#title' => $bundle_id,
             '#open' => TRUE,
           ];
-          $output[$entity_type][$bundle_id]['fields'] = $this->buildFieldTable($entity_type, $bundle_id, $include_not_configured);
+          $output[$entityType][$bundle_id]['fields'] = $this->buildFieldTable($entityType, $bundle_id, $includeNotConfigured);
         }
       }
       else {
         // Don't add another collapsible wrapper around single bundle entities.
-        $bundle_id = reset($bundles);
-        $output[$entity_type][$bundle_id]['fields'] = $this->buildFieldTable($entity_type, $bundle_id, $include_not_configured);
+        $bundle_id = \reset($bundles);
+        $output[$entityType][$bundle_id]['fields'] = $this->buildFieldTable($entityType, $bundle_id, $includeNotConfigured);
       }
     }
 
@@ -83,18 +90,21 @@ class GDPRController extends ControllerBase {
   /**
    * Build a table for entity field list.
    *
-   * @param string $entity_type
+   * @param string $entityType
    *   The entity type id.
    * @param string $bundle_id
    *   The entity bundle id.
-   * @param bool $include_not_configured
+   * @param bool $includeNotConfigured
    *   Include fields for entities that have not yet been configured.
    *
    * @return array
    *   Renderable array for field list table.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  protected function buildFieldTable($entity_type, $bundle_id, $include_not_configured = FALSE) {
-    $rows = $this->collector->listFields($bundle_id, $entity_type, $include_not_configured);
+  protected function buildFieldTable($entityType, $bundle_id, $includeNotConfigured = FALSE) {
+    $rows = $this->collector->listFields($bundle_id, $entityType, $includeNotConfigured);
     // Sort rows by field name.
     ksort($rows);
 
@@ -152,15 +162,20 @@ class GDPRController extends ControllerBase {
    *
    * @return array
    *   Structured array of user related data.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   public function rtaData(UserInterface $user) {
     $rows = [];
     $entities = [];
     $this->collector->getValueEntities($entities, 'user', $user);
 
-    foreach ($entities as $entity_type => $bundles) {
+    foreach ($entities as $entityType => $bundles) {
       foreach ($bundles as $bundle_entity) {
-        $rows += $this->collector->fieldValues($bundle_entity, $entity_type, ['rta' => 'rta']);
+        $rows += $this->collector->fieldValues($bundle_entity, $entityType, ['rta' => 'rta']);
       }
     }
 
@@ -177,15 +192,20 @@ class GDPRController extends ControllerBase {
    *
    * @return array
    *   Structured array of user related data.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   public function rtfData(UserInterface $user) {
     $rows = [];
     $entities = [];
     $this->collector->getValueEntities($entities, 'user', $user);
 
-    foreach ($entities as $entity_type => $bundles) {
+    foreach ($entities as $entityType => $bundles) {
       foreach ($bundles as $bundle_entity) {
-        $rows += $this->collector->fieldValues($bundle_entity, $entity_type, ['rtf' => 'rtf']);
+        $rows += $this->collector->fieldValues($bundle_entity, $entityType, ['rtf' => 'rtf']);
       }
     }
 

@@ -30,7 +30,7 @@ class ConsentAgreementRevisionRevertForm extends ConfirmFormBase {
    *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
-  protected $ConsentAgreementStorage;
+  protected $consentAgreementStorage;
 
   /**
    * The date formatter service.
@@ -40,26 +40,26 @@ class ConsentAgreementRevisionRevertForm extends ConfirmFormBase {
   protected $dateFormatter;
 
   /**
-   * Constructs a new ConsentAgreementRevisionRevertForm.
-   *
-   * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
-   *   The Consent Agreement storage.
-   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
-   *   The date formatter service.
-   */
-  public function __construct(EntityStorageInterface $entity_storage, DateFormatterInterface $date_formatter) {
-    $this->ConsentAgreementStorage = $entity_storage;
-    $this->dateFormatter = $date_formatter;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity.manager')->getStorage('gdpr_consent_agreement'),
+      $container->get('entity_type.manager')->getStorage('gdpr_consent_agreement'),
       $container->get('date.formatter')
     );
+  }
+
+  /**
+   * Constructs a new ConsentAgreementRevisionRevertForm.
+   *
+   * @param \Drupal\Core\Entity\EntityStorageInterface $entityStorage
+   *   The Consent Agreement storage.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
+   *   The date formatter service.
+   */
+  public function __construct(EntityStorageInterface $entityStorage, DateFormatterInterface $dateFormatter) {
+    $this->consentAgreementStorage = $entityStorage;
+    $this->dateFormatter = $dateFormatter;
   }
 
   /**
@@ -73,7 +73,7 @@ class ConsentAgreementRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getQuestion() {
-    return t('Are you sure you want to revert to the revision from %revision-date?', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime())]);
+    return $this->t('Are you sure you want to revert to the revision from %revision-date?', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime())]);
   }
 
   /**
@@ -87,7 +87,7 @@ class ConsentAgreementRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getConfirmText() {
-    return t('Revert');
+    return $this->t('Revert');
   }
 
   /**
@@ -101,7 +101,7 @@ class ConsentAgreementRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $gdpr_consent_agreement_revision = NULL) {
-    $this->revision = $this->ConsentAgreementStorage->loadRevision($gdpr_consent_agreement_revision);
+    $this->revision = $this->consentAgreementStorage->loadRevision($gdpr_consent_agreement_revision);
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -113,14 +113,14 @@ class ConsentAgreementRevisionRevertForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // The revision timestamp will be updated when the revision is saved. Keep
     // the original one for the confirmation message.
-    $original_revision_timestamp = $this->revision->getRevisionCreationTime();
+    $originalRevisionTimestamp = $this->revision->getRevisionCreationTime();
 
     $this->revision = $this->prepareRevertedRevision($this->revision, $form_state);
-    $this->revision->revision_log = t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
+    $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($originalRevisionTimestamp)]);
     $this->revision->save();
 
     $this->logger('content')->notice('Consent Agreement: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
-    \Drupal::messenger()->addMessage(t('Consent Agreement %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
+    \Drupal::messenger()->addMessage($this->t('Consent Agreement %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($originalRevisionTimestamp)]));
     $form_state->setRedirect(
       'entity.gdpr_consent_agreement.version_history',
       ['gdpr_consent_agreement' => $this->revision->id()]

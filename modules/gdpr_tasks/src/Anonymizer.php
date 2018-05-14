@@ -33,7 +33,7 @@ class Anonymizer {
    *
    * @var \Drupal\Core\Database\Connection
    */
-  private $db;
+  private $database;
 
   /**
    * Entity Type manager used to retrieve field storage info.
@@ -72,15 +72,38 @@ class Anonymizer {
 
   /**
    * Anonymizer constructor.
+   *
+   * @param \Drupal\gdpr_fields\GDPRCollector $collector
+   *   Fields collector.
+   * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The module handler.
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
+   * @param \Drupal\anonymizer\Anonymizer\AnonymizerFactory $anonymizerFactory
+   *   The anonymizer plugin factory.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
    */
-  public function __construct(GDPRCollector $collector, Connection $db, EntityTypeManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, AccountProxyInterface $current_user, AnonymizerFactory $anonymizer_factory, ConfigFactoryInterface $config_factory) {
+  public function __construct(
+    GDPRCollector $collector,
+    Connection $database,
+    EntityTypeManagerInterface $entityTypeManager,
+    ModuleHandlerInterface $moduleHandler,
+    AccountProxyInterface $currentUser,
+    AnonymizerFactory $anonymizerFactory,
+    ConfigFactoryInterface $configFactory
+  ) {
     $this->collector = $collector;
-    $this->db = $db;
-    $this->entityTypeManager = $entity_manager;
-    $this->moduleHandler = $module_handler;
-    $this->currentUser = $current_user;
-    $this->anonymizerFactory = $anonymizer_factory;
-    $this->configFactory = $config_factory;
+    $this->database = $database;
+    $this->entityTypeManager = $entityTypeManager;
+    $this->moduleHandler = $moduleHandler;
+    $this->currentUser = $currentUser;
+    $this->anonymizerFactory = $anonymizerFactory;
+    $this->configFactory = $configFactory;
   }
 
   /**
@@ -93,6 +116,8 @@ class Anonymizer {
    *   Returns array containing any error messages.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
    */
   public function run(TaskInterface $task) {
@@ -165,8 +190,8 @@ class Anonymizer {
 
     $task->get('removal_log')->setValue($log);
 
-    if (count($failures) === 0) {
-      $tx = $this->db->startTransaction();
+    if (\count($failures) === 0) {
+      $transaction = $this->database->startTransaction();
 
       try {
         /* @var EntityInterface $entity */
@@ -181,7 +206,7 @@ class Anonymizer {
         $this->writeLogToFile($task, $log);
       }
       catch (\Exception $e) {
-        $tx->rollBack();
+        $transaction->rollBack();
         $errors[] = $e->getMessage();
       }
     }
@@ -320,7 +345,7 @@ class Anonymizer {
    * @param string $user_id
    *   The ID of the user to fetch.
    *
-   * @return \Drupal\user\Entity\User
+   * @return \Drupal\user\UserInterface
    *   The user that was fetched.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException

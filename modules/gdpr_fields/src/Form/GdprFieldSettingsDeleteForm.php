@@ -6,7 +6,7 @@ use Drupal\Core\Entity\EntityConfirmFormBase;
 use Drupal\Core\Url;
 
 /**
- * Delete confirmation form for GDPR field ssettings.
+ * Delete confirmation form for GDPR field settings.
  */
 class GdprFieldSettingsDeleteForm extends EntityConfirmFormBase {
 

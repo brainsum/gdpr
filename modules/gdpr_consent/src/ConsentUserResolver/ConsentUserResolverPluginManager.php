@@ -70,7 +70,7 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
       return $definition['entityType'] === $entityType;
     });
 
-    $definitionsForBundle = array_filter($definitionsForEntity, function ($definition) use ($bundle) {
+    $definitionsForBundle = \array_filter($definitionsForEntity, function ($definition) use ($bundle) {
       return array_key_exists('bundle', $definition) && $definition['bundle'] === $bundle;
     });
 
@@ -82,7 +82,7 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
     elseif (\count($definitionsForEntity) > 0) {
       // None matched for bundle.
       // Find any with no bundle.
-      $definitionsForBundle = array_filter($definitionsForEntity, function ($definition) {
+      $definitionsForBundle = \array_filter($definitionsForEntity, function ($definition) {
         return !array_key_exists('bundle', $definition) || $definition['bundle'] === '';
       });
 

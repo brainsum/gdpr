@@ -19,6 +19,11 @@ use Drupal\gdpr_fields\Controller\GDPRController;
  *   An associative array containing:
  *   - elements: An associative array containing the user information and any
  *   - attributes: HTML attributes for the containing element.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ * @throws \Drupal\Core\Entity\EntityMalformedException
  */
 function template_preprocess_gdpr_task(array &$variables) {
   // Fetch Task Entity Object.

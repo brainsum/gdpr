@@ -27,7 +27,7 @@ env:
   matrix:
     # Latest stable release
     - DRUPAL_CORE="~8.5@alpha"
-    # Latest current dev branche
+    # Latest current dev branch
     - DRUPAL_CORE="8.5.x-dev@dev"
     # Latest future dev branch
     - DRUPAL_CORE="8.6.x-dev@dev"

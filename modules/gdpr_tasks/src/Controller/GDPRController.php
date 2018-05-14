@@ -3,12 +3,13 @@
 namespace Drupal\gdpr_tasks\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Entity\EntityTypeManager;
-use Drupal\Core\Messenger\Messenger;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Session\AccountProxy;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\gdpr_tasks\TaskManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\gdpr_tasks\Form\CreateGdprRequestOnBehalfOfUserForm;
 
 /**
  * Returns responses for Views UI routes.
@@ -16,37 +17,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GDPRController extends ControllerBase {
 
   /**
-   * The messenger service.
-   *
-   * @var \Drupal\Core\Messenger\Messenger
-   */
-  protected $messenger;
-
-  /**
    * The task manager service.
    *
    * @var \Drupal\gdpr_tasks\TaskManager
    */
   protected $taskManager;
-
-  /**
-   * Constructs a new GDPRController.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManager $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Session\AccountProxy $current_user
-   *   The current user service.
-   * @param \Drupal\Core\Messenger\Messenger $messenger
-   *   The messenger service.
-   * @param \Drupal\gdpr_tasks\TaskManager $task_manager
-   *   The task manager service.
-   */
-  public function __construct(EntityTypeManager $entity_type_manager, AccountProxy $current_user, Messenger $messenger, TaskManager $task_manager) {
-    $this->entityTypeManager = $entity_type_manager;
-    $this->currentUser = $current_user;
-    $this->messenger = $messenger;
-    $this->taskManager = $task_manager;
-  }
 
   /**
    * {@inheritdoc}
@@ -58,6 +33,30 @@ class GDPRController extends ControllerBase {
       $container->get('messenger'),
       $container->get('gdpr_tasks.manager')
     );
+  }
+
+  /**
+   * Constructs a new GDPRController.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
+   *   The current user service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
+   * @param \Drupal\gdpr_tasks\TaskManager $task_manager
+   *   The task manager service.
+   */
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    AccountProxyInterface $current_user,
+    MessengerInterface $messenger,
+    TaskManager $task_manager
+  ) {
+    $this->entityTypeManager = $entity_type_manager;
+    $this->currentUser = $current_user;
+    $this->messenger = $messenger;
+    $this->taskManager = $task_manager;
   }
 
   /**
@@ -80,6 +79,9 @@ class GDPRController extends ControllerBase {
    *
    * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
    *   Either the task request form or a redirect response to requests page.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function requestPage(AccountInterface $user, $gdpr_task_type) {
     $tasks = $this->taskManager->getUserTasks($user, $gdpr_task_type);
@@ -92,9 +94,9 @@ class GDPRController extends ControllerBase {
       // However, if we're a member of staff making a request on behalf
       // of someone else, we need to collect further details
       // so render a form to get the notes.
-      if ($this->currentUser()->id() != $user->id()) {
+      if ($this->currentUser()->id() !== $user->id()) {
         return [
-          'form' => $this->formBuilder()->getForm('\Drupal\gdpr_tasks\Form\CreateGdprRequestOnBehalfOfUserForm'),
+          'form' => $this->formBuilder()->getForm(CreateGdprRequestOnBehalfOfUserForm::class),
         ];
       }
 

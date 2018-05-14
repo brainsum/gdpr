@@ -6,7 +6,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 
 /**
- * Provies a list controller for gdpr_consent entities.
+ * Provides a list controller for gdpr_consent entities.
  *
  * @ingroup gdpr_consent
  */

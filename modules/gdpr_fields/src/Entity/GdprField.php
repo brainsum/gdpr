@@ -22,7 +22,7 @@ class GdprField {
   public $name;
 
   /**
-   * Wether GDPR is enabled for this field.
+   * Whether GDPR is enabled for this field.
    *
    * @var bool
    */
@@ -83,7 +83,7 @@ class GdprField {
    * Creates a GdprField instance based on array data from the config entity.
    *
    * @param array $values
-   *   The undlerying data.
+   *   The underlying data.
    *
    * @return \Drupal\gdpr_fields\Entity\GdprField
    *   The field metadata instance.
@@ -107,8 +107,8 @@ class GdprField {
    */
   public function rtfDescription() {
     switch ($this->rtf) {
-      case 'anonymise':
-        return 'Anonymise';
+      case 'anonymize':
+        return 'Anonymize';
 
       case 'remove':
         return 'Remove';

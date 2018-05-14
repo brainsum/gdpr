@@ -329,7 +329,7 @@ class GdprSqlDump {
    */
   protected function prepare() {
     $this->cleanup();
-    $this->buildtablesToSkip();
+    $this->buildTablesToSkip();
     $this->createTableClones();
     $this->sanitizeData();
   }
@@ -337,7 +337,7 @@ class GdprSqlDump {
   /**
    * Builds tablesToSkip array.
    */
-  protected function buildtablesToSkip() {
+  protected function buildTablesToSkip() {
     // Get table expanded selection.
     $sql = $this->getInstance();
     $table_selection = $sql->get_expanded_table_selection();

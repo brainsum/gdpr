@@ -5,9 +5,9 @@ namespace Drupal\gdpr_consent\Controller;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatterInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  *  Returns responses for Consent Agreement routes.
  */
-class ConsentAgreementController extends ControllerBase implements ContainerInjectionInterface {
+class ConsentAgreementController extends ControllerBase {
 
   /**
    * The entity field manager for metadata.
@@ -81,15 +81,17 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    *
    * @return array
    *   An array suitable for drupal_render().
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function revisionShow($gdpr_consent_agreement_revision) {
-    $gdpr_consent_agreement = $this->entityTypeManager
+    $gdprConsentAgreement = $this->entityTypeManager
       ->getStorage('gdpr_consent_agreement')
       ->loadRevision($gdpr_consent_agreement_revision);
-    $view_builder = $this->entityTypeManager
+    $viewBuilder = $this->entityTypeManager
       ->getViewBuilder('gdpr_consent_agreement');
 
-    return $view_builder->view($gdpr_consent_agreement);
+    return $viewBuilder->view($gdprConsentAgreement);
   }
 
   /**
@@ -100,29 +102,34 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    *
    * @return string
    *   The page title.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function revisionPageTitle($gdpr_consent_agreement_revision) {
-    $gdpr_consent_agreement = $this->entityTypeManager
+    $gdprConsentAgreement = $this->entityTypeManager
       ->getStorage('gdpr_consent_agreement')
       ->loadRevision($gdpr_consent_agreement_revision);
     return $this->t('Revision of %title from %date', [
-      '%title' => $gdpr_consent_agreement->label(),
-      '%date' => $this->dateFormatter->format($gdpr_consent_agreement->getRevisionCreationTime()),
+      '%title' => $gdprConsentAgreement->label(),
+      '%date' => $this->dateFormatter->format($gdprConsentAgreement->getRevisionCreationTime()),
     ]);
   }
 
   /**
    * Generates an overview table of older revisions of a Consent Agreement .
    *
-   * @param \Drupal\gdpr_consent\Entity\ConsentAgreement $gdpr_consent_agreement
+   * @param \Drupal\gdpr_consent\Entity\ConsentAgreement $gdprConsentAgreement
    *   A Consent Agreement object.
    *
    * @return array
    *   An array as expected by drupal_render().
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
-  public function revisionOverview(ConsentAgreement $gdpr_consent_agreement) {
-    $agreement = ConsentAgreement::load($gdpr_consent_agreement);
+  public function revisionOverview(ConsentAgreement $gdprConsentAgreement) {
+    $agreement = ConsentAgreement::load($gdprConsentAgreement);
     $account = $this->currentUser();
+    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
     $storage = $this->entityTypeManager->getStorage('gdpr_consent_agreement');
 
     $build['#title'] = $this->t('Revisions for %title', ['%title' => $agreement->title->value]);
@@ -137,7 +144,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
 
     $latest_revision = TRUE;
 
-    foreach (array_reverse($vids) as $vid) {
+    foreach (\array_reverse($vids) as $vid) {
       /** @var \Drupal\gdpr_consent\Entity\ConsentAgreement $revision */
       $revision = $storage->loadRevision($vid);
 
@@ -148,8 +155,8 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
 
       // Use revision link to link to revisions that are not active.
       $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
-      if ($vid != $agreement->getRevisionId()) {
-        $link = $this->l($date, new Url('entity.gdpr_consent_agreement.revision', [
+      if ($vid !== $agreement->getRevisionId()) {
+        $link = Link::fromTextAndUrl($date, new Url('entity.gdpr_consent_agreement.revision', [
           'gdpr_consent_agreement' => $agreement->id(),
           'gdpr_consent_agreement_revision' => $vid,
         ]));
@@ -186,6 +193,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
         foreach ($row as &$current) {
           $current['class'] = ['revision-current'];
         }
+        unset($current);
         $latest_revision = FALSE;
       }
       else {
@@ -238,6 +246,9 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
    *
    * @return array
    *   Renderable table of user agreements.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   public function myAgreements(AccountInterface $user) {
     $map = $this->entityFieldManager->getFieldMapByFieldType('gdpr_user_consent');
@@ -245,7 +256,7 @@ class ConsentAgreementController extends ControllerBase implements ContainerInje
     $rows = [];
 
     foreach ($map as $entity_type => $fields) {
-      $field_names = array_keys($fields);
+      $field_names = \array_keys($fields);
 
       foreach ($field_names as $field_name) {
 

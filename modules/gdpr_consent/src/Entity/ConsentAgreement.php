@@ -74,16 +74,18 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
    * {@inheritdoc}
    */
   protected function urlRouteParameters($rel) {
-    $uri_route_parameters = parent::urlRouteParameters($rel);
+    $uriRouteParameters = parent::urlRouteParameters($rel);
 
-    if ($rel === 'revision_revert' && $this instanceof RevisionableInterface) {
-      $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
-    }
-    elseif ($rel === 'revision_delete' && $this instanceof RevisionableInterface) {
-      $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
+    if ($this instanceof RevisionableInterface) {
+      if ($rel === 'revision_revert') {
+        $uriRouteParameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
+      }
+      elseif ($rel === 'revision_delete') {
+        $uriRouteParameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
+      }
     }
 
-    return $uri_route_parameters;
+    return $uriRouteParameters;
   }
 
   /**
@@ -92,7 +94,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
 
-    foreach (array_keys($this->getTranslationLanguages()) as $langcode) {
+    foreach (\array_keys($this->getTranslationLanguages()) as $langcode) {
       $translation = $this->getTranslation($langcode);
 
       // If no owner has been set explicitly, make the anonymous user the owner.
@@ -195,6 +197,16 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
   }
 
   /**
+   * Return the title.
+   *
+   * @return string
+   *   The title.
+   */
+  public function getTitle() {
+    return (string) $this->get('title')->value;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -220,7 +232,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
       ->setRevisionable(TRUE)
       ->setDescription(t('Whether consent is implicit or explicit. Set to "Explicit" if the user needs to explicitly agree, otherwise "Implicit".'))
       ->setDefaultValue('explicit')
-      ->setSetting('allowed_values_function', ['\Drupal\gdpr_consent\Entity\ConsentAgreement', 'getModes'])
+      ->setSetting('allowed_values_function', [ConsentAgreement::class, 'getModes'])
       ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'type' => 'select',
@@ -338,7 +350,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
    * {@inheritdoc}
    */
   public function __toString() {
-    return $this->get('title')->getString();
+    return $this->getTitle();
   }
 
 }

@@ -3,7 +3,6 @@
 namespace Drupal\gdpr_fields\Plugin\Relationship;
 
 use Drupal\Core\Entity\EntityTypeManager;
-use Drupal\Core\Entity\Query\QueryException;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\ctools\Plugin\Relationship\TypedDataEntityRelationship;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -96,19 +95,14 @@ class TypedDataEntityRelationshipReverse extends TypedDataEntityRelationship imp
     $base = $context->getContextValue();
     $name = $this->getPluginDefinition()['property_name'];
 
-    try {
-      $query = \Drupal::entityQuery($source_entity_type)
-        ->condition($name, $base->id(), '=')
-        ->range(0, 1)
-        ->execute();
-    }
-    catch (QueryException $e) {
-      return FALSE;
-    }
+    $query = \Drupal::entityQuery($source_entity_type)
+      ->condition($name, $base->id(), '=')
+      ->range(0, 1)
+      ->execute();
 
-    $data = reset($query);
+    $data = \reset($query);
     if ($data) {
-      $data = \Drupal::entityTypeManager()->getStorage($source_entity_type)->load($data);
+      $data = $this->entityTypeManager->getStorage($source_entity_type)->load($data);
     }
 
     return $data;

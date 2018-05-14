@@ -5,6 +5,7 @@ namespace Drupal\gdpr_consent;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Routing\AdminHtmlRouteProvider;
 use Symfony\Component\Routing\Route;
+use Drupal\gdpr_consent\Form\ConsentAgreementRevisionRevertForm;
 
 /**
  * Provides routes for Consent Agreement entities.
@@ -111,7 +112,7 @@ class ConsentAgreementHtmlRouteProvider extends AdminHtmlRouteProvider {
       $route = new Route($entity_type->getLinkTemplate('revision_revert'));
       $route
         ->setDefaults([
-          '_form' => '\Drupal\gdpr_consent\Form\ConsentAgreementRevisionRevertForm',
+          '_form' => ConsentAgreementRevisionRevertForm::class,
           '_title' => 'Revert to earlier revision',
         ])
         ->setRequirement('_permission', 'revert all consent agreement revisions')

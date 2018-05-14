@@ -39,6 +39,8 @@ class TaskManager {
    *   The entity type manager.
    * @param \Drupal\Core\Session\AccountProxy $current_user
    *   The current user service.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
   public function __construct(EntityTypeManager $entity_type_manager, AccountProxy $current_user) {
     $this->entityTypeManager = $entity_type_manager;

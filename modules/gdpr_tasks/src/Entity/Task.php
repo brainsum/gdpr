@@ -23,7 +23,6 @@ use Drupal\user\UserInterface;
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\gdpr_tasks\TaskListBuilder",
  *     "views_data" = "Drupal\gdpr_tasks\Entity\TaskViewsData",
- *
  *     "form" = {
  *       "default" = "Drupal\gdpr_tasks\Form\TaskForm",
  *       "process" = "Drupal\gdpr_tasks\Form\TaskActionsForm",
@@ -196,7 +195,7 @@ class Task extends ContentEntityBase implements TaskInterface {
       ->setLabel(t('Status'))
       ->setRequired(TRUE)
       ->setDefaultValue('requested')
-      ->setSetting('allowed_values_function', ['\Drupal\gdpr_tasks\Entity\Task', 'getStatuses'])
+      ->setSetting('allowed_values_function', [static::class, 'getStatuses'])
       ->setDisplayOptions('form', [
         'type' => 'hidden',
       ])

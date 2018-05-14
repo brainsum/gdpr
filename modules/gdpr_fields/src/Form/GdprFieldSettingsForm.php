@@ -247,7 +247,7 @@ class GdprFieldSettingsForm extends FormBase {
       '#type' => 'select',
       '#title' => t('Right to be forgotten'),
       '#options' => [
-        'anonymise' => 'Anonymise',
+        'anonymize' => 'Anonymize',
         'remove' => 'Remove',
         'maybe' => 'Maybe',
         'no' => 'Not Included',
@@ -274,7 +274,7 @@ class GdprFieldSettingsForm extends FormBase {
       '#states' => [
         'visible' => [
           ':input[name="gdpr_enabled"]' => ['checked' => TRUE],
-          ':input[name="gdpr_rtf"]' => ['value' => 'anonymise'],
+          ':input[name="gdpr_rtf"]' => ['value' => 'anonymize'],
         ],
       ],
     ];

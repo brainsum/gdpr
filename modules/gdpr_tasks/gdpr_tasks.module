@@ -82,6 +82,11 @@ function gdpr_tasks_theme_suggestions_gdpr_task(array $variables) {
  *
  * @return array
  *   Structured array of user related data.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ * @throws \Drupal\Core\Entity\EntityMalformedException
  */
 function gdpr_tasks_generate_sar_report(UserInterface $user) {
   /* @var \Drupal\gdpr_fields\Controller\GDPRController $controller */
@@ -98,7 +103,7 @@ function gdpr_tasks_generate_sar_report(UserInterface $user) {
  * @todo Consider creating plugin or event listeners for task processing.
  */
 function gdpr_tasks_entity_presave(EntityInterface $entity) {
-  if ($entity->getEntityTypeId() != 'gdpr_task') {
+  if ('gdpr_task' !== $entity->getEntityTypeId()) {
     return;
   }
 
@@ -138,7 +143,7 @@ function gdpr_tasks_entity_presave(EntityInterface $entity) {
           unset($values['gdpr_rta']);
           $inc[$key] = $values;
 
-          if ($rta == 'maybe') {
+          if ('maybe' === $rta) {
             $maybe[$key] = $values;
           }
         }
@@ -146,7 +151,7 @@ function gdpr_tasks_entity_presave(EntityInterface $entity) {
         /* @var \Drupal\gdpr_tasks\TaskManager $task_manager */
         $task_manager = \Drupal::service('gdpr_tasks.manager');
         $destination = $task_manager->toCsv($inc, $dirname);
-        $export = file_get_contents($destination);
+        $export = \file_get_contents($destination);
 
         // Generate a file entity.
         // @todo Add headers to csv export.
@@ -161,7 +166,7 @@ function gdpr_tasks_entity_presave(EntityInterface $entity) {
         $entity->sar_export = $values;
 
         $temp = $task_manager->toCsv($maybe, $dirname);
-        $entity->manual_data = file_get_contents($temp);
+        $entity->manual_data = \file_get_contents($temp);
       }
       break;
   }
