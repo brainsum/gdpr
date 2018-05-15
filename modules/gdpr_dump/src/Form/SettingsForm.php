@@ -18,6 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SettingsForm extends ConfigFormBase {
 
   const GDPR_DUMP_CONF_KEY = 'gdpr_dump.table_map';
+  const GDPR_DUMP_NO_PLUGIN_KEY = 'none';
 
   /**
    * Database connection.
@@ -122,43 +123,41 @@ class SettingsForm extends ConfigFormBase {
      */
     $anonymizationOptions = [
       '#type' => 'select',
-      '#title' => $this->t('Anonymization plugin'),
+      '#title' => $this->t('Apply anonymization'),
       '#options' => $plugins,
-      '#empty_value' => 'none',
-      '#empty_option' => $this->t('- None -'),
+      '#empty_value' => self::GDPR_DUMP_NO_PLUGIN_KEY,
+      '#empty_option' => $this->t('- No -'),
+      '#title_display' => 'invisible',
     ];
 
     $config = $this->config(self::GDPR_DUMP_CONF_KEY);
     $mapping = $config->get('mapping');
     $emptyTables = $config->get('empty_tables');
+    $table_header = [
+      $this->t('Field'),
+      $this->t('Type'),
+      $this->t('Description'),
+      $this->t('Apply anonymization'),
+    ];
 
     /** @var array $columns */
     foreach ($this->databaseManager->getTableColumns() as $table => $columns) {
       $rows = [];
       foreach ($columns as $column) {
         $currentOptions = $anonymizationOptions;
-        $checked = 0;
         if (isset($mapping[$table][$column['COLUMN_NAME']])) {
-          $checked = 1;
           $currentOptions['#default_value'] = $mapping[$table][$column['COLUMN_NAME']];
         }
 
-        $rows[] = [
-          '#type' => 'container',
+        $rows[$column['COLUMN_NAME']] = [
           'name' => [
-            '#type' => 'value',
-            '#value' => $column['COLUMN_NAME'],
+            '#markup' => '<strong>' . $column['COLUMN_NAME'] . '</strong>',
           ],
-          'anonymize' => [
-            '#type' => 'checkbox',
-            '#title' => $this->t('Anonymize <strong>@field_name</strong>?', [
-              '@field_name' => $column['COLUMN_NAME'],
-            ]),
-            '#description' => $this->t('<b>Field type: </b>@field_type<br><b>Field comment: </b>@field_comment', [
-              '@field_type' => $column['DATA_TYPE'],
-              '@field_comment' => empty($column['COLUMN_COMMENT']) ? '-' : $column['COLUMN_COMMENT'],
-            ]),
-            '#default_value' => $checked,
+          'type' => [
+            '#markup' => '<strong>' . $column['DATA_TYPE'] . '</strong>',
+          ],
+          'description' => [
+            '#markup' => '<strong>' . (empty($column['COLUMN_COMMENT']) ? '-' : $column['COLUMN_COMMENT']) . '</strong>',
           ],
           'option' => $currentOptions,
         ];
@@ -166,16 +165,18 @@ class SettingsForm extends ConfigFormBase {
 
       $form['tables'][$table] = [
         '#type' => 'details',
-        '#title' => $table,
+        '#title' => $this->t('Table: %table', ['%table' => $table]),
         'empty_table' => [
           '#type' => 'checkbox',
           '#title' => $this->t('Empty this table'),
           '#default_value' => isset($emptyTables[$table]) ? $emptyTables[$table] : NULL,
+          '#weight' => 1,
         ],
         'columns' => [
-          '#type' => 'container',
-          'data' => $rows,
-        ],
+          '#type' => 'table',
+          '#header' => $table_header,
+          '#weight' => 0,
+        ] + $rows,
       ];
     }
 
@@ -197,9 +198,9 @@ class SettingsForm extends ConfigFormBase {
         if ($row['empty_table']) {
           $emptyTables[$table] = 1;
         }
-        foreach ($row['columns']['data'] as $data) {
-          if ($data['anonymize'] === 1) {
-            $mapping[$table][$data['name']] = $data['option'];
+        foreach ($row['columns'] as $name => $data) {
+          if (!empty($data['option']) && $data['option'] !== self::GDPR_DUMP_NO_PLUGIN_KEY) {
+            $mapping[$table][$name] = $data['option'];
           }
         }
       }
