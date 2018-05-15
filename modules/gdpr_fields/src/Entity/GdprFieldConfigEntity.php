@@ -75,7 +75,7 @@ class GdprFieldConfigEntity extends ConfigEntityBase {
   public function getField($bundle, $field_name) {
     $bundle_fields = \array_filter($this->bundles, function ($key) use ($bundle) {
       return $key == $bundle;
-    }, \array_filter_USE_KEY);
+    }, ARRAY_FILTER_USE_KEY);
 
     if (\count($bundle_fields)) {
       $result = \array_filter($bundle_fields[$bundle], function ($f) use ($field_name) {
