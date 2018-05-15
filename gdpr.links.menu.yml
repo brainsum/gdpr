@@ -5,6 +5,12 @@ gdpr.admin_config:
 
 gdpr.cheklist:
   title: 'Checklist'
+  description: 'GDPR Checklist'
   parent: gdpr.admin_config
   route_name: checklistapi.checklists.gdpr_checklist
-  description: 'GDPR Checklist'
+
+gdpr.content_links_form:
+  title: 'Content Links Settings'
+  description: 'GDPR Content Links Settings'
+  parent: gdpr.admin_config
+  route_name: gdpr.content_links_form

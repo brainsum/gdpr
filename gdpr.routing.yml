@@ -19,3 +19,13 @@ gdpr.admin_config:
     _permission: 'administer site configuration'
   options:
     _admin_route: TRUE
+
+gdpr.content_links_form:
+  path: '/admin/config/gdpr/content-links'
+  defaults:
+    _title: 'Content links config'
+    _form: \Drupal\gdpr\Form\ContentLinksForm
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE
