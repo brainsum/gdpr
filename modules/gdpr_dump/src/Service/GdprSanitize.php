@@ -25,7 +25,7 @@ class GdprSanitize extends GdprSqlDump {
   protected function rename() {
     $transaction = $this->database->startTransaction('gdpr_rename_table');
 
-    foreach (\array_keys($this->gdprOptions) as $table) {
+    foreach (\array_keys($this->tablesToAnonymize) as $table) {
       $gdprTable = self::GDPR_TABLE_PREFIX . $table;
       $this->database->schema()->dropTable($table);
       $this->database->schema()->renameTable($gdprTable, $table);
