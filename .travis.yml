@@ -11,8 +11,10 @@ cache:
 language: php
 
 php:
-  - 5.6
-  - 7
+  - 5.6.36
+  - 7.0.30
+  - 7.1.17
+  - 7.2.5
 
 env:
   global:
@@ -35,9 +37,13 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: 5.6
+    - php: 5.6.36
       env: DRUPAL_CORE="8.6.x-dev@dev"
-    - php: 7
+    - php: 7.0.30
+      env: DRUPAL_CORE="8.6.x-dev@dev"
+    - php: 7.1.17
+      env: DRUPAL_CORE="8.6.x-dev@dev"
+    - php: 7.2.5
       env: DRUPAL_CORE="8.6.x-dev@dev"
 
 mysql:
@@ -49,6 +55,7 @@ before_install:
   # Remove xdebug. We aren't generating code coverage, and it slows down Composer.
   - phpenv config-rm xdebug.ini || true
   - git config --global github.accesstoken $GITHUB_OAUTH_TOKEN
+  - phpenv config-add $TRAVIS_BUILD_DIR/travis-ci/travis.php.ini
   # Track our general build directory.
   - export DRUPAL_BUILD_ROOT="$(dirname "$TRAVIS_BUILD_DIR")"
   - export VENDOR_DIR="$(dirname "$TRAVIS_BUILD_DIR")/drupal/vendor"
