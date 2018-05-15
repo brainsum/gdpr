@@ -75,12 +75,12 @@ class ContentLinksForm extends ConfigFormBase {
    * @return array
    *   The required content.
    */
-  protected function requiredContentList() {
+  public static function requiredContentList() {
     return [
-      'privacy_policy' => $this->t('Privacy policy'),
-      'terms_of_use' => $this->t('Terms of use'),
-      'about_us' => $this->t('About us'),
-      'impressum' => $this->t('Impressum'),
+      'privacy_policy' => t('Privacy policy'),
+      'terms_of_use' => t('Terms of use'),
+      'about_us' => t('About us'),
+      'impressum' => t('Impressum'),
     ];
   }
 
@@ -110,7 +110,7 @@ class ContentLinksForm extends ConfigFormBase {
         '#title' => $language->getName(),
       ];
 
-      foreach ($this->requiredContentList() as $key => $label) {
+      foreach (static::requiredContentList() as $key => $label) {
         $form['links'][$langCode][$key] = [
           '#type' => 'textfield',
           '#title' => $label,

@@ -5,9 +5,10 @@
  * Module file.
  */
 
+use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Link;
+use Drupal\gdpr\Form\ContentLinksForm;
 
 /**
  * Implements hook_help().
@@ -45,74 +46,80 @@ function gdpr_checklistapi_checklist_info() {
  * Callback for gdpr_checklistapi_checklist_info().
  */
 function gdpr_checklistapi_checklist_items() {
-  $content = gdpr_search_content();
+  $langCode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $contentLinks = \Drupal::config(ContentLinksForm::GDPR_CONTENT_CONF_KEY)
+    ->get('links');
 
-  $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  /** @var \Drupal\Core\Render\RendererInterface $renderer */
+  $renderer = \Drupal::service('renderer');
 
-  if (!empty($content)) {
-    $menu_handler = \Drupal::service('plugin.manager.menu.link');
-    $description = [
-      '#theme' => 'item_list',
-    ];
+  $linkLabels = ContentLinksForm::requiredContentList();
 
-    foreach ($content as $node) {
-      if ($node->hasTranslation($langcode)) {
-        $node = $node->getTranslation($langcode);
-      }
+  $linkOptions = [
+    'absolute' => TRUE,
+    'attributes' => [
+      'target' => '_blank',
+      'rel' => 'noopener noreferrer',
+    ],
+  ];
+  $description = [
+    '#theme' => 'item_list',
+    '#cache' => [
+      'tags' => [
+        'config:' . ContentLinksForm::GDPR_CONTENT_CONF_KEY,
+      ],
+    ],
+  ];
 
-      if ($node->isPublished()) {
-        $status = [
-          '#prefix' => '<span class="admin-enabled">',
-          '#suffix' => '</span>',
-          '#markup' => t('published'),
-        ];
-      }
-      else {
-        $status = [
-          '#prefix' => '<span class="admin-missing">',
-          '#suffix' => '</span>',
-          '#markup' => t('not published'),
-        ];
-      }
-
-      $options = [
-        'absolute' => TRUE,
-        'attributes' => [
-          'target' => '_blank',
-        ],
+  foreach ($contentLinks[$langCode] as $key => $link) {
+    if (empty($link)) {
+      $configStatus = [
+        '#prefix' => '<span class="admin-missing">',
+        '#suffix' => '</span>',
+        '#markup' => t('not configured'),
       ];
-      $url = Link::createFromRoute($node->getTitle(), 'entity.node.canonical', ['node' => $node->id()], $options);
 
-      $links = $menu_handler->loadLinksByRoute('entity.node.canonical', ['node' => $node->id()]);
-
-      $menu_list = [];
-      if (!empty($links)) {
-        foreach ($links as $link) {
-          $menu_list[] = $link->getMenuName();
-        }
-      }
-
-      $in_menu_text = !empty($menu_list) ? t('in menu: @menus', ['@menus' => implode(', ', $menu_list)]) : '';
-
-      $description['#items'][] = t('@title (@status) @menu', [
-        '@title' => $url->toString(),
-        '@status' => \Drupal::service('renderer')->renderPlain($status),
-        '@menu' => $in_menu_text,
-      ]);
-    }
-
-    $content_discovery_description = \Drupal::service('renderer')->renderPlain($description);
-    if ($node->isPublished()) {
-      $privacy_policy_description = t('This one looks good to go, but you need to verify that it has real and relevant content.');
+      $title = $linkLabels[$key];
     }
     else {
-      $privacy_policy_description = t('We could not find a <em>published</em> “Privacy Policy” page.');
+      $configStatus = [
+        '#prefix' => '<span class="admin-enabled">',
+        '#suffix' => '</span>',
+        '#markup' => t('configured'),
+      ];
+
+      $linkAsUrl = Url::fromUri($link, $linkOptions);
+      $title = Link::fromTextAndUrl($linkLabels[$key], $linkAsUrl)
+        ->toString();
     }
+
+    $description['#items'][] = t('@title (@status)', [
+      '@title' => $title,
+      '@status' => $renderer->renderPlain($configStatus),
+    ]);
+  }
+  $contentConfigFormLink = Link::createFromRoute('Content link configuration', 'gdpr.content_links_form')
+    ->toString();
+  if (empty($description['#items'])) {
+    $contentDiscoveryDescription = t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum". Configure them here: @config_link', [
+      '@config_link' => $contentConfigFormLink,
+    ]);
+    $privacyPolicyDescription = t('Please verify manually that such content of similar titles exists and has been published.');
   }
   else {
-    $content_discovery_description = t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum".');
-    $privacy_policy_description = t('Please verify manually that such content of similar titles exists and has been published.');
+    $contentDiscoveryDescription = $renderer->renderPlain($description);
+    $contentDiscoveryDescription = t('You can configure content links here: @config_link', [
+      '@config_link' => $contentConfigFormLink,
+    ]) . $contentDiscoveryDescription;
+
+    if (!empty($contentLinks[$langCode]['privacy_policy'])) {
+      $privacyPolicyDescription = t('This one looks good to go, but you need to verify that it has real and relevant content.');
+    }
+    else {
+      $privacyPolicyDescription = t('We could not find a <em>configured</em> “Privacy Policy” page.');
+    }
   }
+
   $items = [
     'getting_started' => [
       '#title' => t('Getting Started'),
@@ -151,11 +158,10 @@ function gdpr_checklistapi_checklist_items() {
     ],
     'content_related_suggestions' => [
       '#title' => t('Content related suggestions'),
-      '#description' => t('<p>Automated search performed on content of site.</p>')
-      . $content_discovery_description,
+      '#description' => t('<p>Automated search performed on content of site.</p>') . $contentDiscoveryDescription,
       'privacy_policy_page' => [
         '#title' => t("I have checked through the site's content and verified that a page containing <em>Privacy Policy</em> exists and has been published to this site."),
-        '#description' => $privacy_policy_description,
+        '#description' => $privacyPolicyDescription,
       ],
       'privacy_policy_published' => [
         '#title' => t('I confirm the existing "Privacy Policy" or similar page has been published.'),
@@ -171,18 +177,15 @@ function gdpr_checklistapi_checklist_items() {
       '#description' => t('This group of checkpoints addresses various actions to be taken regarding site features.'),
       'external_traffic_measurement' => [
         '#title' => t("Yes, I'm aware there are external traffic measurement and user tracking services integrated on this site"),
-        '#description' => t('As the owner and/or maintainer of the site I have, to the best of my knowledge, taken the necessary measures to set up these 3rd-party data collecting tools to ensure maximum compliance with GDPR regulations.')
-        . _get_module_list('tracking'),
+        '#description' => t('As the owner and/or maintainer of the site I have, to the best of my knowledge, taken the necessary measures to set up these 3rd-party data collecting tools to ensure maximum compliance with GDPR regulations.') . _get_module_list('tracking'),
       ],
       'social_media_connections' => [
         '#title' => t("Yes, I'm aware there are connections established between this site and some social media platforms"),
-        '#description' => t('As many social media platforms collects identifiable personal data, I acknowledge that the owner of this site is responsible for setting up these connections to ensure maximum compliance with GDPR regulations.')
-        . _get_module_list('social'),
+        '#description' => t('As many social media platforms collects identifiable personal data, I acknowledge that the owner of this site is responsible for setting up these connections to ensure maximum compliance with GDPR regulations.') . _get_module_list('social'),
       ],
       'module_data_collection' => [
         '#title' => t('I confirm that all Drupal core, community, and custom modules have been revised as to not gather any unnecessary personal data of site visitors'),
-        '#description' => t('Owner and/or maintainer of the site has to ensure that the modules listed below have been revised as to gather only necessary (i.e. not needed for provision of service) personal data of site visitors.')
-        . _get_module_list('collect'),
+        '#description' => t('Owner and/or maintainer of the site has to ensure that the modules listed below have been revised as to gather only necessary (i.e. not needed for provision of service) personal data of site visitors.') . _get_module_list('collect'),
       ],
       'user_role_permissions' => [
         '#title' => t('I have examined all aspects of displayed personal data, associated with this site, to ensure that all users can access only permitted types of information according to their role'),
@@ -224,7 +227,7 @@ function gdpr_checklistapi_checklist_items() {
       ],
       'logging_responsibility' => [
         '#title' => t('I confirm that I have understood that the responsibility of personal data logging is dependent on the size of my organisation as described below:'),
-        '#description' => _get_logging_responsability_description(),
+        '#description' => _get_logging_responsibility_description(),
       ],
     ],
   ];
@@ -237,7 +240,7 @@ function gdpr_checklistapi_checklist_items() {
  * @return string
  *   HTML markup string
  */
-function _get_logging_responsability_description() {
+function _get_logging_responsibility_description() {
   $logging_items = [
     '#theme' => 'item_list',
     '#items' => [
