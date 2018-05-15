@@ -1,0 +1,8 @@
+# gdpr
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.travis.yml export-ignore
+/gdpr.test export-ignore
+/phpcs.xml export-ignore
+/travis-ci export-ignore
+/bin export-ignore
