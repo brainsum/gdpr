@@ -135,8 +135,8 @@ class ConsentAgreementController extends ControllerBase {
     $build['#title'] = $this->t('Revisions for %title', ['%title' => $agreement->title->value]);
     $header = [$this->t('Revision'), $this->t('Operations')];
 
-    $revert_permission = $account->hasPermission('create gdpr agreements');
-    $delete_permission = $account->hasPermission('create gdpr agreements');
+    $revert_permission = $account->hasPermission('manage gdpr agreements');
+    $delete_permission = $account->hasPermission('manage gdpr agreements');
 
     $rows = [];
 

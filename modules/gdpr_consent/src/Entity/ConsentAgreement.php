@@ -42,7 +42,7 @@ use Drupal\user\UserInterface;
  *     "status" = "status",
  *     "revision" = "revision_id",
  *   },
- *   admin_permission = "create gdpr agreements",
+ *   admin_permission = "manage gdpr agreements",
  *   links = {
  *     "canonical" = "/admin/gdpr/agreements/{gdpr_consent_agreement}",
  *     "add-form" = "/admin/gdpr/agreements/add",
