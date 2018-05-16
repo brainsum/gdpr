@@ -31,7 +31,7 @@ class UserController extends ControllerBase {
 
     // If access to the page is enabled, only show the tab if we're viewing our
     // OWN profile or we're a GDPR admin.
-    if (!$this->currentUser()->hasPermission('administer gdpr settings')) {
+    if ($this->currentUser()->hasPermission('administer gdpr settings')) {
       return AccessResult::allowed();
     }
 
