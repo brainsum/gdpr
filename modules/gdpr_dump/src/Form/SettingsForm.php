@@ -3,6 +3,7 @@
 namespace Drupal\gdpr_dump\Form;
 
 use Drupal\anonymizer\Anonymizer\AnonymizerPluginManager;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\ConfigFormBase;
@@ -102,7 +103,7 @@ class SettingsForm extends ConfigFormBase {
     $form['#tree'] = TRUE;
 
     $form['description'] = [
-      '#markup' => $this->t('Check the checkboxes for each table columns containing sensitive data!'),
+      '#markup' => $this->t('Apply anonymization for each table columns containing sensitive data!'),
     ];
 
     $form['tables'] = [
@@ -140,45 +141,104 @@ class SettingsForm extends ConfigFormBase {
       $this->t('Apply anonymization'),
     ];
 
+    $more_header = [$this->t('Table name')];
+    $db_schema = $this->database->schema();
+    $schema_handles_table_comments = is_callable([$db_schema, 'getComment']);
+    if ($schema_handles_table_comments) {
+      $more_header[] = $this->t('Description');
+    }
+    $more_header[] = $this->t('Columns');
+
+    $form['more_wrapper'] = [
+      '#type' => 'details',
+      '#title' => $this->t('More tables'),
+      'more_tables' => [
+        '#caption' => $this->t('Select from the following tables to be able to configure more for anonymization, then press the \'Refresh form\' button below to add them to the form.'),
+        '#header' => $more_header,
+        '#type' => 'tableselect',
+        '#options' => [],
+        '#js_select' => FALSE,
+      ],
+      'refresh' => [
+        '#type' => 'button',
+        '#value' => $this->t('Refresh form'),
+      ],
+    ];
+
+    $added = NestedArray::getValue($form_state->getUserInput(), ['more_wrapper', 'more_tables'], $exists);
+    // Force some tables to always show in the form if they exist.
+    $forced = [
+      'comment_field_data' => TRUE,
+      'contact_message' => TRUE,
+      'users_data' => TRUE,
+      'users_field_data' => TRUE,
+      'webform_submission' => TRUE,
+      'webform_submission_data' => TRUE,
+      'webform_submission_log' => TRUE,
+    ];
+
     /** @var array $columns */
     foreach ($this->databaseManager->getTableColumns() as $table => $columns) {
-      $rows = [];
-      foreach ($columns as $column) {
-        $currentOptions = $anonymizationOptions;
-        if (isset($mapping[$table][$column['COLUMN_NAME']])) {
-          $currentOptions['#default_value'] = $mapping[$table][$column['COLUMN_NAME']];
+      $table_comment = $schema_handles_table_comments ? $db_schema->getComment($table) : NULL;
+      $table_configured = isset($mapping[$table]) || isset($emptyTables[$table]);
+      $table_forced = isset($forced[$table]) || strpos($table, 'user__') === 0 || strpos($table, 'contact_message__') === 0 || strpos($table, 'comment__') === 0;
+      $table_added = isset($added[$table]);
+
+      if ($table_configured || $table_added || $table_forced) {
+        $rows = [];
+        foreach ($columns as $column) {
+          $currentOptions = $anonymizationOptions;
+          if (isset($mapping[$table][$column['COLUMN_NAME']])) {
+            $currentOptions['#default_value'] = $mapping[$table][$column['COLUMN_NAME']];
+          }
+
+          $rows[$column['COLUMN_NAME']] = [
+            'name' => [
+              '#markup' => '<strong>' . $column['COLUMN_NAME'] . '</strong>',
+            ],
+            'type' => [
+              '#markup' => '<strong>' . $column['DATA_TYPE'] . '</strong>',
+            ],
+            'description' => [
+              '#markup' => '<strong>' . (empty($column['COLUMN_COMMENT']) ? '-' : $column['COLUMN_COMMENT']) . '</strong>',
+            ],
+            'option' => $currentOptions,
+          ];
         }
 
-        $rows[$column['COLUMN_NAME']] = [
-          'name' => [
-            '#markup' => '<strong>' . $column['COLUMN_NAME'] . '</strong>',
+        $form['tables'][$table] = [
+          '#type' => 'details',
+          '#title' => $this->t('Table: %table', ['%table' => $table]),
+          '#description' => $table_comment,
+          'empty_table' => [
+            '#type' => 'checkbox',
+            '#title' => $this->t('Empty this table'),
+            '#default_value' => isset($emptyTables[$table]) ? $emptyTables[$table] : NULL,
+            '#weight' => 1,
           ],
-          'type' => [
-            '#markup' => '<strong>' . $column['DATA_TYPE'] . '</strong>',
-          ],
-          'description' => [
-            '#markup' => '<strong>' . (empty($column['COLUMN_COMMENT']) ? '-' : $column['COLUMN_COMMENT']) . '</strong>',
-          ],
-          'option' => $currentOptions,
+          'columns' => [
+            '#type' => 'table',
+            '#header' => $table_header,
+            '#weight' => 0,
+          ] + $rows,
         ];
+
+        if ($schema_handles_table_comments) {
+          $form['tables'][$table]['#description'] = $table_comment;
+        }
       }
 
-      $form['tables'][$table] = [
-        '#type' => 'details',
-        '#title' => $this->t('Table: %table', ['%table' => $table]),
-        'empty_table' => [
-          '#type' => 'checkbox',
-          '#title' => $this->t('Empty this table'),
-          '#default_value' => isset($emptyTables[$table]) ? $emptyTables[$table] : NULL,
-          '#weight' => 1,
-        ],
-        'columns' => [
-          '#type' => 'table',
-          '#header' => $table_header,
-          '#weight' => 0,
-        ] + $rows,
-      ];
+      if (!$table_configured && !$table_forced) {
+        $row = [['data' => ['#markup' => '<strong>' . $table . '</strong>']]];
+        if ($schema_handles_table_comments) {
+          $row[] = $table_comment;
+        }
+        $row[] = implode(', ', array_column($columns, 'COLUMN_NAME'));
+        $form['more_wrapper']['more_tables']['#options'][$table] = $row;
+      }
     }
+
+    $form['more_wrapper']['#access'] = !empty($form['more_wrapper']['more_tables']['#options']);
 
     return parent::buildForm($form, $form_state);
   }
