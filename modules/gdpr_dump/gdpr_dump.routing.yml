@@ -1,0 +1,9 @@
+gdpr_dump.settings:
+  path: '/admin/config/gdpr/dump-settings'
+  defaults:
+    _form: '\Drupal\gdpr_dump\Form\SettingsForm'
+    _title: 'SQL Dump settings'
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE

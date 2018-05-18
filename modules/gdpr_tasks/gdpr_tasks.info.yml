@@ -1,0 +1,14 @@
+name: General Data Protection Regulation (GDPR) - Tasks
+description: Allow tracking of SARs and Removal requests.
+core: 8.x
+type: module
+package: General Data Protection Regulation
+
+dependencies:
+  - gdpr:gdpr
+  - gdpr:anonymizer
+  - gdpr:gdpr_fields
+  - entity:entity
+  - drupal:file
+  - drupal:views
+  - drupal:options

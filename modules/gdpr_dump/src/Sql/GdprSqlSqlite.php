@@ -10,5 +10,4 @@ use Drush\Sql\SqlSqlite;
  * @package Drupal\gdpr_dump\Sql
  */
 class GdprSqlSqlite extends SqlSqlite {
-
 }

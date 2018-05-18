@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * Install file for the gdpr_dump module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function gdpr_dump_requirements() {
+  $requirements = [];
+  $requirements['gdpr_dump_drush'] = [
+    'title' => t('GDPR Dump - Drush'),
+    'value' => t('This module needs Drush 8 to function.'),
+    'severity' => REQUIREMENT_INFO,
+  ];
+
+  return $requirements;
+}
+
+/**
+ * Enable the 'Anonymizer' module.
+ */
+function gdpr_dump_update_8001() {
+  /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
+  $installer = \Drupal::service('module_installer');
+  $installer->install(['anonymizer']);
+}

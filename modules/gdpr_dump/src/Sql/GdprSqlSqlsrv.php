@@ -10,5 +10,4 @@ use Drush\Sql\SqlSqlsrv;
  * @package Drupal\gdpr_dump\Sql
  */
 class GdprSqlSqlsrv extends SqlSqlsrv {
-
 }

@@ -1,0 +1,7 @@
+services:
+  gdpr_tasks.manager:
+    class: Drupal\gdpr_tasks\TaskManager
+    arguments: ['@entity_type.manager', '@current_user']
+  gdpr_tasks.anonymizer:
+    class: Drupal\gdpr_tasks\Anonymizer
+    arguments: ['@gdpr_fields.collector', '@database', '@entity_type.manager', '@module_handler', '@current_user', '@anonymizer.anonymizer_factory', '@config.factory']

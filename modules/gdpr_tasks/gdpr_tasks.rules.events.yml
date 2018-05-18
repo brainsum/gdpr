@@ -1,0 +1,18 @@
+gdpr_tasks.rules_rta_complete:
+  label: 'Data access request completed'
+  category: 'GDPR'
+  context:
+    user:
+        type: 'entity:user'
+        label: 'The user'
+    link:
+      type: 'string'
+      label: 'The URL to download the report'
+
+gdpr_tasks.rules_rtf_complete:
+  label: 'Right to be forgotten completed'
+  category: 'GDPR'
+  context:
+    email:
+      type: 'string'
+      label: 'The email address of the recipient'

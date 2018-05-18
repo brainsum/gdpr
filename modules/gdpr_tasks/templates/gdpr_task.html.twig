@@ -1,0 +1,44 @@
+{#
+/**
+ * @file gdpr_task.html.twig
+ * Default theme implementation to present Task data.
+ *
+ * This template is used when viewing Task pages.
+ *
+ *
+ * Available variables:
+ * - content: A list of content items. Use 'content' to print all content, or
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_gdpr_task()
+ *
+ * @ingroup themeable
+ */
+#}
+
+{% if content %}
+  <details data-drupal-selector="task-summary" id="task-summary" open="open">
+    <summary role="button" aria-controls="task-summary" aria-expanded="true" aria-pressed="true">Task Summary</summary>
+    <div class="details-wrapper">
+      <div{{ attributes.addClass('gdpr_task') }}>
+        <strong>Type: </strong> {{ type }}
+        {{- content -}}
+      </div>
+    </div>
+  </details>
+{% endif %}
+
+{% if data %}
+  <details data-drupal-selector="task-data" id="task-data" open="open">
+    <summary role="button" aria-controls="task-data" aria-expanded="true" aria-pressed="true">Data</summary>
+    <div class="details-wrapper">
+      <div{{ attributes.addClass('gdpr_task') }}>
+        {{ data }}
+      </div>
+    </div>
+  </details>
+{% endif %}
+
+{% if actions %}
+  {{ actions }}
+{% endif %}

@@ -1,0 +1,10 @@
+field.field.*.*.*.third_party.gdpr_fields:
+  type: mapping
+  label: 'GDPR field'
+  mapping:
+    gdpr_fields_rta:
+        type: string
+        label: 'Whether this field is user sensitive or not.'
+    gdpr_fields_rtf:
+        type: string
+        label: 'Whether this field is user sensitive or not.'

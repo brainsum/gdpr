@@ -1,0 +1,5 @@
+gdpr_dump.settings:
+  title: 'SQL Dump settings'
+  description: 'Settings for the GDPR SQL Dump command'
+  parent: gdpr.admin_config
+  route_name: gdpr_dump.settings

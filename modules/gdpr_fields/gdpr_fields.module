@@ -1,0 +1,96 @@
+<?php
+
+/**
+ * @file
+ * Module file for the GDPR Fields module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
+use Drupal\gdpr_fields\Form\GdprFieldSettingsForm;
+
+/**
+ * Implements hook_toolbar_alter().
+ */
+function gdpr_fields_toolbar_alter(&$items) {
+  $user = \Drupal::currentUser();
+
+  if ($user->hasPermission('view gdpr fields')) {
+    // Root menu url.
+    if (empty($items['gdpr']['tab']['#url'])) {
+      $items['gdpr']['tab']['#url'] = Url::fromRoute('gdpr_fields.fields_list');
+    }
+
+    $items['gdpr']['tray']['links']['#links']['fields'] = [
+      'title' => t('Field list'),
+      'url' => Url::fromRoute('gdpr_fields.fields_list'),
+      'attributes' => [
+        'title' => t('Field list'),
+      ],
+      'weight' => 100,
+    ];
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * @todo Check user edit permission for GDPR fields.
+ */
+function gdpr_fields_form_field_config_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  /* @var \Drupal\Core\Field\FieldConfigInterface $field */
+  // @todo Check that target entity is a content entity.
+  $field = $form_state->getFormObject()->getEntity();
+
+  // Do not add GDPR settings to the GDPR Consent Agreement form.
+  if ($field->getType() == 'gdpr_user_consent') {
+    return;
+  }
+
+  $form['field']['gdpr_fields'] = [
+    '#type' => 'details',
+    '#title' => t('GDPR field settings'),
+    '#open' => TRUE,
+  ];
+
+  GdprFieldSettingsForm::buildFormFields($form['field']['gdpr_fields'], $field->getTargetEntityTypeId(), $field->getTargetBundle(), $field->getName());
+
+  $form['actions']['submit']['#submit'][] = 'gdpr_fields_form_field_config_edit_form_submit';
+}
+
+/**
+ * Form submission handler for gdpr_fields_form_field_config_edit_form_alter.
+ *
+ * This version of the GDPR fields form is embedded on the standard field
+ * settings page.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ *
+ * @throws \Drupal\Core\Entity\EntityStorageException
+ */
+function gdpr_fields_form_field_config_edit_form_submit(array $form, FormStateInterface $form_state) {
+  /* @var \Drupal\Core\Field\FieldConfigInterface $field */
+  $field = $form_state->getFormObject()->getEntity();
+  $entity_type = $field->getTargetEntityTypeId();
+
+  $config = GdprFieldConfigEntity::load($entity_type);
+  if (NULL === $config) {
+    $config = GdprFieldConfigEntity::create(['id' => $entity_type]);
+  }
+
+  $config->setField(
+    $field->getTargetBundle(),
+    $field->getName(), [
+      'enabled' => $form_state->getValue('gdpr_enabled'),
+      'rta' => $form_state->getValue('gdpr_rta'),
+      'rtf' => $form_state->getValue('gdpr_rtf'),
+      'anonymizer' => $form_state->getValue('gdpr_anonymizer'),
+      'notes' => $form_state->getValue('gdpr_notes'),
+    ]
+  );
+  $config->save();
+}

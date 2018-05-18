@@ -1,0 +1,17 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - gdpr_tasks
+id: gdpr_task.manual_data
+field_name: manual_data
+entity_type: gdpr_task
+type: string_long
+settings:
+  case_sensitive: false
+module: core
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

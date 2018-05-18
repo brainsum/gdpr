@@ -10,5 +10,4 @@ use Drush\Sql\SqlPgsql;
  * @package Drupal\gdpr_dump\Sql
  */
 class GdprSqlPgsql extends SqlPgsql {
-
 }

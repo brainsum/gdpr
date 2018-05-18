@@ -1,0 +1,15 @@
+{
+    "name": "drupal/anonymizer",
+    "description": "Provides ways to anonymize data.",
+    "type": "drupal-module",
+    "require": {
+        "fzaninotto/faker": "^1.7"
+    },
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name": "mhavelant",
+            "email": "mhavelant@brainsum.com"
+        }
+    ]
+}

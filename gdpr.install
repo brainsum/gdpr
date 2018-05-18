@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * Install file for the GDPR module.
+ */
+
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_requirements().
+ *
+ * For the Status Report, return information about GDPR checklist status.
+ */
+function gdpr_requirements($phase) {
+  $requirements = [];
+
+  if ($phase === 'runtime' && $definitions = checklistapi_get_checklist_info()) {
+    $id = 'gdpr_checklist';
+    if (isset($definitions[$id]) && $checklist = checklistapi_checklist_load($id)) {
+      $percent = round($checklist->getPercentComplete());
+      $requirements['gdpr_status'] = [
+        'title' => t('GDPR Preparation'),
+        'value' => t('Self assessment Checklist: <a href="@url">@percent% done</a>.', [
+          '@percent' => $percent,
+          '@url' => Url::fromRoute('checklistapi.checklists.gdpr_checklist')->toString(),
+        ]),
+        'severity' => REQUIREMENT_INFO,
+      ];
+    }
+  }
+
+  return $requirements;
+}

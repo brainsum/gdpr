@@ -10,5 +10,4 @@ use Drush\Sql\SqlOracle;
  * @package Drupal\gdpr_dump\Sql
  */
 class GdprSqlOracle extends SqlOracle {
-
 }

@@ -1,0 +1,12 @@
+services:
+  plugin.manager.anonymizer:
+    class: \Drupal\anonymizer\Anonymizer\AnonymizerPluginManager
+    parent: default_plugin_manager
+
+  anonymizer.anonymizer_factory:
+    class: \Drupal\anonymizer\Anonymizer\AnonymizerFactory
+    arguments:
+      - '@plugin.manager.anonymizer'
+
+  anonymizer.faker:
+    class: \Drupal\anonymizer\Service\FakerService

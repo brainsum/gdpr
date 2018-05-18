@@ -10,5 +10,4 @@ use Drush\Sql\SqlMysql;
  * @package Drupal\gdpr_dump\Sql
  */
 class GdprSqlMysql extends SqlMysql {
-
 }

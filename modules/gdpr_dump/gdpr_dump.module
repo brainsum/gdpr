@@ -12,7 +12,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
  */
 function gdpr_dump_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    // Main module help for the prova module.
+    // Main module help for the dump module.
     case 'help.page.gdpr_dump':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';

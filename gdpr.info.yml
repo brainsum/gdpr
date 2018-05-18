@@ -6,4 +6,4 @@ configure: checklistapi.checklists.gdpr_checklist
 package: General Data Protection Regulation
 
 dependencies:
-  - drupal:checklistapi
+  - checklistapi:checklistapi

@@ -5,15 +5,17 @@
  * Module file.
  */
 
+use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
+use Drupal\gdpr\Form\ContentLinksForm;
 
 /**
  * Implements hook_help().
  */
 function gdpr_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    // Main module help for the prova module.
+    // Main module help for the GDPR module.
     case 'help.page.gdpr':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
@@ -29,26 +31,119 @@ function gdpr_help($route_name, RouteMatchInterface $route_match) {
  */
 function gdpr_checklistapi_checklist_info() {
   $definitions = [];
+
   $definitions['gdpr_checklist'] = [
     '#title' => t('GDPR Checklist'),
     '#path' => 'admin/config/gdpr/checklist',
     '#description' => t('GDPR Checklist'),
     '#help' => t('<p>Complete this checklist to make your site GDPR-compliant.</p>'),
-    'configuration' => [
-      '#title' => t('Configuration'),
-      '#description' => t('<p>Things you can can do by just making changes in your site configuration'),
-      'cancel_account' => [
-        '#title' => t('Allow users to cancel their own user account'),
-        'permission' => [
-          '#text' => t('Permissions for "Cancel own user account"'),
-          '#url' => Url::fromUserInput('/admin/people/permissions#module-user'),
+    '#callback' => 'gdpr_checklistapi_checklist_items',
+  ];
+  return $definitions;
+}
+
+/**
+ * Callback for gdpr_checklistapi_checklist_info().
+ */
+function gdpr_checklistapi_checklist_items() {
+  $langCode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $contentLinks = \Drupal::config(ContentLinksForm::GDPR_CONTENT_CONF_KEY)
+    ->get('links');
+
+  /** @var \Drupal\Core\Render\RendererInterface $renderer */
+  $renderer = \Drupal::service('renderer');
+
+  if (!empty($contentLinks[$langCode])) {
+    $linkLabels = ContentLinksForm::requiredContentList();
+
+    $linkOptions = [
+      'absolute' => TRUE,
+      'attributes' => [
+        'target' => '_blank',
+        'rel' => 'noopener noreferrer',
+      ],
+    ];
+    $description = [
+      '#theme' => 'item_list',
+      '#cache' => [
+        'tags' => [
+          'config:' . ContentLinksForm::GDPR_CONTENT_CONF_KEY,
         ],
       ],
-      'delete_data' => [
-        '#title' => t('Users need to be able to request for removal of all their personal data.'),
-        'account_config' => [
-          '#text' => t('Account configuration for "Delete the account and make its content belong to the Anonymous user"'),
-          '#url' => Url::fromRoute('entity.user.admin_form'),
+    ];
+
+    foreach ($contentLinks[$langCode] as $key => $link) {
+      if (empty($link)) {
+        $configStatus = [
+          '#prefix' => '<span class="admin-missing">',
+          '#suffix' => '</span>',
+          '#markup' => t('not configured'),
+        ];
+
+        $title = $linkLabels[$key];
+      }
+      else {
+        $configStatus = [
+          '#prefix' => '<span class="admin-enabled">',
+          '#suffix' => '</span>',
+          '#markup' => t('configured'),
+        ];
+
+        $linkAsUrl = Url::fromUri($link, $linkOptions);
+        $title = Link::fromTextAndUrl($linkLabels[$key], $linkAsUrl)
+          ->toString();
+      }
+
+      $description['#items'][] = t('@title (@status)', [
+        '@title' => $title,
+        '@status' => $renderer->renderPlain($configStatus),
+      ]);
+    }
+  }
+
+  $contentConfigFormLink = Link::createFromRoute('Content link configuration', 'gdpr.content_links_form')
+    ->toString();
+  if (empty($description['#items'])) {
+    $contentDiscoveryDescription = t('No nodes with the following terms have been found: "Privacy Policy", "Terms of Use", "About us" or "Impressum". Configure them here: @config_link', [
+      '@config_link' => $contentConfigFormLink,
+    ]);
+    $privacyPolicyDescription = t('Please verify manually that such content of similar titles exists and has been published.');
+  }
+  else {
+    $contentDiscoveryDescription = $renderer->renderPlain($description);
+    $contentDiscoveryDescription = t('You can configure content links here: @config_link', [
+        '@config_link' => $contentConfigFormLink,
+      ]) . $contentDiscoveryDescription;
+
+    if (!empty($contentLinks[$langCode]['privacy_policy'])) {
+      $privacyPolicyDescription = t('This one looks good to go, but you need to verify that it has real and relevant content.');
+    }
+    else {
+      $privacyPolicyDescription = t('We could not find a <em>configured</em> “Privacy Policy” page.');
+    }
+  }
+
+  $items = [
+    'getting_started' => [
+      '#title' => t('Getting Started'),
+      '#description' => t("<p>To begin your self-assessment process, it's highly recommended to take the following steps:</p>"),
+      'responsibility_agreement' => [
+        '#title' => t("Yes, I agree that by using the <em>GDPR</em> module, I'm still accountable for personal data handling performed on the site."),
+        '#description' => t('Responsibility Agreement: before the site owner starts the checklist process, they should acknowledge that installing and using this module pack does not mean sharing responsibility. Neither the Drupal Community nor module maintainers can guarantee full compliance with the GDPR regulations in case of a potential control.'),
+      ],
+      'recommended_resources' => [
+        '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
+        'wiki_page' => [
+          '#text' => t('GDPR Wikipedia page'),
+          '#url' => Url::fromUri((string) t('https://en.wikipedia.org/wiki/General_Data_Protection_Regulation')),
+        ],
+        'summary' => [
+          '#text' => t('Summary of the GDPR regulation'),
+          '#url' => Url::fromUri((string) t('http://eur-lex.europa.eu/legal-content/EN/LSU/?uri=CELEX:32016R0679#document1')),
+        ],
+        'legislation' => [
+          '#text' => t('The GDPR legislation'),
+          '#url' => Url::fromUri((string) t('http://eur-lex.europa.eu/eli/reg/2016/679/oj')),
         ],
       ],
     ],
@@ -64,6 +159,354 @@ function gdpr_checklistapi_checklist_info() {
         ],
       ],
     ],
+    'content_related_suggestions' => [
+      '#title' => t('Content related suggestions'),
+      '#description' => t('<p>Automated search performed on content of site.</p>') . $contentDiscoveryDescription,
+      'privacy_policy_page' => [
+        '#title' => t("I have checked through the site's content and verified that a page containing <em>Privacy Policy</em> exists and has been published to this site."),
+        '#description' => $privacyPolicyDescription,
+      ],
+      'privacy_policy_published' => [
+        '#title' => t('I confirm the existing "Privacy Policy" or similar page has been published.'),
+        '#description' => t('This <em>GDPR</em> module does not automatically affect publishing status of site content. Therefore, even if such information has been uploaded (regarding the previous point), then you must make sure that this content is available to visitors.'),
+      ],
+      'privacy_policy_in_menu' => [
+        '#title' => t('I confirm the published "Privacy Policy" or similar page is included in at least one menu of the site.'),
+        '#description' => t("To ensure best practice, it's strongly recommended to divulge personal data handling guidelines on the site by including a link to the guidelines page in a generally displayed menu in clear view on the site layout."),
+      ],
+    ],
+    'site_features' => [
+      '#title' => t('Site feature related suggestions'),
+      '#description' => t('This group of checkpoints addresses various actions to be taken regarding site features.'),
+      'external_traffic_measurement' => [
+        '#title' => t("Yes, I'm aware there are external traffic measurement and user tracking services integrated on this site"),
+        '#description' => t('As the owner and/or maintainer of the site I have, to the best of my knowledge, taken the necessary measures to set up these 3rd-party data collecting tools to ensure maximum compliance with GDPR regulations.') . _get_module_list('tracking'),
+      ],
+      'social_media_connections' => [
+        '#title' => t("Yes, I'm aware there are connections established between this site and some social media platforms"),
+        '#description' => t('As many social media platforms collects identifiable personal data, I acknowledge that the owner of this site is responsible for setting up these connections to ensure maximum compliance with GDPR regulations.') . _get_module_list('social'),
+      ],
+      'module_data_collection' => [
+        '#title' => t('I confirm that all Drupal core, community, and custom modules have been revised as to not gather any unnecessary personal data of site visitors'),
+        '#description' => t('Owner and/or maintainer of the site has to ensure that the modules listed below have been revised as to gather only necessary (i.e. not needed for provision of service) personal data of site visitors.') . _get_module_list('collect'),
+      ],
+      'user_role_permissions' => [
+        '#title' => t('I have examined all aspects of displayed personal data, associated with this site, to ensure that all users can access only permitted types of information according to their role'),
+        '#description' => t('Consider every use case in which Drupal fetches information from its database and exposes it to external parties. Bear in mind all possible scenarios extending beyond webpages, eg. RSS feeds, metadata and outgoing e-mail templates sent by the site.'),
+      ],
+    ],
+    'configuration' => [
+      '#title' => t('Configuration'),
+      '#description' => t('<p>Things you can can do by just making changes in your site configuration</p>'),
+      'cancel_account' => [
+        '#title' => t('Allow users to cancel their own user account'),
+        'permission' => [
+          '#text' => t('Permissions for "Cancel own user account"'),
+          '#url' => Url::fromUserInput('/admin/people/permissions#module-user'),
+        ],
+      ],
+      'delete_data' => [
+        '#title' => t('Users need to be able to request for removal of all their personal data.'),
+        'account_config' => [
+          '#text' => t('Account configuration for "Delete the account and make its content belong to the Anonymous user"'),
+          '#url' => Url::fromRoute('entity.user.admin_form'),
+        ],
+      ],
+    ],
+    'beyond_website_management' => [
+      '#title' => t('Beyond website management'),
+      '#description' => t('The scope of GDPR is not clearly defined, stretching far beyond IT and legal aspects.'),
+      'legal_adviser_consulted' => [
+        '#title' => t('I have found and consulted with a legal adviser'),
+        '#description' => t('It is strongly suggested to have a complete overview of the internal data handling workflows within the organisation represented by the website. An experienced legal adviser can guide your organisation through this transformation process.'),
+      ],
+      'gdpr_modules' => [
+        '#title' => t('I have enabled all features of the GDPR module'),
+        '#description' => _get_gdpr_module_description(),
+      ],
+      'notice_upon_breach' => [
+        '#title' => t('I declare that I am able to notify the supervisory authority within 72 hours in the case of a personal data breach'),
+        '#description' => t('Referring to Article 33 of the regulation, site owner/maintainer as a data controller must have a contingency plan in place in the event of any personal data breach incident.'),
+      ],
+      'logging_responsibility' => [
+        '#title' => t('I confirm that I have understood that the responsibility of personal data logging is dependent on the size of my organisation as described below:'),
+        '#description' => _get_logging_responsibility_description(),
+      ],
+    ],
   ];
-  return $definitions;
+  return $items;
+}
+
+/**
+ * Returns a HTML markup for logging_responsibility checkpoint description.
+ *
+ * @return string
+ *   HTML markup string
+ */
+function _get_logging_responsibility_description() {
+  $logging_items = [
+    '#theme' => 'item_list',
+    '#items' => [
+      t('Has fewer than 250 employees the processing it carries out is likely no result in a risk to the rights and freedoms of data subjects, the processing is only occasional and the processing does not includes special categories of data (Article 30/5) and as such my organisation is not required to create records of processing activities'),
+      t('My organisation has 250 or more employees and records of processing activities have been prepared according to Article 30 of the regulation'),
+    ],
+  ];
+
+  return \Drupal::service('renderer')->renderPlain($logging_items);
+}
+
+/**
+ * Returns a HTML markup for gdpr_modules checkpoint description.
+ *
+ * @return string
+ *   HTML markup string
+ */
+function _get_gdpr_module_description() {
+  $all_modules = _get_modules();
+
+  $renderer = \Drupal::service('renderer');
+
+  $gdpr_module_names = ['gdpr_dump'];
+
+  $gdpr_modules_list = [
+    '#theme' => 'item_list',
+    '#items' => [],
+  ];
+
+  $module_statuses = _get_module_statuses();
+
+  $color_classes = [
+    -1 => 'admin-missing',
+    0 => 'admin-missing',
+    1 => 'admin-enabled',
+  ];
+
+  foreach ($gdpr_module_names as $module_name) {
+    if (isset($all_modules[$module_name])) {
+      if (!$all_modules[$module_name]['status']) {
+        $status_class = $color_classes[$all_modules[$module_name]['status']];
+        $status = [
+          '#prefix' => '<span class="' . $status_class . '">',
+          '#suffix' => '</span>',
+          '#markup' => $module_statuses[$all_modules[$module_name]['status']],
+        ];
+
+        $gdpr_modules_list['#items'][] = t('@title (@status)', [
+          '@title' => $all_modules[$module_name]['name'],
+          '@status' => $renderer->renderPlain($status),
+        ]);
+      }
+    }
+    else {
+      $status_class = $color_classes[-1];
+      $status = [
+        '#prefix' => '<span class="' . $status_class . '">',
+        '#suffix' => '</span>',
+        '#markup' => $module_statuses[-1],
+      ];
+
+      $gdpr_modules_list['#items'][] = t('@title (@status)', [
+        '@title' => $module_name,
+        '@status' => $renderer->renderPlain($status),
+      ]);
+    }
+  }
+
+  $gdpr_modules = $renderer->renderPlain($gdpr_modules_list);
+
+  $options = ['absolute' => TRUE];
+  $link = Link::createFromRoute(t('Enable them on Extend admin page'), 'system.modules_list', [], $options);
+
+  if (!empty($gdpr_modules_list['#items'])) {
+    $text = t("In order to have a complete overview of the site functionalities, it's recommended to enable the following features as well:");
+    return $text . $gdpr_modules . $link->toString();
+  }
+  else {
+    return '';
+  }
+}
+
+/**
+ * Returns an array of module statuses.
+ *
+ * @return array
+ *   Module statuses array
+ */
+function _get_module_statuses() {
+  return [
+    -1 => t('missing'),
+    0 => t('disabled'),
+    1 => t('enabled'),
+  ];
+}
+
+/**
+ * Returns a HTML markup for data_collecting modules checkpoint description.
+ *
+ * @param string $type
+ *   Type of modules to search for.
+ *
+ * @return string
+ *   HTML markup string
+ */
+function _get_module_list($type) {
+  $c_modules = _get_module_list_by_type($type);
+
+  $renderer = \Drupal::service('renderer');
+
+  $modules_list = [
+    '#theme' => 'item_list',
+    '#items' => [],
+  ];
+
+  $module_statuses = _get_module_statuses();
+  $all_modules = _get_modules();
+
+  $color_classes = [
+    -1 => 'admin-enabled',
+    0 => 'admin-enabled',
+    1 => 'admin-missing',
+  ];
+
+  foreach ($c_modules as $c_module) {
+    if (isset($all_modules[$c_module])) {
+      $status_class = $color_classes[$all_modules[$c_module]['status']];
+      $status = [
+        '#prefix' => '<span class="' . $status_class . '">',
+        '#suffix' => '</span>',
+        '#markup' => $module_statuses[$all_modules[$c_module]['status']],
+      ];
+
+      $modules_list['#items'][] = t('@title (@status)', [
+        '@title' => $all_modules[$c_module]['name'],
+        '@status' => $renderer->renderPlain($status),
+      ]);
+    }
+  }
+
+  return $renderer->renderPlain($modules_list);
+}
+
+/**
+ * Returns array of module machine_names by type.
+ *
+ * @param string $type
+ *   The type of modules to search for.
+ *
+ * @return array
+ *   Array of module machine_names
+ */
+function _get_module_list_by_type($type) {
+  $list = [];
+  switch ($type) {
+    case 'collect':
+      $list = [
+        'contact',
+        'webform',
+        'geoip',
+      ];
+      break;
+
+    case 'tracking':
+      $list = [
+        'google_analytics',
+        'google_tag',
+        'piwik',
+        'hotjar',
+        'recaptcha',
+        'site_verify',
+        'adsense',
+        'yandex_metrics',
+      ];
+      break;
+
+    case 'social':
+      $list = [
+        'oauth',
+        'sharethis',
+        'addtoany',
+        'cas',
+        'fb_likebox',
+        'easy_social',
+      ];
+      break;
+  }
+  return $list;
+}
+
+/**
+ * Returns cached module data from module info files.
+ *
+ * @return array
+ *   Array of module data
+ */
+function _get_modules() {
+  $cache = \Drupal::cache()->get('modules.list');
+
+  if (!empty($cache->data)) {
+    return $cache->data;
+  }
+  else {
+    $modules_list_raw = system_rebuild_module_data();
+    $modules_list = [];
+
+    foreach ($modules_list_raw as $module) {
+      $modules_list[$module->getName()] = [
+        'status' => $module->status,
+        'name' => $module->info['name'],
+      ];
+    }
+    \Drupal::cache()->set('modules.list', $modules_list);
+    return $modules_list;
+  }
+}
+
+/**
+ * Implements hook_toolbar().
+ */
+function gdpr_toolbar() {
+  $user = \Drupal::currentUser();
+
+  $items = [];
+
+  $items['gdpr'] = [
+    '#cache' => [
+      'contexts' => [
+        'user',
+      ],
+    ],
+  ];
+
+  // Just add the root menu item.
+  // Other GDPR submodules will modify this in hook_toolbar_alter.
+  if ($user->hasPermission('administer gdpr settings')) {
+    $items['gdpr'] += [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('GDPR'),
+        // Task module adds in the URL.
+        '#url' => '',
+        '#attributes' => [
+          'title' => t('GDPR'),
+          'class' => ['toolbar-icon', 'toolbar-icon-gdpr'],
+        ],
+      ],
+      'tray' => [
+        'links' => [
+          '#theme' => 'links',
+          '#links' => [],
+          '#attributes' => [
+            'class' => ['toolbar-menu'],
+          ],
+        ],
+      ],
+      '#weight' => -10,
+      // @todo: Attach custom lib with custom icons.
+      // Previously used: shortcut/drupal.shortcut.
+      '#attached' => [],
+    ];
+  }
+
+  return $items;
 }

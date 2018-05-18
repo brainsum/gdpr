@@ -1,0 +1,21 @@
+services:
+  gdpr_dump.sql_dump:
+    class: \Drupal\gdpr_dump\Service\GdprSqlDump
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@gdpr_dump.database_manager'
+      - '@anonymizer.anonymizer_factory'
+
+  gdpr_dump.sanitize:
+    class: \Drupal\gdpr_dump\Service\GdprSanitize
+    arguments:
+      - '@config.factory'
+      - '@database'
+      - '@gdpr_dump.database_manager'
+      - '@anonymizer.anonymizer_factory'
+
+  gdpr_dump.database_manager:
+    class: \Drupal\gdpr_dump\Service\GdprDatabaseManager
+    arguments:
+      - '@database'

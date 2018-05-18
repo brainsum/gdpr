@@ -1,0 +1,20 @@
+uuid: b457e6e8-cf95-493e-b25a-8248bc60449f
+langcode: en
+status: true
+dependencies:
+  module:
+    - message
+    - user
+id: message.user_accepted
+field_name: user_accepted
+entity_type: message
+type: entity_reference
+settings:
+  target_type: user
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

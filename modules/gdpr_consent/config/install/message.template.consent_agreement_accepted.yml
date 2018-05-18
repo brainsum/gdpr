@@ -1,0 +1,17 @@
+uuid: a020749c-7309-4278-9fbf-4d1edfdafd51
+langcode: en
+status: true
+dependencies: {  }
+template: consent_agreement_accepted
+label: 'GDPR Consent Agreement'
+description: ''
+text:
+  -
+    value: "<p>Agreement: <a href=\"[message:agreement:entity:url]/revisions/[message:agreement:target_revision_id]/view\">[message:agreement:entity:title]</a><br />\r\nAgreed: [message:agreed]<br />\r\nNotes: [message:notes]</p>\r\n"
+    format: full_html
+settings:
+  'token options':
+    clear: false
+    'token replace': true
+  purge_override: true
+  purge_methods: {  }

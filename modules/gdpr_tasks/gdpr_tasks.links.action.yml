@@ -1,0 +1,21 @@
+gdpr_tasks.request_export:
+  route_name: gdpr_tasks.request
+  route_parameters:
+    gdpr_task_type: 'gdpr_sar'
+  title: 'Request data export'
+  appears_on:
+    - view.gdpr_tasks_my_data_requests.page_1
+
+gdpr_tasks.request_remove:
+  route_name: gdpr_tasks.request
+  route_parameters:
+    gdpr_task_type: 'gdpr_remove'
+  title: 'Request data removal'
+  appears_on:
+    - view.gdpr_tasks_my_data_requests.page_1
+
+entity.gdpr_task_type.add_form:
+  route_name: entity.gdpr_task_type.add_form
+  title: 'Add Task type'
+  appears_on:
+    - entity.gdpr_task_type.collection

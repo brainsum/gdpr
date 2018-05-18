@@ -1,0 +1,23 @@
+uuid: 3b601cf3-2f83-4b18-a271-3025a16db2ad
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.message.agreed
+    - message.template.consent_agreement_accepted
+id: message.consent_agreement_accepted.agreed
+field_name: agreed
+entity_type: message
+bundle: consent_agreement_accepted
+label: Agreed
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

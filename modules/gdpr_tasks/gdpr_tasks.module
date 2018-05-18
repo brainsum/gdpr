@@ -1,0 +1,173 @@
+<?php
+
+/**
+ * @file
+ * Module file for the GDPR Tasks module.
+ */
+
+use Drupal\Core\Url;
+use Drupal\gdpr_fields\Controller\GDPRController;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_toolbar().
+ */
+function gdpr_tasks_toolbar_alter(&$items) {
+  $user = \Drupal::currentUser();
+
+  if ($user->hasPermission('view gdpr tasks')) {
+    // Root menu url.
+    $items['gdpr']['tab']['#url'] = Url::fromRoute('gdpr_tasks.summary');
+
+    $items['gdpr']['tray']['links']['#links']['summary'] = [
+      'title' => t('Summary'),
+      'url' => Url::fromRoute('gdpr_tasks.summary'),
+      'attributes' => [
+        'title' => t('GDPR Summary'),
+      ],
+      'weight' => 0,
+    ];
+
+    $items['gdpr']['tray']['links']['#links']['tasks'] = [
+      'title' => t('Tasks'),
+      'url' => Url::fromRoute('entity.gdpr_task.collection'),
+      'attributes' => [
+        'title' => t('GDPR Task list'),
+      ],
+    ];
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gdpr_tasks_theme() {
+  $theme = [];
+  $theme['gdpr_task'] = [
+    'render element' => 'elements',
+    'file' => 'gdpr_task.page.inc',
+    'template' => 'gdpr_task',
+  ];
+  $theme['gdpr_task_content_add_list'] = [
+    'render element' => 'content',
+    'variables' => ['content' => NULL],
+    'file' => 'gdpr_task.page.inc',
+  ];
+  return $theme;
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ */
+function gdpr_tasks_theme_suggestions_gdpr_task(array $variables) {
+  $suggestions = [];
+  /* @var \Drupal\gdpr_tasks\Entity\TaskInterface $entity */
+  $entity = $variables['elements']['#gdpr_task'];
+  $anonymized_view_mode = strtr($variables['elements']['#view_mode'], '.', '_');
+
+  $suggestions[] = 'gdpr_task__' . $anonymized_view_mode;
+  $suggestions[] = 'gdpr_task__' . $entity->bundle();
+  $suggestions[] = 'gdpr_task__' . $entity->bundle() . '__' . $anonymized_view_mode;
+  $suggestions[] = 'gdpr_task__' . $entity->id();
+  $suggestions[] = 'gdpr_task__' . $entity->id() . '__' . $anonymized_view_mode;
+  return $suggestions;
+}
+
+/**
+ * Build export data for a user.
+ *
+ * @param \Drupal\user\UserInterface $user
+ *   The user to generate data for.
+ *
+ * @return array
+ *   Structured array of user related data.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ * @throws \Drupal\Core\Entity\EntityMalformedException
+ */
+function gdpr_tasks_generate_sar_report(UserInterface $user) {
+  /* @var \Drupal\gdpr_fields\Controller\GDPRController $controller */
+  $controller = \Drupal::classResolver()->getInstanceFromDefinition(GDPRController::class);
+
+  return $controller->rtaData($user);
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * Process data for task requests.
+ *
+ * @todo Consider creating plugin or event listeners for task processing.
+ */
+function gdpr_tasks_entity_presave(EntityInterface $entity) {
+  if ('gdpr_task' !== $entity->getEntityTypeId()) {
+    return;
+  }
+
+  /* @var \Drupal\gdpr_tasks\Entity\TaskInterface $entity */
+  switch ($entity->bundle()) {
+    case 'gdpr_remove':
+      break;
+
+    // Collect relevant data and save to downloadable csv.
+    case 'gdpr_sar':
+      if (empty($entity->get('sar_export')->count())) {
+        /* @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field */
+        $field = $entity->get('sar_export');
+        /* @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
+        $field_definition = $field->getFieldDefinition();
+        $settings = $field_definition->getSettings();
+
+        $config = [
+          'field_definition' => $field_definition,
+          'name' => $field->getName(),
+          'parent' => $field->getParent(),
+        ];
+        /* @var \Drupal\file\Plugin\Field\FieldType\FileItem $field_type */
+        $field_type = Drupal::service('plugin.manager.field.field_type')->createInstance($field_definition->getType(), $config);
+
+        // Prepare destination.
+        $dirname = $field_type->getUploadLocation();
+        file_prepare_directory($dirname, FILE_CREATE_DIRECTORY);
+
+        $user = $entity->getOwner();
+        $data = gdpr_tasks_generate_sar_report($user);
+
+        $inc = [];
+        $maybe = [];
+        foreach ($data as $key => $values) {
+          $rta = $values['gdpr_rta'];
+          unset($values['gdpr_rta']);
+          $inc[$key] = $values;
+
+          if ('maybe' === $rta) {
+            $maybe[$key] = $values;
+          }
+        }
+
+        /* @var \Drupal\gdpr_tasks\TaskManager $task_manager */
+        $task_manager = \Drupal::service('gdpr_tasks.manager');
+        $destination = $task_manager->toCsv($inc, $dirname);
+        $export = \file_get_contents($destination);
+
+        // Generate a file entity.
+        // @todo Add headers to csv export.
+        $file = file_save_data($export, $destination, FILE_EXISTS_REPLACE);
+
+        $values = [
+          'target_id' => $file->id(),
+          'display' => (int) $settings['display_default'],
+          'description' => '',
+        ];
+
+        $entity->sar_export = $values;
+
+        $temp = $task_manager->toCsv($maybe, $dirname);
+        $entity->manual_data = \file_get_contents($temp);
+      }
+      break;
+  }
+}
