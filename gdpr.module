@@ -53,51 +53,54 @@ function gdpr_checklistapi_checklist_items() {
   /** @var \Drupal\Core\Render\RendererInterface $renderer */
   $renderer = \Drupal::service('renderer');
 
-  $linkLabels = ContentLinksForm::requiredContentList();
+  if (!empty($contentLinks[$langCode])) {
+    $linkLabels = ContentLinksForm::requiredContentList();
 
-  $linkOptions = [
-    'absolute' => TRUE,
-    'attributes' => [
-      'target' => '_blank',
-      'rel' => 'noopener noreferrer',
-    ],
-  ];
-  $description = [
-    '#theme' => 'item_list',
-    '#cache' => [
-      'tags' => [
-        'config:' . ContentLinksForm::GDPR_CONTENT_CONF_KEY,
+    $linkOptions = [
+      'absolute' => TRUE,
+      'attributes' => [
+        'target' => '_blank',
+        'rel' => 'noopener noreferrer',
       ],
-    ],
-  ];
+    ];
+    $description = [
+      '#theme' => 'item_list',
+      '#cache' => [
+        'tags' => [
+          'config:' . ContentLinksForm::GDPR_CONTENT_CONF_KEY,
+        ],
+      ],
+    ];
 
-  foreach ($contentLinks[$langCode] as $key => $link) {
-    if (empty($link)) {
-      $configStatus = [
-        '#prefix' => '<span class="admin-missing">',
-        '#suffix' => '</span>',
-        '#markup' => t('not configured'),
-      ];
+    foreach ($contentLinks[$langCode] as $key => $link) {
+      if (empty($link)) {
+        $configStatus = [
+          '#prefix' => '<span class="admin-missing">',
+          '#suffix' => '</span>',
+          '#markup' => t('not configured'),
+        ];
 
-      $title = $linkLabels[$key];
+        $title = $linkLabels[$key];
+      }
+      else {
+        $configStatus = [
+          '#prefix' => '<span class="admin-enabled">',
+          '#suffix' => '</span>',
+          '#markup' => t('configured'),
+        ];
+
+        $linkAsUrl = Url::fromUri($link, $linkOptions);
+        $title = Link::fromTextAndUrl($linkLabels[$key], $linkAsUrl)
+          ->toString();
+      }
+
+      $description['#items'][] = t('@title (@status)', [
+        '@title' => $title,
+        '@status' => $renderer->renderPlain($configStatus),
+      ]);
     }
-    else {
-      $configStatus = [
-        '#prefix' => '<span class="admin-enabled">',
-        '#suffix' => '</span>',
-        '#markup' => t('configured'),
-      ];
-
-      $linkAsUrl = Url::fromUri($link, $linkOptions);
-      $title = Link::fromTextAndUrl($linkLabels[$key], $linkAsUrl)
-        ->toString();
-    }
-
-    $description['#items'][] = t('@title (@status)', [
-      '@title' => $title,
-      '@status' => $renderer->renderPlain($configStatus),
-    ]);
   }
+
   $contentConfigFormLink = Link::createFromRoute('Content link configuration', 'gdpr.content_links_form')
     ->toString();
   if (empty($description['#items'])) {
