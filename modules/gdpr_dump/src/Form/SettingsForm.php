@@ -119,9 +119,6 @@ class SettingsForm extends ConfigFormBase {
      * Maybe divide by type (int, varchar, etc) and
      * display only appropriate ones for the actual selects.
      */
-    /* @todo
-     * UX
-     */
     $anonymizationOptions = [
       '#type' => 'select',
       '#title' => $this->t('Apply anonymization'),
@@ -141,20 +138,20 @@ class SettingsForm extends ConfigFormBase {
       $this->t('Apply anonymization'),
     ];
 
-    $more_header = [$this->t('Table name')];
-    $db_schema = $this->database->schema();
-    $schema_handles_table_comments = is_callable([$db_schema, 'getComment']);
-    if ($schema_handles_table_comments) {
-      $more_header[] = $this->t('Description');
+    $moreHeader = [$this->t('Table name')];
+    $dbSchema = $this->database->schema();
+    $schemaHandlesTableComments = \is_callable([$dbSchema, 'getComment']);
+    if ($schemaHandlesTableComments) {
+      $moreHeader[] = $this->t('Description');
     }
-    $more_header[] = $this->t('Columns');
+    $moreHeader[] = $this->t('Columns');
 
     $form['more_wrapper'] = [
       '#type' => 'details',
       '#title' => $this->t('More tables'),
       'more_tables' => [
-        '#caption' => $this->t('Select from the following tables to be able to configure more for anonymization, then press the \'Refresh form\' button below to add them to the form.'),
-        '#header' => $more_header,
+        '#caption' => $this->t("Select from the following tables to be able to configure more for anonymization, then press the 'Refresh form' button below to add them to the form."),
+        '#header' => $moreHeader,
         '#type' => 'tableselect',
         '#options' => [],
         '#js_select' => FALSE,
@@ -165,7 +162,10 @@ class SettingsForm extends ConfigFormBase {
       ],
     ];
 
-    $added = NestedArray::getValue($form_state->getUserInput(), ['more_wrapper', 'more_tables'], $exists);
+    $added = NestedArray::getValue(
+      $form_state->getUserInput(),
+      ['more_wrapper', 'more_tables']
+    );
     // Force some tables to always show in the form if they exist.
     $forced = [
       'comment_field_data' => TRUE,
@@ -179,12 +179,12 @@ class SettingsForm extends ConfigFormBase {
 
     /** @var array $columns */
     foreach ($this->databaseManager->getTableColumns() as $table => $columns) {
-      $table_comment = $schema_handles_table_comments ? $db_schema->getComment($table) : NULL;
-      $table_configured = isset($mapping[$table]) || isset($emptyTables[$table]);
-      $table_forced = isset($forced[$table]) || strpos($table, 'user__') === 0 || strpos($table, 'contact_message__') === 0 || strpos($table, 'comment__') === 0;
-      $table_added = isset($added[$table]);
+      $tableComment = $schemaHandlesTableComments ? $dbSchema->getComment($table) : NULL;
+      $tableConfigured = isset($mapping[$table]) || isset($emptyTables[$table]);
+      $tableForced = isset($forced[$table]) || \strpos($table, 'user__') === 0 || \strpos($table, 'contact_message__') === 0 || \strpos($table, 'comment__') === 0;
+      $tableAdded = isset($added[$table]);
 
-      if ($table_configured || $table_added || $table_forced) {
+      if ($tableConfigured || $tableAdded || $tableForced) {
         $rows = [];
         foreach ($columns as $column) {
           $currentOptions = $anonymizationOptions;
@@ -209,7 +209,7 @@ class SettingsForm extends ConfigFormBase {
         $form['tables'][$table] = [
           '#type' => 'details',
           '#title' => $this->t('Table: %table', ['%table' => $table]),
-          '#description' => $table_comment,
+          '#description' => $tableComment,
           'empty_table' => [
             '#type' => 'checkbox',
             '#title' => $this->t('Empty this table'),
@@ -223,17 +223,17 @@ class SettingsForm extends ConfigFormBase {
           ] + $rows,
         ];
 
-        if ($schema_handles_table_comments) {
-          $form['tables'][$table]['#description'] = $table_comment;
+        if ($schemaHandlesTableComments) {
+          $form['tables'][$table]['#description'] = $tableComment;
         }
       }
 
-      if (!$table_configured && !$table_forced) {
+      if (!$tableConfigured && !$tableForced) {
         $row = [['data' => ['#markup' => '<strong>' . $table . '</strong>']]];
-        if ($schema_handles_table_comments) {
-          $row[] = $table_comment;
+        if ($schemaHandlesTableComments) {
+          $row[] = $tableComment;
         }
-        $row[] = implode(', ', array_column($columns, 'COLUMN_NAME'));
+        $row[] = \implode(', ', \array_column($columns, 'COLUMN_NAME'));
         $form['more_wrapper']['more_tables']['#options'][$table] = $row;
       }
     }
