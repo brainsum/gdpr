@@ -132,15 +132,15 @@ function gdpr_checklistapi_checklist_items() {
         '#title' => t('Yes, I have read at least one of the following recommended resources from the list below'),
         'wiki_page' => [
           '#text' => t('GDPR Wikipedia page'),
-          '#url' => Url::fromUri(t('https://en.wikipedia.org/wiki/General_Data_Protection_Regulation')),
+          '#url' => Url::fromUri((string) t('https://en.wikipedia.org/wiki/General_Data_Protection_Regulation')),
         ],
         'summary' => [
           '#text' => t('Summary of the GDPR regulation'),
-          '#url' => Url::fromUri(t('http://eur-lex.europa.eu/legal-content/EN/LSU/?uri=CELEX:32016R0679#document1')),
+          '#url' => Url::fromUri((string) t('http://eur-lex.europa.eu/legal-content/EN/LSU/?uri=CELEX:32016R0679#document1')),
         ],
         'legislation' => [
           '#text' => t('The GDPR legislation'),
-          '#url' => Url::fromUri(t('http://eur-lex.europa.eu/eli/reg/2016/679/oj')),
+          '#url' => Url::fromUri((string) t('http://eur-lex.europa.eu/eli/reg/2016/679/oj')),
         ],
       ],
     ],
