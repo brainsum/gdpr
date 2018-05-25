@@ -5,22 +5,15 @@ namespace Drupal\gdpr_fields\Entity;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 
 /**
- * Defines a Flower configuration entity class.
+ * Defines a GDPR Field configuration entity.
  *
  * @ConfigEntityType(
  *   id = "gdpr_fields_config",
  *   label = @Translation("GDPR Fields"),
- *   handlers = {
- *   },
  *   config_prefix = "gdpr_fields_config",
  *   admin_permission = "view gdpr fields",
  *   entity_keys = {
  *     "id" = "id"
- *   },
- *   links = {
- *     "add-form" = "/admin/gdpr/fields/add",
- *     "edit-form" = "/admin/gdpr/fields/{gdpr_fields_config}/edit2",
- *     "delete-form" = "/admin/gdpr/fields/{gdpr_fields_config}/delete"
  *   }
  * )
  */
