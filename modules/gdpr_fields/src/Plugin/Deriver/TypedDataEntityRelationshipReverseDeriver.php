@@ -46,7 +46,6 @@ class TypedDataEntityRelationshipReverseDeriver extends TypedDataEntityRelations
         return;
       }
 
-
       parent::generateDerivativeDefinition($base_plugin_definition, $data_type_id, $data_type_definition, $base_definition, $property_name, $property_definition);
 
       $bundle_info = $base_definition->getConstraint('Bundle');
