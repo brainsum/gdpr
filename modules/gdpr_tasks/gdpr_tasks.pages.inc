@@ -27,19 +27,19 @@ use Drupal\gdpr_fields\Controller\GDPRController;
  */
 function template_preprocess_gdpr_task(array &$variables) {
   // Fetch Task Entity Object.
-  /* @var \Drupal\gdpr_tasks\Entity\TaskInterface $gdpr_task */
-  $gdpr_task = $variables['elements']['#gdpr_task'];
+  /* @var \Drupal\gdpr_tasks\Entity\TaskInterface $gdprTask */
+  $gdprTask = $variables['elements']['#gdpr_task'];
 
-  $bundle_storage = \Drupal::entityTypeManager()->getStorage($gdpr_task->getEntityType()->getBundleEntityType());
-  $variables['type'] = $bundle_storage->load($gdpr_task->bundle())->label();;
+  $bundleStorage = \Drupal::entityTypeManager()->getStorage($gdprTask->getEntityType()->getBundleEntityType());
+  $variables['type'] = $bundleStorage->load($gdprTask->bundle())->label();
 
   /* @var \Drupal\gdpr_fields\Controller\GDPRController $controller */
   $controller = \Drupal::classResolver()->getInstanceFromDefinition(GDPRController::class);
 
   /* @var \Drupal\gdpr_tasks\Entity\TaskInterface $entity */
-  switch ($gdpr_task->bundle()) {
+  switch ($gdprTask->bundle()) {
     case 'gdpr_remove':
-      $rows = $controller->rtfData($gdpr_task->getOwner());
+      $rows = $controller->rtfData($gdprTask->getOwner());
 
       $variables['data'] = [
         '#type' => 'table',
@@ -57,11 +57,11 @@ function template_preprocess_gdpr_task(array &$variables) {
         '#empty' => t('There are no GDPR fields.'),
       ];
 
-      $variables['actions'] = \Drupal::service('entity.form_builder')->getForm($gdpr_task, 'process');
+      $variables['actions'] = \Drupal::service('entity.form_builder')->getForm($gdprTask, 'process');
       break;
 
     case 'gdpr_sar':
-      $rows = $controller->rtaData($gdpr_task->getOwner());
+      $rows = $controller->rtaData($gdprTask->getOwner());
 
       $variables['data'] = [
         '#type' => 'table',
@@ -77,7 +77,7 @@ function template_preprocess_gdpr_task(array &$variables) {
         '#sticky' => TRUE,
         '#empty' => t('There are no GDPR fields.'),
       ];
-      $variables['actions'] = \Drupal::service('entity.form_builder')->getForm($gdpr_task, 'process');
+      $variables['actions'] = \Drupal::service('entity.form_builder')->getForm($gdprTask, 'process');
       break;
   }
 
