@@ -46,13 +46,13 @@ function gdpr_tasks_theme() {
   $theme = [];
   $theme['gdpr_task'] = [
     'render element' => 'elements',
-    'file' => 'gdpr_task.page.inc',
+    'file' => 'gdpr_tasks.pages.inc',
     'template' => 'gdpr_task',
   ];
   $theme['gdpr_task_content_add_list'] = [
     'render element' => 'content',
     'variables' => ['content' => NULL],
-    'file' => 'gdpr_task.page.inc',
+    'file' => 'gdpr_tasks.pages.inc',
   ];
   return $theme;
 }

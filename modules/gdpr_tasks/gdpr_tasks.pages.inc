@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains gdpr_task.page.inc.
+ * Contains gdpr_tasks.pages.inc.
  *
  * Page callback for Task entities.
  */
