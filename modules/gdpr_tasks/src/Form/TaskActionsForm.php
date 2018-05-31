@@ -108,6 +108,7 @@ class TaskActionsForm extends ContentEntityForm {
    * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   private function doSarExport(FormStateInterface $form_state) {
+    /** @var \Drupal\gdpr_tasks\Entity\TaskInterface $entity */
     $entity = $this->entity;
     $manual = $form_state->getValue(['manual_data', 0, 'value']);
 
@@ -133,7 +134,7 @@ class TaskActionsForm extends ContentEntityForm {
     $export .= $manual;
 
     // @todo Add headers to csv export.
-    file_save_data($export, $file_uri, FILE_EXISTS_REPLACE);
+    _gdpr_tasks_file_save_data($export, $entity->getOwner(), $file_uri, FILE_EXISTS_REPLACE);
 
     $this->eventDispatcher->dispatch(RightToAccessCompleteEvent::EVENT_NAME, new RightToAccessCompleteEvent($entity->getOwner(), $file_uri));
   }
@@ -193,7 +194,7 @@ class TaskActionsForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    /* @var $entity \Drupal\gdpr_tasks\Entity\Task */
+    /* @var $entity \Drupal\gdpr_tasks\Entity\TaskInterface */
     $entity = $this->entity;
 
     if ($entity->bundle() == 'gdpr_remove') {
