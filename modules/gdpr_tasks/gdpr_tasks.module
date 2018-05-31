@@ -10,7 +10,6 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\file\FileInterface;
 use Drupal\gdpr_fields\Controller\GDPRController;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\gdpr_tasks\Entity\TaskInterface;
 use Drupal\user\UserInterface;
 
@@ -116,7 +115,6 @@ function gdpr_tasks_gdpr_task_presave(TaskInterface $gdprTask) {
       if (0 < $gdprTask->get('sar_export')->count()) {
         break;
       }
-      dpm('updating task ' . $gdprTask->id());
 
       /* @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field */
       $field = $gdprTask->get('sar_export');
