@@ -37,9 +37,8 @@ function gdpr_consent_menu() {
   $items['admin/config/gdpr/agreements/%gdpr_consent_agreement'] = array(
     'title' => 'Consent Agreement',
     'page callback' => 'gdpr_consent_agreement_view_entity',
-    //'page callback' => 'entity_ui_entity_page_view',
     'page arguments' => array(3),
-    'access callback' => TRUE,
+    'access arguments' => array('manage gdpr agreements'),
     'file' => 'includes/gdpr_consent.agreements.inc',
   );
   // 'View' tab for an individual entity.
@@ -246,7 +245,7 @@ function gdpr_consent_access_callback($op, $entity = NULL, $account = NULL) {
 }
 
 /**
- * Implements hook_field_access()
+ * Implements hook_field_access().
  */
 function gdpr_consent_field_access($op, $field, $entity_type, $entity, $account) {
   if ($field['type'] == 'gdpr_user_consent' && $op == 'edit') {
@@ -255,7 +254,6 @@ function gdpr_consent_field_access($op, $field, $entity_type, $entity, $account)
     }
 
     // @todo Check grant own consent when we can consistently find the user.
-
     return TRUE;
   }
 }
@@ -446,8 +444,6 @@ function gdpr_consent_field_attach_submit($entity_type, $entity, $form, &$form_s
 
       // @todo Needs test coverage to make sure we aren't logging irrelevant changes.
       if ($new !== $old) {
-        global $user;
-
         if ($new) {
           $message = message_create('consent_agreement_accepted', array('uid' => $values[LANGUAGE_NONE][0]['user_consenter']));
         }
@@ -468,7 +464,6 @@ function gdpr_consent_field_attach_submit($entity_type, $entity, $form, &$form_s
     }
   }
 }
-
 
 /**
  * Fetches a list of consent fields for an entity.
@@ -593,7 +588,7 @@ function gdpr_consent_field_widget_form(&$form, &$form_state, $field, $instance,
   $entity_type = 'gdpr_consent_agreement';
   $entity = entity_load_single($entity_type, $field['settings']['target_id']);
 
-  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  list(, $vid) = entity_extract_ids($entity_type, $entity);
 
   switch ($instance['widget']['type']) {
     case 'gdpr_consent_widget':
@@ -606,8 +601,8 @@ function gdpr_consent_field_widget_form(&$form, &$form_state, $field, $instance,
           'class' => array('gdpr_consent_agreement'),
         ),
         '#attached' => array(
-          'css' =>  array(drupal_get_path('module', 'gdpr_consent') . '/css/gdpr_consent.css'),
-          'js' =>  array(drupal_get_path('module', 'gdpr_consent') . '/js/gdpr_consent.js'),
+          'css' => array(drupal_get_path('module', 'gdpr_consent') . '/css/gdpr_consent.css'),
+          'js' => array(drupal_get_path('module', 'gdpr_consent') . '/js/gdpr_consent.js'),
         ),
         '#description' => $entity->long_description,
       ) + $widget;
@@ -715,6 +710,7 @@ function gdpr_consent_default_message_type() {
  * Our custom entity class.
  */
 class ConsentAgreement extends Entity {
+
   /**
    * Implement a custom default URI.
    */
@@ -728,6 +724,7 @@ class ConsentAgreement extends Entity {
   public function identifier() {
     return $this->internalIdentifier();
   }
+
 }
 
 /**
@@ -801,7 +798,7 @@ class ConsentAgreementEntityUIController extends EntityDefaultUIController {
 
     $build['agreement_type'] = array(
       '#type' => 'markup',
-      '#markup' => $entity->agreement_type == GDPR_CONSENT_TYPE_EXPLICIT ?  t('Explicit') : t('Implicit'),
+      '#markup' => $entity->agreement_type == GDPR_CONSENT_TYPE_EXPLICIT ? t('Explicit') : t('Implicit'),
     );
 
     return $build;

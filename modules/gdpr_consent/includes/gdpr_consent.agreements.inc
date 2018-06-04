@@ -7,6 +7,7 @@
 
 /**
  * Page callback to list a user's consent agreements.
+ *
  * @todo Finish this.
  */
 function gdpr_consent_collected_agreements($account) {
@@ -82,7 +83,7 @@ function gdpr_consent_agreement_view_entity($entity, $view_mode = 'default') {
 }
 
 /**
- * Callback for /admin/config/gdpr/agreements/{gdpr_consent_agreement ID}/{revision ID} page.
+ * Callback for consent agreement revision page.
  */
 function gdpr_consent_agreement_view_revision($revision_id) {
   $agreement = entity_revision_load('gdpr_consent_agreement', $revision_id);

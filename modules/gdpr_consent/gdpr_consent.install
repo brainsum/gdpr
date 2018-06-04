@@ -517,7 +517,7 @@ function gdpr_consent_install() {
     ),
   );
 
-  // Exported field_instance: 'message-consent_agreement_accepted-user_consenter'.
+  // Exported instance: 'message-consent_agreement_accepted-user_consenter'.
   $field_instances['message-consent_agreement_accepted-user_consenter'] = array(
     'default_value' => NULL,
     'deleted' => 0,
