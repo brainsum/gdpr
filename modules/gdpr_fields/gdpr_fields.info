@@ -1,0 +1,10 @@
+name = General Data Protection Regulation (GDPR) - Fields
+description = Configure GDPR field settings and sensitivity.
+core = 7.x
+
+dependencies[] = gdpr
+dependencies[] = gdpr_dump
+dependencies[] = ctools
+dependencies[] = entity
+
+files[] = src/Plugins/GDPRFieldData.php
