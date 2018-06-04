@@ -8,7 +8,7 @@
 /**
  * Form for managing a consent agreement entity.
  */
-function gdpr_consent_agreement_form($form, &$form_state, ConsentAgreement $entity = NULL) {
+function gdpr_consent_agreement_form($form, &$form_state, GdprConsentAgreement $entity = NULL) {
   $form['title'] = array(
     '#title' => t('Title'),
     '#type' => 'textfield',
@@ -95,13 +95,13 @@ function gdpr_consent_agreement_form_submit(&$form, &$form_state) {
 /**
  * Generates an overview table of older revisions of a Consent Agreement.
  *
- * @param ConsentAgreement $agreement
+ * @param GdprConsentAgreement $agreement
  *   A consent agreement entity.
  *
  * @return array
  *   An array as expected by drupal_render().
  */
-function gdpr_consent_agreement_revision_overview($agreement) {
+function gdpr_consent_agreement_revision_overview(GdprConsentAgreement $agreement) {
   drupal_set_title(t('Revisions for @title', array('@title' => $agreement->title)));
 
   $header = array(
@@ -123,7 +123,8 @@ function gdpr_consent_agreement_revision_overview($agreement) {
           '!date' => l(format_date($revision->timestamp, 'short'), "admin/config/gdpr/agreements/$agreement->id"),
           '!username' => theme('username', array('account' => $revision)),
         )) . (($revision->log != '') ? '<p class="revision-log">' . filter_xss($revision->log) . '</p>' : ''),
-        'class' => array('revision-current'));
+        'class' => array('revision-current')
+      );
       $operations[] = array(
         'data' => drupal_placeholder(t('current revision')),
         'class' => array('revision-current'),
@@ -133,7 +134,7 @@ function gdpr_consent_agreement_revision_overview($agreement) {
     else {
       $row[] = t('!date by !username', array(
         '!date' => l(format_date($revision->timestamp, 'short'), "admin/config/gdpr/agreements/$agreement->id/revisions/$revision->revision_id/view"),
-        '!username' => theme('username', array('account' => $revision))
+        '!username' => theme('username', array('account' => $revision)),
       )) . (($revision->log != '') ? '<p class="revision-log">' . filter_xss($revision->log) . '</p>' : '');
       $operations[] = l(t('revert'), "admin/config/gdpr/agreements/$agreement->id/revisions/$revision->revision_id/revert");
       $operations[] = l(t('delete'), "admin/config/gdpr/agreements/$agreement->id/revisions/$revision->revision_id/delete");
@@ -153,13 +154,13 @@ function gdpr_consent_agreement_revision_overview($agreement) {
 /**
  * Returns a list of all the existing revision numbers.
  *
- * @param ConsentAgreement $agreement
+ * @param GdprConsentAgreement $agreement
  *   The Consent Agreement entity.
  *
  * @return array
  *   An associative array keyed by revision number.
  */
-function gdpr_consent_revision_list($agreement) {
+function gdpr_consent_revision_list(GdprConsentAgreement $agreement) {
   $revisions = array();
   $result = db_query('SELECT r.revision_id, a.title, r.log, r.author_uid, a.revision_id AS current_revision, r.timestamp, u.name FROM {gdpr_consent_agreement_revision} r LEFT JOIN {gdpr_consent_agreement} a ON a.revision_id = r.revision_id INNER JOIN {users} u ON u.uid = r.author_uid WHERE r.id = :id ORDER BY r.revision_id DESC', array(':id' => $agreement->id));
   foreach ($result as $revision) {

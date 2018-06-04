@@ -19,7 +19,7 @@ function gdpr_consent_collected_agreements($account) {
 
   if (isset($result['gdpr_consent_agreement'])) {
     $consent_ids = array_keys($result['gdpr_consent_agreement']);
-    $consent_items = entity_load('gdpr_consent_agreement', $consent_ids);
+    entity_load('gdpr_consent_agreement', $consent_ids);
   }
 
   return MENU_ACCESS_DENIED;

@@ -118,8 +118,8 @@ function gdpr_consent_entity_info() {
     'label' => t('GDPR Consent Agreement'),
     'base table' => 'gdpr_consent_agreement',
     'revision table' => 'gdpr_consent_agreement_revision',
-    'entity class' => 'ConsentAgreement',
-    'controller class' => 'ConsentAgreementController',
+    'entity class' => 'GdprConsentAgreement',
+    'controller class' => 'GdprConsentAgreementController',
     'fieldable' => TRUE,
     'bundles' => array(
       'gdpr_consent_agreement' => array(
@@ -140,7 +140,7 @@ function gdpr_consent_entity_info() {
     'access callback' => 'gdpr_consent_access_callback',
     'admin ui' => array(
       'path' => 'admin/config/gdpr/agreements',
-      'controller class' => 'ConsentAgreementEntityUIController',
+      'controller class' => 'GdprConsentAgreementEntityUIController',
       'menu wildcard' => '%gdpr_consent_agreement',
       'file' => 'includes/gdpr_consent.admin.inc',
     ),
@@ -620,7 +620,7 @@ function gdpr_consent_field_widget_form(&$form, &$form_state, $field, $instance,
         '#title' => 'Consent Notes',
         '#default_value' => $notes,
         '#weight' => 10,
-        '#description' => 'Consent notes only visible for staff.',
+        '#description' => t('Consent notes only visible for staff.'),
         '#access' => user_access('grant any consent', $user),
       ) + $widget;
       $element['target_id'] = array(
@@ -709,7 +709,7 @@ function gdpr_consent_default_message_type() {
 /**
  * Our custom entity class.
  */
-class ConsentAgreement extends Entity {
+class GdprConsentAgreement extends Entity {
 
   /**
    * Implement a custom default URI.
@@ -730,7 +730,7 @@ class ConsentAgreement extends Entity {
 /**
  * Custom controller for the gdpr_consent_agreement entity type.
  */
-class ConsentAgreementController extends EntityAPIControllerExportable {
+class GdprConsentAgreementController extends EntityAPIControllerExportable {
 
   /**
    * {@inheritdoc}
@@ -773,7 +773,7 @@ class ConsentAgreementController extends EntityAPIControllerExportable {
 /**
  * Custom UI controller for the gdpr_consent_agreement entity type.
  */
-class ConsentAgreementEntityUIController extends EntityDefaultUIController {
+class GdprConsentAgreementEntityUIController extends EntityDefaultUIController {
 
   /**
    * {@inheritdoc}
