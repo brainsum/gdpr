@@ -123,7 +123,7 @@ function gdpr_consent_agreement_revision_overview(GdprConsentAgreement $agreemen
           '!date' => l(format_date($revision->timestamp, 'short'), "admin/config/gdpr/agreements/$agreement->id"),
           '!username' => theme('username', array('account' => $revision)),
         )) . (($revision->log != '') ? '<p class="revision-log">' . filter_xss($revision->log) . '</p>' : ''),
-        'class' => array('revision-current')
+        'class' => array('revision-current'),
       );
       $operations[] = array(
         'data' => drupal_placeholder(t('current revision')),
