@@ -8,4 +8,4 @@ configure = admin/config/gdpr/dump-settings
 dependencies[] = gdpr
 dependencies[] = ctools
 
-files[] = src/GDPRUtilRandom.php
+files[] = src/GdprDumpUtilRandom.php

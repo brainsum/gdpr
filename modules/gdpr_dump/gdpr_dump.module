@@ -203,10 +203,10 @@ function gdpr_dump_get_sanitizer_plugins($id = NULL) {
  * Random word generator function.
  *
  * @deprecated in Drupal 7.x-1.0-alpha6 and will be removed before 7.x-1.0.
- *   Use GDPRUtilRandom::word() instead.
+ *   Use GdprDumpUtilRandom::word() instead.
  */
 function gdpr_random_word($length = 8) {
-  $random = new GDPRUtilRandom();
+  $random = new GdprDumpUtilRandom();
   return $random->word($length);
 }
 
@@ -214,10 +214,10 @@ function gdpr_random_word($length = 8) {
  * Random sentence generator.
  *
  * @deprecated in Drupal 7.x-1.0-alpha6 and will be removed before 7.x-1.0.
- *   Use GDPRUtilRandom::sentences() instead.
+ *   Use GdprDumpUtilRandom::sentences() instead.
  */
 function gdpr_random_sentence($word_count) {
-  $random = new GDPRUtilRandom();
+  $random = new GdprDumpUtilRandom();
   return $random->sentences($word_count);
 }
 
@@ -225,10 +225,10 @@ function gdpr_random_sentence($word_count) {
  * Random paragraph generator.
  *
  * @deprecated in Drupal 7.x-1.0-alpha6 and will be removed before 7.x-1.0.
- *   Use GDPRUtilRandom::paragraphs() instead.
+ *   Use GdprDumpUtilRandom::paragraphs() instead.
  */
 function gdpr_random_paragraphs($paragraph_count) {
-  $random = new GDPRUtilRandom();
+  $random = new GdprDumpUtilRandom();
   return $random->paragraphs($paragraph_count);
 }
 

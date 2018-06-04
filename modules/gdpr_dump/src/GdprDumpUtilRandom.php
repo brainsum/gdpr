@@ -3,7 +3,7 @@
 /**
  * Defines a utility class for creating random data.
  */
-class GDPRUtilRandom {
+class GdprDumpUtilRandom {
 
   /**
    * Generates a random string of ASCII characters of codes 32 to 126.
@@ -18,7 +18,7 @@ class GDPRUtilRandom {
    * @return string
    *   Randomly generated string.
    *
-   * @see GDPRUtilRandom::name()
+   * @see GdprDumpUtilRandom::name()
    */
   public function string($length = 8) {
 
@@ -45,7 +45,7 @@ class GDPRUtilRandom {
    * @return string
    *   Randomly generated string.
    *
-   * @see GDPRUtilRandom::string()
+   * @see GdprDumpUtilRandom::string()
    */
   public function name($length = 8) {
     $values = array_merge(range(65, 90), range(97, 122), range(48, 57));
@@ -60,12 +60,15 @@ class GDPRUtilRandom {
   }
 
   /**
-   * Generate a string that looks like a word (letters only, alternating consonants and vowels).
+   * Generate a string that looks like a word.
+   *
+   * Letters only, alternating consonants and vowels.
    *
    * @param int $length
    *   The desired word length.
    *
    * @return string
+   *   The generate random word.
    */
   public function word($length) {
     mt_srand((double) microtime() * 1000000);
@@ -195,7 +198,10 @@ class GDPRUtilRandom {
    * Generate paragraphs separated by double new line.
    *
    * @param int $paragraph_count
+   *   The number of paragraphs to generate.
+   *
    * @return string
+   *   The generated paragraphs.
    */
   public function paragraphs($paragraph_count = 12) {
     $output = '';
