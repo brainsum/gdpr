@@ -1,7 +1,11 @@
 name = General Data Protection Regulation (GDPR) - Obfuscated SQL Dump
 description = Provides a drush command for obfuscating database dumps.
 core = 7.x
+package = General Data Protection Regulation
+
+configure = admin/config/gdpr/dump-settings
+
 dependencies[] = gdpr
 dependencies[] = ctools
-configure = admin/config/gdpr/dump-settings
-package = General Data Protection Regulation
+
+files[] = src/GDPRUtilRandom.php

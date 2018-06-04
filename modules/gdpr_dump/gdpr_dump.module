@@ -201,84 +201,35 @@ function gdpr_dump_get_sanitizer_plugins($id = NULL) {
 
 /**
  * Random word generator function.
+ *
+ * @deprecated in Drupal 7.x-1.0-alpha6 and will be removed before 7.x-1.0.
+ *   Use GDPRUtilRandom::word() instead.
  */
 function gdpr_random_word($length = 8) {
-  mt_srand((double) microtime() * 1000000);
-  $vowels = [
-    "a",
-    "e",
-    "i",
-    "o",
-    "u",
-  ];
-  $cons = [
-    "b",
-    "c",
-    "d",
-    "g",
-    "h",
-    "j",
-    "k",
-    "l",
-    "m",
-    "n",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
-    "v",
-    "w",
-    "tr",
-    "cr",
-    "br",
-    "fr",
-    "th",
-    "dr",
-    "ch",
-    "ph",
-    "wr",
-    "st",
-    "sp",
-    "sw",
-    "pr",
-    "sl",
-    "cl",
-    "sh",
-  ];
-  $num_vowels = count($vowels);
-  $num_cons = count($cons);
-  $word = '';
-  while (strlen($word) < $length) {
-    $word .= $cons[mt_rand(0, $num_cons - 1)] . $vowels[mt_rand(0, $num_vowels - 1)];
-  }
-  return substr($word, 0, $length);
+  $random = new GDPRUtilRandom();
+  return $random->word($length);
 }
 
 /**
  * Random sentence generator.
+ *
+ * @deprecated in Drupal 7.x-1.0-alpha6 and will be removed before 7.x-1.0.
+ *   Use GDPRUtilRandom::sentences() instead.
  */
 function gdpr_random_sentence($word_count) {
-  $output_array = [];
-
-  for ($i = 0; $i < $word_count; $i++) {
-    $output_array[] = gdpr_random_word(rand(1, 12));
-  }
-
-  $output = implode(' ', $output_array);
-
-  return ucfirst($output) . '.';
+  $random = new GDPRUtilRandom();
+  return $random->sentences($word_count);
 }
 
 /**
  * Random paragraph generator.
+ *
+ * @deprecated in Drupal 7.x-1.0-alpha6 and will be removed before 7.x-1.0.
+ *   Use GDPRUtilRandom::paragraphs() instead.
  */
 function gdpr_random_paragraphs($paragraph_count) {
-  $output = '';
-  for ($i = 1; $i <= $paragraph_count; $i++) {
-    $output .= gdpr_random_sentence(mt_rand(20, 60)) . "\n\n";
-  }
-  return $output;
+  $random = new GDPRUtilRandom();
+  return $random->paragraphs($paragraph_count);
 }
 
 /**

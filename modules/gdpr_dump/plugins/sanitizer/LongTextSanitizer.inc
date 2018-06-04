@@ -56,6 +56,7 @@ function gdpr_long_text_remote_generator($input) {
  * Local generator for long text sanitizer.
  */
 function gdpr_long_text_local_generator($input) {
-  $paragraphCount = str_word_count($input) % 5;
-  return gdpr_random_paragraphs($paragraphCount);
+  $random = new GDPRUtilRandom();
+  $paragraph_count = str_word_count($input) % 5;
+  return $random->paragraphs($paragraph_count);
 }
