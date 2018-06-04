@@ -18,5 +18,6 @@ function gdpr_email_sanitize($input) {
     return $input;
   }
 
-  return gdpr_random_word(12) . '@example.com';
+  $random = new GDPRUtilRandom();
+  return $random->word(12) . '@example.com';
 }

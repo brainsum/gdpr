@@ -29,13 +29,6 @@ class GdprDumpGdprSqlDump {
   protected $skipTables = [];
 
   /**
-   * The database.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $database;
-
-  /**
    * The Sanitizer plugins.
    *
    * @var array
@@ -279,7 +272,7 @@ class GdprDumpGdprSqlDump {
         db_drop_table($gdprTable);
       }
     }
-    catch (Eexception $e) {
+    catch (Exception $e) {
       $transaction->rollback();
       drush_set_error('DRUSH_SQL_DUMP_FAIL', 'Database Cleanup failed');
     }
