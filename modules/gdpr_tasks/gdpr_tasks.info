@@ -1,0 +1,17 @@
+name = General Data Protection Regulation (GDPR) - Tasks
+description = Allow tracking of SARs and Removal requests.
+core = 7.x
+
+dependencies[] = gdpr
+dependencies[] = gdpr_fields
+dependencies[] = entity
+dependencies[] = views
+
+files[] = src/Anonymizer.php
+files[] = src/Entity/GDPRTask.php
+files[] = src/Entity/GDPRTaskInterface.php
+files[] = src/Entity/GDPRTaskController.php
+files[] = src/Entity/GDPRTaskUIController.php
+files[] = src/Entity/GDPRTaskType.php
+files[] = src/Plugin/QueueWorker/GdprTasksSarWorker.php
+files[] = views/handlers/gdpr_tasks_handler_operations_field.inc
