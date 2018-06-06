@@ -16,14 +16,14 @@ function gdpr_tasks_schema() {
         'description' => 'The primary identifier for a task.',
         'type' => 'serial',
         'unsigned' => TRUE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'type' => array(
         'description' => 'The {gdpr_task_type} of this task.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'language' => array(
         'description' => 'The {languages}.language of this task.',
@@ -43,7 +43,7 @@ function gdpr_tasks_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'created' => array(
         'description' => 'The Unix timestamp when the task was created.',

@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Queue worker callback for processing SARs requests.
  */
@@ -87,7 +86,7 @@ class GdprTasksSarWorker {
 
     // Build our export files.
     $csvs = array();
-    foreach ($all_data as $plugin_id =>  $data) {
+    foreach ($all_data as $plugin_id => $data) {
       if ($plugin_id == '_assets') {
         $wrapper->gdpr_tasks_sar_export_assets = $data;
         continue;
@@ -157,7 +156,7 @@ class GdprTasksSarWorker {
     $zip = new ZipArchive();
     if (!$zip->open($file_path, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
       // @todo: Improve error handling.
-      drupal_set_message('error opening file', 'error');
+      drupal_set_message(t('Error opening file.'), 'error');
       return;
     }
 
@@ -204,9 +203,7 @@ class GdprTasksSarWorker {
       file_delete($part_file);
     }
 
-    // Clean up the parts directory.
-    // @todo.
-
+    // @todo Clean up the parts directory.
     // Update the status as completed.
     $task->status = 'closed';
     $task->save();
@@ -219,6 +216,7 @@ class GdprTasksSarWorker {
    *   The filename to read from (supports streams).
    *
    * @return array
+   *   CSV file data.
    */
   public static function readCsv($filename) {
     $data = array();
