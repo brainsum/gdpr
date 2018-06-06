@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<ruleset name="GDPR coding standards">
+    <description>GDPR custom Drupal 7 coding standards</description>
+
+    <exclude-pattern>*/css/*</exclude-pattern>
+    <exclude-pattern>*/js/*</exclude-pattern>
+    <exclude-pattern>README.md</exclude-pattern>
+
+    <rule ref="Drupal"/>
+
+    <!-- The following rules are intentionally disabled. -->
+    <rule ref="Drupal.NamingConventions.ValidClassNameSniff.StartWithCaptial">
+        <severity>0</severity>
+    </rule>
+
+    <rule ref="Drupal.NamingConventions.ValidClassNameSniff.NoUnderscores">
+        <severity>0</severity>
+    </rule>
+
+</ruleset>
