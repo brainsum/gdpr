@@ -10,19 +10,22 @@
     <rule ref="DrupalPractice"/>
 
     <!-- The following rules are intentionally disabled. -->
+
+    <!-- Other contrib modules don't follow class naming convention so when extending
+         other classes we are unable to follow strict naming standards. -->
     <rule ref="Drupal.NamingConventions.ValidClassName.StartWithCaptial">
         <severity>0</severity>
     </rule>
-
     <rule ref="Drupal.NamingConventions.ValidClassName.NoUnderscores">
         <severity>0</severity>
     </rule>
-
     <rule ref="Drupal.NamingConventions.ValidFunctionName.ScopeNotCamelCaps">
         <severity>0</severity>
     </rule>
-
     <rule ref="Drupal.NamingConventions.ValidVariableName.LowerCamelName">
+        <severity>0</severity>
+    </rule>
+    <rule ref="DrupalPractice.General.ClassName.ClassPrefix">
         <severity>0</severity>
     </rule>
 
