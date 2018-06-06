@@ -12,53 +12,56 @@ class GDPRFieldData {
 
   /**
    * The machine name for this field.
+   *
    * @var string
    */
   public $name;
 
   /**
-   * Plugin type of field.
-   * @var string
-   */
-  public $plugin_type;
-
-  /**
    * Human readable name for the field.
+   *
    * @var string
    */
   public $label;
 
   /**
    * Short description for the field.
+   *
    * @var string
    */
   public $description;
 
   /**
    * Entity type of field.
+   *
    * @var string
    */
   public $entity_type;
 
   /**
    * Entity bundle of field.
+   *
    * @var string
    */
   public $entity_bundle;
 
   /**
    * Name of the property.
+   *
    * @var string
    */
   public $property_name;
 
   /**
    * Whether this finder is disabled.
+   *
+   * @var bool
    */
   public $disabled = FALSE;
 
   /**
    * Additional settings.
+   *
    * @var array
    */
   public $settings;
@@ -98,29 +101,43 @@ class GDPRFieldData {
 
     return $field;
   }
-  
+
   /**
    * Create field data from property name, entity type and bundle.
    *
-   * @param $entity_type
-   * @param $bundle
-   * @param $property_name
+   * @param string $entity_type
+   *   The entity type id.
+   * @param string $bundle
+   *   The bundle name.
+   * @param string $property_name
+   *   The property name.
+   *
+   * @return static
+   *   New field data object.
    */
   public static function createFromProperty($entity_type, $bundle, $property_name) {
     ctools_include('plugins');
-    $plugin = ctools_get_plugins('gdpr_fields', 'gdpr_data', implode('|', array($entity_type, $bundle, $property_name)));
-    
+    $plugin = ctools_get_plugins(
+      'gdpr_fields',
+      'gdpr_data',
+      implode('|', array($entity_type, $bundle, $property_name))
+    );
+
     if ($plugin) {
       return static::createFromPlugin($plugin);
     }
-    
+
     return NULL;
   }
-  
+
   /**
    * Create the field data from a property wrapper.
    *
    * @param EntityMetadataWrapper $wrapper
+   *   The property wrapper to build field data from.
+   *
+   * @return static
+   *   New field data object.
    */
   public static function createFromWrapper(EntityMetadataWrapper $wrapper) {
     $entity_type = $bundle = $property_name = FALSE;
@@ -129,13 +146,13 @@ class GDPRFieldData {
       if (empty($info['parent'])) {
         return NULL;
       }
-      
+
       $wrapper = $info['parent'];
       if ($wrapper instanceof EntityDrupalWrapper) {
         $entity_type = $wrapper->type();
         $bundle = $wrapper->getBundle();
         $property_name = $info['name'];
-        
+
         break;
       }
     }
@@ -146,7 +163,6 @@ class GDPRFieldData {
     if (isset($plugins[$name])) {
       return $plugins[$name];
     }
-
 
     return static::createFromProperty($entity_type, $bundle, $property_name);
   }
@@ -169,7 +185,7 @@ class GDPRFieldData {
 
     return $default;
   }
-  
+
   /**
    * Whether to recurse to entities included in this property.
    */
@@ -201,9 +217,11 @@ class GDPRFieldData {
    *   The value to be stored.
    *
    * @return $this
+   *   Return this class.
    */
   public function setSetting($setting, $value) {
     $this->settings[$setting] = $value;
     return $this;
   }
+
 }

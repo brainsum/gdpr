@@ -4,14 +4,15 @@
  * Base class for export UI.
  */
 class gdpr_entity_property {
-  var $plugin;
-  var $name;
-  var $options = array();
+
+  public $plugin;
+  public $name;
+  public $options = array();
 
   /**
    * Fake constructor.
    */
-  function init($plugin) {
+  public function init($plugin) {
     $this->plugin = $plugin;
   }
 

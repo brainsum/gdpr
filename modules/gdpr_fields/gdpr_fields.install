@@ -14,8 +14,6 @@ function gdpr_fields_schema() {
     'export' => array(
       'key' => 'name',
       'key name' => 'Name',
-//      'admin_title' => 'label',
-//      'admin_description' => 'description',
       'primary key' => 'name',
       'identifier' => 'field',
       'default hook' => 'gdpr_fields_default_field_data',
@@ -26,11 +24,7 @@ function gdpr_fields_schema() {
         'type' => 'varchar',
         'length' => 255,
         'description' => 'Machine name for field.',
-      ),
-      'plugin_type' => array(
-        'type' => 'varchar',
-        'length' => 128,
-        'description' => 'Plugin type of the field.',
+        'not null' => TRUE,
       ),
       'entity_type' => array(
         'type' => 'varchar',
@@ -57,7 +51,7 @@ function gdpr_fields_schema() {
     'primary key' => array('name'),
     'keys' => array(
       'enabled' => array('enabled'),
-    )
+    ),
   );
 
   return $schema;
