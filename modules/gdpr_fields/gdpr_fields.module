@@ -177,7 +177,7 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
             if ($sub_list_type = entity_property_list_extract_type($sub_property_type)) {
               $sub_property_type = $sub_list_type;
             }
-            
+
             if ($sub_property_type != 'file' && ($sub_property_type == 'entity' || entity_get_info($sub_property_type))) {
               // Skip relationships that we do not want to follow.
               // IF we can't get gdpr data for this property then follow anyway

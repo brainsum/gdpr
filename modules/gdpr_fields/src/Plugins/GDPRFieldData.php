@@ -33,6 +33,7 @@ class GDPRFieldData {
 
   /**
    * Entity type of field.
+   *
    * @var string
    */
   public $entity_type;

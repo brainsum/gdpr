@@ -12,7 +12,7 @@
  *   An array of field settings definitions.
  */
 function hook_gdpr_fields_default_field_data() {
-  $export =  array();
+  $export = array();
 
   $field = new GDPRFieldData();
   $field->disabled = FALSE; /* Edit this to true to make a default field disabled initially */

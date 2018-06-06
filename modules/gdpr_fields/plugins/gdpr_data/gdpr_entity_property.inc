@@ -22,13 +22,13 @@ $plugin = array(
  *   The plugin to get child for.
  * @param string $parent
  *   The parent plugin id.
- * @param string $parent
+ * @param string $child
  *   The child plugin id.
  *
  * @return array
  *   An child plugin definition.
  */
-function gdpr_fields_gdpr_entity_property_get_child($plugin, $parent, $child) {
+function gdpr_fields_gdpr_entity_property_get_child(array $plugin, $parent, $child) {
   $plugins = gdpr_fields_gdpr_entity_property_get_children($plugin, $parent);
   return $plugins[$parent . ':' . $child];
 }
@@ -43,9 +43,8 @@ function gdpr_fields_gdpr_entity_property_get_child($plugin, $parent, $child) {
  *
  * @return array
  *   An array of child plugin definitions.
-
  */
-function gdpr_fields_gdpr_entity_property_get_children($plugin, $parent) {
+function gdpr_fields_gdpr_entity_property_get_children(array $plugin, $parent) {
   $plugins = array();
   foreach (entity_get_property_info() as $entity_type => $property_info) {
     // Get a list of bundles.
