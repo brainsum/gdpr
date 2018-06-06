@@ -9,11 +9,11 @@
     <rule ref="Drupal"/>
 
     <!-- The following rules are intentionally disabled. -->
-    <rule ref="Drupal.NamingConventions.ValidClassNameSniff.StartWithCaptial">
+    <rule ref="Drupal.NamingConventions.ValidClassName.StartWithCaptial">
         <severity>0</severity>
     </rule>
 
-    <rule ref="Drupal.NamingConventions.ValidClassNameSniff.NoUnderscores">
+    <rule ref="Drupal.NamingConventions.ValidClassName.NoUnderscores">
         <severity>0</severity>
     </rule>
 
