@@ -17,7 +17,7 @@ class gdpr_fields_ui extends ctools_export_ui {
   /**
    * {@inheritdoc}
    */
-  function hook_menu(&$items) {
+  public function hook_menu(&$items) {
     unset($this->plugin['menu']['items']['add']);
     // @todo Make sure import always overrides and never adds.
     $this->plugin['menu']['items']['import']['title'] = 'Override';
@@ -66,7 +66,7 @@ class gdpr_fields_ui extends ctools_export_ui {
    * @return GDPRFieldData[]
    *   Array of plugins found.
    */
-  protected function getItemEntityPlugins($item, $filter_unconfigured = FALSE) {
+  protected function getItemEntityPlugins(GDPRFieldData $item, $filter_unconfigured = FALSE) {
     $plugins = array();
 
     if (empty($this->entityPlugins[$item->entity_type])) {
@@ -91,25 +91,24 @@ class gdpr_fields_ui extends ctools_export_ui {
 
   /**
    * {@inheritdoc}
-   *
-   * @param GDPRFieldData $item
    */
   public function list_build_row($item, &$form_state, $operations) {
-    // Set up sorting
+    // Set up sorting.
+    /* @var GDPRFieldData $item */
     $name = $item->{$this->plugin['export']['key']};
-    $schema = ctools_export_get_schema($this->plugin['schema']);
 
-    $is_id = Anonymizer::propertyIsEntityId($item->entity_type, $item->property_name);
+    // @todo Abstract id property getter out of tasks module or require module.
+    $is_id = class_exists('Anonymizer') ? Anonymizer::propertyIsEntityId($item->entity_type, $item->property_name) : FALSE;
 
-    // Note: $item->{$schema['export']['export type string']} should have already been set up by export.inc so
-    // we can use it safely.
     switch ($form_state['values']['order']) {
       case 'disabled':
         $this->sorts[$name] = empty($item->disabled) . $name;
         break;
+
       case 'title':
         $this->sorts[$name] = $item->{$this->plugin['export']['admin_title']};
         break;
+
       case 'name':
         $this->sorts[$name] = $name;
         break;
@@ -146,7 +145,10 @@ class gdpr_fields_ui extends ctools_export_ui {
     $rta_labels = $this->rtaOptions();
     $rtf_labels = $this->rtfOptions();
 
-    $row['data'][] = array('data' => $rta_labels[$item->getSetting('gdpr_fields_rta', '')], 'class' => array('ctools-export-ui-rta'));
+    $row['data'][] = array(
+      'data' => $rta_labels[$item->getSetting('gdpr_fields_rta', '')],
+      'class' => array('ctools-export-ui-rta'),
+    );
 
     $rtf_label = $rtf_labels[$item->getSetting('gdpr_fields_rtf', '')];
 
@@ -157,7 +159,15 @@ class gdpr_fields_ui extends ctools_export_ui {
 
     $row['data'][] = array('data' => $rtf_label, 'class' => array('ctools-export-ui-rtf'));
 
-    $ops = theme('links__ctools_dropbutton', array('links' => $operations, 'attributes' => array('class' => array('links', 'inline'))));
+    $ops = theme('links__ctools_dropbutton', array(
+      'links' => $operations,
+      'attributes' => array(
+        'class' => array(
+          'links',
+          'inline',
+        ),
+      ),
+    ));
 
     $row['data'][] = array('data' => $ops, 'class' => array('ctools-export-ui-operations'));
 
@@ -178,8 +188,7 @@ class gdpr_fields_ui extends ctools_export_ui {
     return $options;
   }
 
-
-    /**
+  /**
    * {@inheritdoc}
    */
   public function list_table_header() {
@@ -203,7 +212,7 @@ class gdpr_fields_ui extends ctools_export_ui {
     $table_data = '';
 
     foreach ($this->rows as $name => $row) {
-      list($entity_type, $entity_bundle, $property_name) = explode('|', $name);
+      list($entity_type, $entity_bundle,) = explode('|', $name);
       $tables[$entity_type][$entity_bundle][$name] = $row;
     }
 
@@ -215,7 +224,7 @@ class gdpr_fields_ui extends ctools_export_ui {
           )),
           '#value' => '',
           '#children' => '<div>',
-          '#attributes' => array (
+          '#attributes' => array(
             'class' => array(
               'collapsible',
             ),
@@ -247,10 +256,9 @@ class gdpr_fields_ui extends ctools_export_ui {
               )),
               '#value' => theme('table', $table),
               '#children' => '<div>',
-              '#attributes' => array (
+              '#attributes' => array(
                 'class' => array(
                   'collapsible',
-//                  'collapsed',
                 ),
               ),
             ),
@@ -264,7 +272,7 @@ class gdpr_fields_ui extends ctools_export_ui {
 
     $content = array(
       '#type' => 'container',
-      '#attributes' => array (
+      '#attributes' => array(
         'id' => 'ctools-export-ui-list-items',
       ),
       'data' => array('#markup' => !empty($table_data) ? $table_data : $this->plugin['strings']['message']['no items']),

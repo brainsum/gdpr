@@ -48,7 +48,7 @@ function gdpr_fields_get_gdpr_data() {
  * Default hook for building field data plugins.
  */
 function gdpr_fields_gdpr_fields_default_field_data() {
-  $export =  array();
+  $export = array();
 
   $plugins = gdpr_fields_get_gdpr_data();
   foreach ($plugins as $name => $plugin) {
@@ -73,7 +73,7 @@ function gdpr_fields_gdpr_fields_default_field_data() {
  *
  * @param string $entity_type
  *   The entity type of $entity.
- * @param int|stdClass $entity
+ * @param int|object $entity
  *   The entity we want information for.
  * @param array $entity_list
  *   Internal use only, provide the entity list to build upon.
@@ -91,7 +91,7 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
   /* @var \EntityDrupalWrapper $wrapper */
   $wrapper = entity_metadata_wrapper($entity_type, $entity);
   $entity_id = $wrapper->getIdentifier();
-  
+
   // Check for recursion.
   if (isset($entity_list[$entity_type][$entity_id])) {
     return $entity_list;
@@ -104,7 +104,7 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
   $entity->_gdpr_row_id = $row_id;
   $entity->_gdpr_source_plugin = $source_plugin;
   $entity_list[$entity_type][$entity_id] = $entity;
-  
+
   // Loop over all defined properties and collect information.
   // @todo: Add a way to exclude specific properties.
   // @todo: Exclude entity types.
@@ -128,27 +128,27 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
       $is_list = TRUE;
       $property_type = $list_type;
     }
-    
+
     // If it is an entity property recursively call this function.
     if ($property_type != 'file' && entity_get_info($property_type)) {
       // If the gdpr settings tell us not to follow related entities through
       // this property then exclude them.
-      $GDPR_data = GDPRFieldData::createFromWrapper($wrapper->{$property_name});
-      if (!$GDPR_data) {
+      $gdpr_data = GDPRFieldData::createFromWrapper($wrapper->{$property_name});
+      if (!$gdpr_data) {
         continue;
       }
-      if (!$GDPR_data->includeRelatedEntities()) {
+      if (!$gdpr_data->includeRelatedEntities()) {
         continue;
       }
 
       // If the property is a list then loop over each item.
       if ($is_list) {
-        foreach ($wrapper->{$property_name} as $delta => $property_wrapper) {
+        foreach ($wrapper->{$property_name} as $property_wrapper) {
           $entity_list = gdpr_fields_collect_gdpr_entities(
             $property_wrapper->type(),
             $property_wrapper->value(),
             $entity_list,
-            $GDPR_data->name
+            $gdpr_data->name
           );
         }
       }
@@ -157,7 +157,7 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
           $wrapper->{$property_name}->type(),
           $wrapper->{$property_name}->value(),
           $entity_list,
-          $GDPR_data->name,
+          $gdpr_data->name,
           $row_id
         );
       }
@@ -182,8 +182,8 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
               // Skip relationships that we do not want to follow.
               // IF we can't get gdpr data for this property then follow anyway
               // just in case.
-              $GDPR_data = GDPRFieldData::createFromWrapper($property_wrapper->{$sub_property_name});
-              if ($GDPR_data && !$GDPR_data->includeRelatedEntities()) {
+              $gdpr_data = GDPRFieldData::createFromWrapper($property_wrapper->{$sub_property_name});
+              if ($gdpr_data && !$gdpr_data->includeRelatedEntities()) {
                 continue;
               }
 
@@ -193,7 +193,7 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
                     $sub_property_wrapper->type(),
                     $sub_property_wrapper->value(),
                     $entity_list,
-                    $GDPR_data->name
+                    $gdpr_data->name
                   );
                 }
               }
@@ -202,7 +202,7 @@ function gdpr_fields_collect_gdpr_entities($entity_type, $entity, array $entity_
                   $property_wrapper->{$sub_property_name}->type(),
                   $property_wrapper->{$sub_property_name}->value(),
                   $entity_list,
-                  $GDPR_data->name,
+                  $gdpr_data->name,
                   $row_id
                 );
               }
