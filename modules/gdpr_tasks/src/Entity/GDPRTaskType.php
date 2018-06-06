@@ -5,11 +5,7 @@
  */
 class GDPRTaskType extends Entity {
 
-  /**
-   * @var string
-   */
   public $type;
-
   public $label;
   public $weight = 0;
 

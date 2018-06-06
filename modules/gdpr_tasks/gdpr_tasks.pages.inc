@@ -11,7 +11,7 @@
 function gdpr_task_user_request($user) {
   return array(
     'message' => array(
-      '#markup' => 'Make data access requests.'
+      '#markup' => 'Make data access requests.',
     ),
   );
 }
@@ -23,7 +23,7 @@ function gdpr_tasks_request($account, $gdpr_task_type) {
   $tasks = gdpr_tasks_get_user_tasks($account, $gdpr_task_type);
 
   if (!empty($tasks)) {
-    drupal_set_message('You already have a pending task.', 'warning');
+    drupal_set_message(t('You already have a pending task.'), 'warning');
   }
   else {
     global $user;
@@ -43,7 +43,7 @@ function gdpr_tasks_request($account, $gdpr_task_type) {
     else {
       gdpr_tasks_send_mail('task_requested_other', $task);
     }
-    drupal_set_message('Your request has been logged.');
+    drupal_set_message(t('Your request has been logged.'));
   }
 
   drupal_goto("user/{$account->uid}/gdpr/requests");

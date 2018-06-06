@@ -8,16 +8,20 @@ class GDPRTask extends Entity implements GDPRTaskInterface {
   /**
    * The internal numeric id of the task.
    *
-   * @var integer
+   * @var int
    */
   public $id;
 
   /**
+   * The task type.
+   *
    * @var string
    */
   public $type;
 
   /**
+   * The default language.
+   *
    * @var string
    */
   public $language;
@@ -25,7 +29,7 @@ class GDPRTask extends Entity implements GDPRTaskInterface {
   /**
    * The users id that requested this task.
    *
-   * @var integer
+   * @var int
    */
   public $user_id;
 
@@ -39,35 +43,35 @@ class GDPRTask extends Entity implements GDPRTaskInterface {
   /**
    * The Unix timestamp when the task was created.
    *
-   * @var integer
+   * @var int
    */
   public $created;
 
   /**
    * The Unix timestamp when the task was most recently saved.
    *
-   * @var integer
+   * @var int
    */
   public $changed;
 
   /**
    * The Unix timestamp when the task was completed.
    *
-   * @var integer
+   * @var int
    */
   public $complete;
 
   /**
    * The users id that requested this task.
    *
-   * @var integer
+   * @var int
    */
   public $requested_by;
 
   /**
    * The users id that processed this task.
    *
-   * @var integer
+   * @var int
    */
   public $processed_by;
 
@@ -75,7 +79,6 @@ class GDPRTask extends Entity implements GDPRTaskInterface {
    * {@inheritdoc}
    */
   protected $defaultLabel = TRUE;
-
 
   /**
    * {@inheritdoc}
@@ -105,4 +108,5 @@ class GDPRTask extends Entity implements GDPRTaskInterface {
     // Add in the translated specified label property.
     return $this->entityInfo['bundles'][$this->bundle()]['label'];
   }
+
 }
