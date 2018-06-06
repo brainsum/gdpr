@@ -56,5 +56,6 @@ function gdpr_text_remote_generator($input) {
  * Local generator for text sanitize.
  */
 function gdpr_text_local_generator($input) {
-  return gdpr_random_sentence(str_word_count($input));
+  $random = new GdprDumpUtilRandom();
+  return $random->sentences(str_word_count($input));
 }
