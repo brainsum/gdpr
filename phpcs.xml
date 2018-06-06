@@ -7,6 +7,7 @@
     <exclude-pattern>README.md</exclude-pattern>
 
     <rule ref="Drupal"/>
+    <rule ref="DrupalPractice"/>
 
     <!-- The following rules are intentionally disabled. -->
     <rule ref="Drupal.NamingConventions.ValidClassName.StartWithCaptial">
@@ -14,6 +15,14 @@
     </rule>
 
     <rule ref="Drupal.NamingConventions.ValidClassName.NoUnderscores">
+        <severity>0</severity>
+    </rule>
+
+    <rule ref="Drupal.NamingConventions.ValidFunctionName.ScopeNotCamelCaps">
+        <severity>0</severity>
+    </rule>
+
+    <rule ref="Drupal.NamingConventions.ValidVariableName.LowerCamelName">
         <severity>0</severity>
     </rule>
 

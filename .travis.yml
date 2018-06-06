@@ -29,11 +29,8 @@ env:
 
 matrix:
   fast_finish: true
-  include:
-    - env: PHPCS_WARNINGS=warnings
   allow_failures:
     - php: hhvm
-    - env: PHPCS_WARNINGS=warnings
 
 mysql:
   database: drupal_travis_db
@@ -52,11 +49,12 @@ install:
 
 before_script:
   - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs --config-set installed_paths $DRUPAL_BUILD_ROOT/drupal/vendor/drupal/coder/coder_sniffer
+  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs --config-set ignore_warnings_on_exit 1
   - php -S localhost:8888 -t $DRUPAL_BUILD_ROOT/drupal/web &
   - mysql -u root -e "CREATE DATABASE IF NOT EXISTS drupal_travis_db"
 
 script:
-  - ./travis-ci/phpcs.sh
+  - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpcs $TRAVIS_BUILD_DIR -p --standard=phpcs.xml --colors
   # @todo: Add ESLint
   # - $DRUPAL_BUILD_ROOT/drupal/vendor/bin/phpunit -c $DRUPAL_BUILD_ROOT/drupal/web/core/phpunit.xml.dist --group=gdpr
 
