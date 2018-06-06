@@ -28,7 +28,7 @@ class Anonymizer {
       $errors[] = 'An export directory has not been set. Please set this under Configuration -> GDPR -> Right to be Forgotten';
     }
 
-    foreach (gdpr_tasks_collect_rtf_data($user, TRUE) as $plugin_id => $data) {
+    foreach (gdpr_tasks_collect_rtf_data($user, TRUE) as $data) {
       $mode = $data['rtf'];
       $entity_type = $data['entity_type'];
       $entity_id = $data['entity_id'];
@@ -100,7 +100,6 @@ class Anonymizer {
         user_save($user, array('status' => 0));
 
         // @todo Write a log to file system.
-//        $this->writeLogToFile($task, $log);
       }
       catch (\Exception $e) {
         $tx->rollback();
@@ -116,13 +115,13 @@ class Anonymizer {
    *
    * @param array $field_info
    *   The current field to process.
-   * @param EntityInterface|stdClass $entity
+   * @param object|EntityInterface $entity
    *   The current field to process.
    *
    * @return array
    *   First element is success boolean, second element is the error message.
    */
-  private function remove($field_info, $entity) {
+  private function remove(array $field_info, $entity) {
     try {
       $entity_type = $field_info['entity_type'];
       $field = $field_info['plugin']->property_name;
@@ -156,13 +155,13 @@ class Anonymizer {
    *
    * @param array $field_info
    *   The field to anonymise.
-   * @param $entity
+   * @param object|EntityInterface $entity
    *   The parent entity.
    *
    * @return array
    *   First element is success boolean, second element is the error message.
    */
-  private function anonymize($field_info, $entity) {
+  private function anonymize(array $field_info, $entity) {
     $sanitizer_id = $this->getSanitizerId($field_info, $entity);
     $field = $field_info['plugin']->property_name;
 
@@ -190,7 +189,6 @@ class Anonymizer {
     }
   }
 
-
   /**
    * Checks that the export directory has been set.
    *
@@ -209,13 +207,13 @@ class Anonymizer {
    *
    * @param array $field_info
    *   The field to anonymise.
-   * @param $entity
+   * @param object|EntityInterface $entity
    *   The parent entity.
    *
    * @return string
    *   The sanitizer ID or null.
    */
-  private function getSanitizerId($field_info, $entity) {
+  private function getSanitizerId(array $field_info, $entity) {
     // First check if this field has a sanitizer defined.
     $sanitizer = $field_info['plugin']->settings['gdpr_fields_sanitizer'];
 
@@ -251,13 +249,13 @@ class Anonymizer {
    *   The field name.
    * @param array $property_info
    *   The property info.
-   * @param null $error_message
+   * @param mixed $error_message
    *   A variable to fill with an error message.
    *
    * @return bool
    *   TRUE if the property can be removed, FALSE if not.
    */
-  public static function propertyCanBeRemoved($entity_type, $field, $property_info, &$error_message = NULL) {
+  public static function propertyCanBeRemoved($entity_type, $field, array $property_info, &$error_message = NULL) {
     // Fail on computed fields.
     if (!empty($property_info['computed'])) {
       $error_message = "Unable to remove computed property.";

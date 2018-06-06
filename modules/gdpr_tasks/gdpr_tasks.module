@@ -20,7 +20,7 @@ function gdpr_tasks_module_implements_alter(&$implementations, $hook) {
  * Implements hook_entity_info().
  */
 function gdpr_tasks_entity_info() {
-  $entities =  array();
+  $entities = array();
 
   $entities['gdpr_task'] = array(
     'label' => t('Task'),
@@ -174,29 +174,27 @@ function gdpr_tasks_permission() {
     ),
     'view gdpr tasks' => array(
       'title' => t('View GDPR tasks'),
-      'description' => t(''),
     ),
     'view own gdpr tasks' => array(
       'title' => t('View you own GDPR tasks'),
-      'description' => t(''),
     ),
     'edit gdpr tasks' => array(
       'title' => t('Edit GDPR tasks'),
-      'description' => t(''),
     ),
     'request gdpr tasks' => array(
       'title' => t('Request new GDPR tasks for themselves'),
-      'description' => t(''),
     ),
     'request any gdpr tasks' => array(
       'title' => t('Request new GDPR tasks for anyone'),
-      'description' => t(''),
     ),
   );
 
   return $perms;
 }
 
+/**
+ * Access callback for user task permission.
+ */
 function gdpr_tasks_user_tasks_access($op, $account) {
   global $user;
   $own = $account == $user->uid ? 'own ' : '';
@@ -278,7 +276,7 @@ function gdpr_task_type_access($op, $task_type = NULL, $account = NULL) {
 /**
  * Load a GDPR Task entity.
  *
- * @param $id
+ * @param int $id
  *   The id of the task.
  *
  * @return GDPRTask|null
@@ -291,28 +289,32 @@ function gdpr_task_load($id) {
 /**
  * Load tasks from the database.
  *
- * @param $ids
+ * @param array|bool $ids
  *   An array of task IDs.
- * @param $conditions
+ * @param array $conditions
  *   (deprecated) An associative array of conditions on the {gdpr_task}
  *   table, where the keys are the database fields and the values are the
  *   values those fields must have. Instead, it is preferable to use
  *   EntityFieldQuery to retrieve a list of entity IDs loadable by
  *   this function.
- * @param $reset
+ * @param bool $reset
  *   Whether to reset the internal static entity cache.
  *
- * @return
+ * @return array
  *   An array of task objects, indexed by task ID.
  *
  * @see entity_load()
  * @see EntityFieldQuery
  */
-function gdpr_task_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE) {
+function gdpr_task_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
   return entity_load('gdpr_task', $ids, $conditions, $reset);
 }
 
-
+/**
+ * Get a list of tasks for a user.
+ *
+ * Optional condition on the type of task if provided.
+ */
 function gdpr_tasks_get_user_tasks($user, $gdpr_task_type = NULL) {
   $query = db_select('gdpr_task', 't')
     ->fields('t', array('id'))
@@ -331,60 +333,6 @@ function gdpr_tasks_get_user_tasks($user, $gdpr_task_type = NULL) {
 
   return $result;
 }
-
-/**
- * Implements hook_entity_load().
- *
- * TEMP function for api testing.
- */
-function gdpr_tasks_entity_load($entities, $type) {
-  if ($type != 'gdpr_task') {
-    return;
-  }
-  return;
-
-  foreach ($entities as $entity) {
-    if ($entity->type != 'gdpr_sar') {
-      continue;
-    }
-
-
-    ctools_include('context');
-    ctools_include('plugins');
-
-
-    $context = ctools_context_create('entity:user', $entity->user_id);
-    $available_relationships = ctools_context_get_relevant_relationships(array($context));
-
-    // @todo work out how to configure any required entity_properties.
-    if (isset($available_relationships['entity_property'])) {
-      unset($available_relationships['entity_property']);
-    }
-
-    if (isset($available_relationships['user_category_edit_form_from_user'])) {
-      unset($available_relationships['user_category_edit_form_from_user']);
-    }
-
-    foreach (array_keys($available_relationships) as $relationship) {
-      $relationship = ctools_get_relationship($relationship);
-      // @todo can identifier be loaded elsewhere?
-      $relationship['identifier'] = $relationship['title'];
-
-      $entity_contexts = gdpr_fields_get_contexts_from_relationship($relationship, $context);
-
-      if (!is_array($entity_contexts)) {
-        $entity_contexts = array($entity_contexts);
-      }
-
-      foreach ($entity_contexts as $entity_context) {
-        if (!empty($entity_context->data)) {
-//        dpm($entity_context->data);
-        }
-      }
-    }
-  }
-}
-
 
 /**
  * Implements hook_cron_queue_info().
@@ -417,76 +365,8 @@ function gdpr_tasks_gdpr_task_insert($task) {
   }
 }
 
-
-
-/*($entity, $type) {
-  if ($type != 'gdpr_task') {
-    return;
-  }
-
-  if ($entity->type != 'gdpr_sar') {
-    return;
-  }
-
-
-  if (empty($entity->gdpr_tasks_sar_export)) {
-    $wrapper = entity_metadata_wrapper('gdpr_task', $entity);
-
-    $info = field_info_field('gdpr_tasks_sar_export');
-    $instance = field_info_instance('gdpr_task', 'gdpr_tasks_sar_export', 'gdpr_sar');
-
-    $dirname = $info['settings']['uri_scheme'] . '://' . $instance['settings']['file_display'];
-
-    $data = gdpr_tasks_collect_rta_data(user_load($entity->user_id));
-
-    $inc = array();
-    $maybe = array();
-    foreach ($data as $key => $values) {
-      $rta = $values['rta'];
-      unset($values['rta']);
-      $inc[$key] = $values;
-
-      if ($rta == 'maybe') {
-        $maybe[$key] = $values;
-      }
-    }
-
-
-    $destination = gdpr_tasks_update_task_csv($inc, $dirname);
-    $export = file_get_contents($destination);
-
-    // Generate a file entity.
-    // @todo Add headers to csv export.
-    $file = file_save_data($export, $destination, FILE_EXISTS_REPLACE);
-
-    $wrapper->gdpr_tasks_sar_export->file = $file;
-
-    $temp = gdpr_tasks_update_task_csv($maybe, $dirname);
-    $entity->gdpr_tasks_manual_data[LANGUAGE_NONE][0]['value'] = file_get_contents($temp);
-  }
-
-}*/
-
-function gdpr_tasks_update_task_csv($data, $dirname = 'private://') {
-  // Prepare destination.
-  file_prepare_directory($dirname, FILE_CREATE_DIRECTORY);
-
-  // Generate a file entity.
-  $random = new GdprDumpUtilRandom();
-  $destination = $dirname . '/' . $random->name(10) . '.csv';
-
-  // Update csv with actual data.
-  $fp = fopen($destination, 'w');
-  foreach($data as $line){
-    fputcsv($fp, $line);
-  }
-  fclose($fp);
-
-  return $destination;
-}
-
 /**
- * @param $user
+ * Collect RTA data for a specific user.
  */
 function gdpr_tasks_collect_rta_data($user) {
   ctools_include('plugins');
@@ -509,7 +389,8 @@ function gdpr_tasks_collect_rta_data($user) {
           $field_config = $plugins[$plugin_name];
 
           /* @var GDPRFieldData $field_config */
-          if ($field_config->disabled || !in_array($field_config->getSetting('gdpr_fields_rta'), array('inc', 'maybe'))) {
+          $allowed_values = array('inc', 'maybe');
+          if ($field_config->disabled || !in_array($field_config->getSetting('gdpr_fields_rta'), $allowed_values)) {
             continue;
           }
 
@@ -564,6 +445,9 @@ function gdpr_tasks_collect_rta_data($user) {
   return $fields;
 }
 
+/**
+ * Extract renderable text from entity property data.
+ */
 function gdpr_tasks_collect_rta_data_extract_value($type, EntityMetadataWrapper $value, array &$assets) {
   // If there is a callback, pass straight to that.
   $info = $value->info();
@@ -607,7 +491,7 @@ function gdpr_tasks_collect_rta_data_extract_value($type, EntityMetadataWrapper 
 }
 
 /**
- * @param $user
+ * Collect RTF data for a specific user.
  */
 function gdpr_tasks_collect_rtf_data($user, $include_plugins = FALSE) {
   ctools_include('plugins');
@@ -629,7 +513,8 @@ function gdpr_tasks_collect_rtf_data($user, $include_plugins = FALSE) {
           $field_config = $plugins[$plugin_name];
 
           /* @var GDPRFieldData $field_config */
-          if ($field_config->disabled || !in_array($field_config->getSetting('gdpr_fields_rtf'), array('anonymise', 'remove', 'maybe'))) {
+          $allowed_values = array('anonymise', 'remove', 'maybe');
+          if ($field_config->disabled || !in_array($field_config->getSetting('gdpr_fields_rtf'), $allowed_values)) {
             continue;
           }
 
@@ -686,6 +571,9 @@ function gdpr_tasks_collect_rtf_data($user, $include_plugins = FALSE) {
   return $fields;
 }
 
+/**
+ * Extract renderable text from entity property data.
+ */
 function gdpr_tasks_collect_rtf_data_extract_value($type, EntityMetadataWrapper $value) {
   // If there is a callback, pass straight to that.
   $info = $value->info();
@@ -754,9 +642,9 @@ function gdpr_tasks_send_mail($key, GDPRTask $task, array $tokens = array()) {
   $tokens['gdpr_task'] = $task;
   $params = array(
     'context' => array(
-        'subject' => $email['subject'],
-        'body' => check_markup($email['body']['value'], $email['body']['format'], $language->language, TRUE),
-      ) + $tokens,
+      'subject' => $email['subject'],
+      'body' => check_markup($email['body']['value'], $email['body']['format'], $language->language, TRUE),
+    ) + $tokens,
     'attachments' => NULL,
     'plaintext' => NULL,
   );
@@ -780,7 +668,13 @@ function gdpr_tasks_entity_property_info_alter(&$info) {
  * Implements hook_field_info_alter().
  */
 function gdpr_tasks_field_info_alter(&$field_info) {
-  $types = array('datetime', 'date', 'datestampe', 'name', 'addressfield', 'commerce_price');
+  $types = array('datetime',
+    'date',
+    'datestampe',
+    'name',
+    'addressfield',
+    'commerce_price',
+  );
   foreach ($types as $type) {
     $field_info[$type]['property_callbacks'][] = 'gdpr_tasks_field_metatdata_property_info_alter';
   }
@@ -849,7 +743,19 @@ function gdpr_tasks_sars_callback_address_field(EntityMetadataWrapper $value) {
   $components = array();
   $address = $value->value();
 
-  foreach (array('name_line', 'first_name', 'last_name', 'organisation_name', 'thoroughfare', 'premise', 'locality', 'administrative_area', 'postal_code', 'country') as $component) {
+  $available = array(
+    'name_line',
+    'first_name',
+    'last_name',
+    'organisation_name',
+    'thoroughfare',
+    'premise',
+    'locality',
+    'administrative_area',
+    'postal_code',
+    'country',
+  );
+  foreach ($available as $component) {
     if (!empty($address[$component])) {
       $components[] = $address[$component];
     }

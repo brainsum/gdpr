@@ -13,7 +13,7 @@ function gdpr_task_type_form($form, &$form_state, $bundle = array(), $op = 'edit
   // @todo Do we need to edit bundles?
   $form['message'] = array(
     '#type' => 'markup',
-    '#markup' => 'Editing of GDPR Task types is not currently supported.'
+    '#markup' => 'Editing of GDPR Task types is not currently supported.',
   );
 
   return $form;
@@ -100,7 +100,7 @@ function gdpr_task_edit_gdpr_remove_form($form, &$form_state) {
   $form['actions']['submit']['#name'] = 'remove';
 
   if ($task->status == 'closed') {
-//    $form['actions']['#access'] = FALSE;
+    $form['actions']['#access'] = FALSE;
   }
 
   return $form;
@@ -139,11 +139,13 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
 
             $row_type = 'header';
             break;
+
           case 'header':
             $header = $data;
             $rows[] = $type;
             $row_type = 'row';
             break;
+
           default:
             $rows[] = $data;
             break;
@@ -156,13 +158,12 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
       '#theme' => 'table',
       '#header' => $header,
       '#rows' => $rows,
-      '#caption' => t('File contents for @filename', array('@filename' =>  $part['filename'])),
+      '#caption' => t('File contents for @filename', array('@filename' => $part['filename'])),
     );
   }
 
   $form['actions']['submit']['#value'] = t('Process');
   $form['actions']['submit']['#name'] = 'export';
-
 
   $form['gdpr_tasks_manual_data']['#access'] = FALSE;
   if ($task->status == 'closed') {
@@ -202,7 +203,7 @@ function gdpr_task_edit_gdpr_sar_form_validate($form, &$form_state) {
         $files[$file->filename] = $file->filename;
       }
       else {
-        form_set_error('gdpr_tasks_sar_export_parts', 'Please remove the old file when replacing with a new one.');
+        form_set_error('gdpr_tasks_sar_export_parts', t('Please remove the old file when replacing with a new one.'));
       }
     }
   }
@@ -223,7 +224,8 @@ function gdpr_task_edit_gdpr_remove_form_submit($form, &$form_state) {
     gdpr_task_form_submit($form, $form_state);
   }
   else {
-    dpm($errors);
+    // @todo Better error handling.
+    drupal_set_message(json_encode($errors));
     $form_state['rebuild'] = TRUE;
   }
 
@@ -266,7 +268,6 @@ function gdpr_tasks_email_settings($form, &$form_state) {
   $description = t('This email is sent when a task has been prcessed by a staff member or administrator.');
   $form['gdpr_tasks_emails'] += gdpr_tasks_email_settings_subform('task_processed', $title, $description, $emails, $tokens);
 
-
   // Make sure anything not exposed is preserved.
   foreach ($emails as $key => $value) {
     if (!isset($form['gdpr_tasks_emails'][$key])) {
@@ -303,8 +304,8 @@ function gdpr_tasks_email_settings_validate(&$form, &$form_state) {
 
     // If enabled, check we have our required values.
     $enabled = drupal_array_get_nested_value($form_state['values'], $element['enabled']['#parents']);
-    if (!empty($enabled) && !empty($element['enabled']['#commerce_booking_team_email_dependents'])) {
-      foreach ($element['enabled']['#commerce_booking_team_email_dependents'] as $array_parents) {
+    if (!empty($enabled) && !empty($element['enabled']['#gdpr_tasks_email_dependents'])) {
+      foreach ($element['enabled']['#gdpr_tasks_email_dependents'] as $array_parents) {
         // Get hold of the sub element we are requiring.
         $sub_element = drupal_array_get_nested_value($element, $array_parents);
         if (!$sub_element) {
@@ -334,15 +335,15 @@ function gdpr_tasks_email_settings_submit(&$form, &$form_state) {
 }
 
 /**
- * Build the form elements for a particular
+ * Build the form elements for a particular email.
  *
- * @param $key string
+ * @param string $key
  *   The form key for the element.
- * @param $title string
+ * @param string $title
  *   The translated title for this email.
- * @param $description string
+ * @param string $description
  *   The translated description for this email.
- * @param $settings array
+ * @param array $settings
  *   An array of settings for this email.
  * @param array $tokens
  *   An optional array of tokens which are supported for this email.
@@ -350,7 +351,7 @@ function gdpr_tasks_email_settings_submit(&$form, &$form_state) {
  * @return array
  *   A fieldset form element array.
  */
-function gdpr_tasks_email_settings_subform($key, $title, $description, $settings = array(), $tokens = array()) {
+function gdpr_tasks_email_settings_subform($key, $title, $description, array $settings = array(), array $tokens = array()) {
   // Pull the relevant key out of the settings.
   $settings = isset($settings[$key]) ? $settings[$key] : array();
 
@@ -361,7 +362,6 @@ function gdpr_tasks_email_settings_subform($key, $title, $description, $settings
     '#group' => 'gdpr_tasks_emails][emails',
     '#title' => $title,
     '#description' => $description,
-    '#commerce_booking_teams_email' => TRUE,
   );
 
   // Allow this email to be enabled/disabled.
@@ -369,7 +369,10 @@ function gdpr_tasks_email_settings_subform($key, $title, $description, $settings
     '#type' => 'checkbox',
     '#title' => t('Enable %title', array('%title' => $title)),
     '#default_value' => !empty($settings['enabled']),
-    '#commerce_booking_team_email_dependents' => array(array('email', 'subject'), array('email', 'body', 'value')),
+    '#gdpr_tasks_email_dependents' => array(
+      array('email', 'subject'),
+      array('email', 'body', 'value'),
+    ),
   );
 
   $element['email'] = array(

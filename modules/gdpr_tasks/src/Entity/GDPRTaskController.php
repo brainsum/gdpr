@@ -16,10 +16,12 @@ class GDPRTaskController extends EntityAPIController {
     return $task;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     $entity->changed = REQUEST_TIME;
     return parent::save($entity, $transaction);
   }
-
 
 }
