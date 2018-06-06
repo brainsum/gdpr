@@ -76,7 +76,7 @@ class GdprDumpGdprSqlDump {
     if (!empty($dbSpec)) {
       if (!empty($dbSpec['driver'])) {
         // Try loading our implementation first.
-        $className = 'GdprSql' . ucfirst($dbSpec['driver']);
+        $className = 'GdprDumpGdprSql' . ucfirst($dbSpec['driver']);
         module_load_include('inc', 'gdpr_dump', 'inc/' . $className);
 
         $instance = drush_get_class($className, [$dbSpec]);

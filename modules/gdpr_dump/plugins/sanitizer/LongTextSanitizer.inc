@@ -18,10 +18,10 @@ function gdpr_long_text_sanitize($input) {
     return $input;
   }
 
-  $output = gdpr_remote_generator($input);
+  $output = gdpr_long_text_remote_generator($input);
 
   if ($output === $input) {
-    $output = gdpr_local_generator($input);
+    $output = gdpr_long_text_local_generator($input);
   }
 
   return $output;
