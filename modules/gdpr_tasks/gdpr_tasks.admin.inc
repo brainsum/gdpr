@@ -113,6 +113,7 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
   $task = $form_state['task'] = $form_state['build_info']['args'][0];
   $form = gdpr_task_form($form, $form_state);
 
+  ctools_include('export');
   $plugins = ctools_export_load_object('gdpr_fields_field_data');
   $inc_label_map = array(
     'inc' => '[' . t('Include') . ']',
