@@ -30,7 +30,7 @@ use Drupal\user\UserInterface;
  *     },
  *     "access" = "Drupal\gdpr_tasks\TaskAccessControlHandler",
  *     "route_provider" = {
- *       "html" = "Drupal\entity\Routing\AdminHtmlRouteProvider",
+ *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
  *     },
  *   },
  *   base_table = "gdpr_task",
