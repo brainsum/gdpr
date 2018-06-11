@@ -5,6 +5,7 @@
  * Module file for the GDPR Consent module.
  */
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 
 /**
@@ -22,5 +23,49 @@ function gdpr_consent_toolbar_alter(&$items) {
       ],
       'weight' => 100,
     ];
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function gdpr_consent_form_field_ui_field_storage_add_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $form['#validate'][] = '_gdpr_consent_field_add_validation';
+}
+
+/**
+ * Custom form validation.
+ *
+ * @param array $form
+ *   The form.
+ * @param \Drupal\Core\Form\FormStateInterface $formState
+ *   The form state.
+ *
+ * @throws \Exception
+ */
+function _gdpr_consent_field_add_validation(array &$form, FormStateInterface $formState) {
+  // @todo: Set up for existing fields.
+  if ('gdpr_user_consent' === $formState->getValue('new_storage_type', FALSE)) {
+    /** @var \Symfony\Component\HttpFoundation\RequestStack $requestStack */
+    $requestStack = \Drupal::service('request_stack');
+    /** @var \Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface $requestParameters */
+    $requestParameters = $requestStack->getCurrentRequest()->attributes;
+
+    if ($requestParameters->has('entity_type_id') && $requestParameters->has('bundle')) {
+      $entityTypeId = $requestParameters->get('entity_type_id');
+      $entityBundle = $requestParameters->get('bundle');
+
+      /** @var \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager $consentResolverManager */
+      $consentResolverManager = \Drupal::service('plugin.manager.gdpr_consent_resolver');
+      /** @var array|bool $resolver */
+      $resolver = $consentResolverManager->getDefinitionForType($entityTypeId, $entityBundle);
+
+      if (FALSE === $resolver) {
+        $formState->setError($form['add'], t('The "@entityBundle" bundle for the "@entityTypeId" entity type has no available user resolver. Please ensure there is a resolver registered.', [
+          '@entityBundle' => $entityBundle,
+          '@entityTypeId' => $entityTypeId,
+        ]));
+      }
+    }
   }
 }
