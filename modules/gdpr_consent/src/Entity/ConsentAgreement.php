@@ -20,6 +20,7 @@ use Drupal\user\UserInterface;
  *   label = @Translation("Consent Agreement"),
  *   description = @Translation("Consent Agreement"),
  *   base_table = "gdpr_consent_agreement",
+ *   data_table = "gdpr_consent_agreement_field_data",
  *   revision_table = "gdpr_consent_agreement_revision",
  *   translatable = TRUE,
  *   handlers = {
