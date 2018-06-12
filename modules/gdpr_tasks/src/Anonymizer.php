@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\TypedData\Exception\ReadOnlyException;
 use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
 use Drupal\gdpr_fields\GDPRCollector;
@@ -20,6 +21,8 @@ use Drupal\gdpr_tasks\Form\RemovalSettingsForm;
  * Anonymizes or removes field values for GDPR.
  */
 class Anonymizer {
+
+  use StringTranslationTrait;
 
   /**
    * Collector used to retrieve properties to anonymize.
@@ -132,7 +135,7 @@ class Anonymizer {
     $log = [];
 
     if (!$this->checkExportDirectoryExists()) {
-      $errors[] = 'An export directory has not been set. Please set this under Configuration -> GDPR -> Right to be Forgotten';
+      $errors[] = $this->t('An export directory has not been set. Please set this under Configuration -> GDPR -> Right to be Forgotten');
     }
 
     $this->collector->getValueEntities($entities, 'user', $user);
@@ -289,8 +292,8 @@ class Anonymizer {
   private function getAnonymizerId(FieldItemListInterface $field, EntityInterface $bundleEntity) {
     // First check if this field has a anonymizer defined.
     $config = GdprFieldConfigEntity::load($bundleEntity->getEntityTypeId());
-    $field_config = $config->getField($bundleEntity->bundle(), $field->getName());
-    $anonymizer = $field_config->anonymizer;
+    $fieldConfig = $config->getField($bundleEntity->bundle(), $field->getName());
+    $anonymizer = $fieldConfig->anonymizer;
     $fieldDefinition = $field->getFieldDefinition();
     $type = $fieldDefinition->getType();
 
@@ -317,29 +320,36 @@ class Anonymizer {
    * @return array
    *   Array containing metadata about the entity.
    *   Elements are entity_type, bundle, field and mode.
+   *
+   * @throws \Exception
    */
   private function getFieldsToProcess(EntityInterface $entity) {
-    $bundle_id = $entity->bundle();
-    $config = GdprFieldConfigEntity::load($entity->getEntityTypeId());
+    $bundleId = $entity->bundle();
+    $entityTypeId = $entity->getEntityTypeId();
+    $config = GdprFieldConfigEntity::load($entityTypeId);
+
+    if (NULL === $config) {
+      throw new \Exception('The GDPR field config could not be loaded for the "' . $entityTypeId . '" entity type.');
+    }
 
     // Get fields for entity.
     $fields = [];
     foreach ($entity as $field) {
       /** @var \Drupal\Core\Field\FieldItemListInterface $field */
-      $field_config = $config->getField($bundle_id, $field->getName());
+      $fieldConfig = $config->getField($bundleId, $field->getName());
 
-      if (!$field_config->enabled) {
+      if (!$fieldConfig->enabled) {
         continue;
       }
 
-      $rtf_value = $field_config->rtf;
+      $rtfValue = $fieldConfig->rtf;
 
-      if ($rtf_value && $rtf_value !== 'no') {
+      if ($rtfValue && $rtfValue !== 'no') {
         $fields[] = [
           'entity_type' => $entity->getEntityTypeId(),
-          'bundle' => $bundle_id,
+          'bundle' => $bundleId,
           'field' => $field,
-          'mode' => $rtf_value,
+          'mode' => $rtfValue,
         ];
       }
 
@@ -358,6 +368,7 @@ class Anonymizer {
    *   The user that was fetched.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   private function refetchUser($user_id) {
     return $this->entityTypeManager->getStorage('user')
@@ -373,8 +384,7 @@ class Anonymizer {
   private function checkExportDirectoryExists() {
     $directory = $this->configFactory->get(RemovalSettingsForm::CONFIG_KEY)
       ->get(RemovalSettingsForm::EXPORT_DIRECTORY);
-
-    return !empty($directory) && file_prepare_directory($directory);
+    return !empty($directory) && \file_prepare_directory($directory);
   }
 
   /**
@@ -386,7 +396,7 @@ class Anonymizer {
    *   Log of processed fields.
    */
   private function writeLogToFile(TaskInterface $task, array $log) {
-    $filename = 'GDPR_RTF_' . date('Y-m-d H-i-s') . '_' . $task->uuid() . '.json';
+    $filename = 'GDPR_RTF_' . \date('Y-m-d H-i-s') . '_' . $task->uuid() . '.json';
     $dir = $this->configFactory->get(RemovalSettingsForm::CONFIG_KEY)
       ->get(RemovalSettingsForm::EXPORT_DIRECTORY);
 
@@ -402,7 +412,7 @@ class Anonymizer {
       'log' => $log,
     ];
 
-    file_put_contents($filename, json_encode($output));
+    \file_put_contents($filename, \json_encode($output));
   }
 
 }
