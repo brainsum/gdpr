@@ -55,5 +55,6 @@ function gdpr_username_remote_generator($input) {
  * Local generator for username sanitizer.
  */
 function gdpr_username_local_generator($input) {
-  return gdpr_random_word(strlen($input));
+  $random = new GdprDumpUtilRandom();
+  return $random->word(strlen($input));
 }

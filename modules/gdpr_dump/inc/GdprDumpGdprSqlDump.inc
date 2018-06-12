@@ -29,13 +29,6 @@ class GdprDumpGdprSqlDump {
   protected $skipTables = [];
 
   /**
-   * The database.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $database;
-
-  /**
    * The Sanitizer plugins.
    *
    * @var array
@@ -83,7 +76,7 @@ class GdprDumpGdprSqlDump {
     if (!empty($dbSpec)) {
       if (!empty($dbSpec['driver'])) {
         // Try loading our implementation first.
-        $className = 'GdprSql' . ucfirst($dbSpec['driver']);
+        $className = 'GdprDumpGdprSql' . ucfirst($dbSpec['driver']);
         module_load_include('inc', 'gdpr_dump', 'inc/' . $className);
 
         $instance = drush_get_class($className, [$dbSpec]);
@@ -279,7 +272,7 @@ class GdprDumpGdprSqlDump {
         db_drop_table($gdprTable);
       }
     }
-    catch (Eexception $e) {
+    catch (Exception $e) {
       $transaction->rollback();
       drush_set_error('DRUSH_SQL_DUMP_FAIL', 'Database Cleanup failed');
     }
