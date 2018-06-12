@@ -27,7 +27,7 @@ function gdpr_dump_settings_form($form, &$form_state) {
   $form['#tree'] = TRUE;
 
   $form['description'] = [
-    '#markup' => t('Check the checkboxes for each table columns containing sensitive data!'),
+    '#markup' => t('Apply anonymization for each table columns containing sensitive data!'),
   ];
 
   $form['tables'] = [
@@ -45,68 +45,119 @@ function gdpr_dump_settings_form($form, &$form_state) {
     '#title' => t('Sanitation plugin'),
     '#options' => $plugins,
     '#empty_value' => 'none',
-    '#empty_option' => t('- None -'),
+    '#empty_option' => t('- No -'),
+    '#title_display' => 'invisible',
   ];
 
-  $config = variable_get('gdpr_config_tables', []);
+  $mapping = variable_get('gdpr_dump_table_map', []);
+  $empty_tables = variable_get('gdpr_dump_empty_tables', []);
+  $table_header = [
+    t('Field'),
+    t('Type'),
+    t('Description'),
+    t('Apply anonymization'),
+  ];
 
   $db_schema = gdpr_get_complete_schema();
+  ksort($db_schema);
 
-  $empty_tables = variable_get('gdpr_dump_empty_tables', []);
-  $config = variable_get('gdpr_dump_table_map', []);
+  $more_header = [
+    t('Table name'),
+    t('Description'),
+    t('Columns'),
+  ];
+
+  $form['more_wrapper'] = [
+    '#type' => 'fieldset',
+    '#title' => t('More tables'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    'more_tables' => [
+      '#caption' => t("Select from the following tables to be able to configure more for anonymization, then press the 'Refresh form' button below to add them to the form."),
+      '#header' => $more_header,
+      '#type' => 'tableselect',
+      '#options' => [],
+      '#js_select' => FALSE,
+    ],
+    'refresh' => [
+      '#type' => 'button',
+      '#value' => t('Refresh form'),
+    ],
+  ];
+
+  $added = [];
+
+  if (isset($form_state['values'])) {
+    $added = drupal_array_get_nested_value($form_state['values'], ['more_wrapper', 'more_tables']);
+    $added = array_filter($added);
+  }
+
+  // Force some tables to always show in the form if they exist.
+  $forced = [
+    'comment' => TRUE,
+    'contact_message' => TRUE,
+    'users' => TRUE,
+    'webform_submission' => TRUE,
+    'webform_submitted_data' => TRUE,
+  ];
 
   foreach ($db_schema as $table => $table_schema) {
-    $rows = [];
-    foreach ($table_schema['fields'] as $column_name => $column_info) {
-      $currentOptions = $sanitationOptions;
-      $checked = 0;
-      if (isset($config[$table][$column_name])) {
-        $checked = 1;
-        $currentOptions['#default_value'] = $config[$table][$column_name];
+    $table_comment = isset($table_schema['description']) ? $table_schema['description'] : NULL;
+    $table_configured = isset($mapping[$table]) || isset($empty_tables[$table]);
+    $table_forced = isset($forced[$table]);
+    $table_added = isset($added[$table]);
+
+    if ($table_configured || $table_added || $table_forced) {
+      $rows = [];
+      foreach ($table_schema['fields'] as $column_name => $column_info) {
+        $currentOptions = $sanitationOptions;
+        if (isset($mapping[$table][$column_name])) {
+          $currentOptions['#default_value'] = $mapping[$table][$column_name];
+        }
+
+        $rows[$column_name] = [
+          'name' => [
+            '#markup' => '<strong>' . $column_name . '</strong>',
+          ],
+          'type' => [
+            '#markup' => '<strong>' . $column_info['type'] . '</strong>',
+          ],
+          'description' => [
+            '#markup' => '<strong>' . (empty($column_info['description']) ? '-' : $column_info['description']) . '</strong>',
+          ],
+          'option' => $currentOptions,
+        ];
+
       }
 
-      $rows[] = [
-        '#type' => 'container',
-        'name' => [
-          '#type' => 'value',
-          '#value' => $column_name,
-        ],
-        'sanitize' => [
+      $form['tables'][$table] = [
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#title' => t('Table: %table', ['%table' => $table]),
+        '#description' => $table_comment,
+        'empty_table' => [
           '#type' => 'checkbox',
-          '#title' => t('Sanitize <strong>@field_name</strong>?', [
-            '@field_name' => $column_name,
-          ]),
-          '#default_value' => $checked,
+          '#title' => t('Empty this table'),
+          '#default_value' => isset($empty_tables[$table]) ? $empty_tables[$table] : NULL,
+          '#weight' => 1,
         ],
-        'type' => [
-          '#type' => 'item',
-          '#markup' => $column_info['type'],
-          '#title' => t('Field type'),
-        ],
-        'comment' => [
-          '#type' => 'item',
-          '#markup' => empty($column_info['description']) ? '-' : $column_info['description'],
-          '#title' => t('Field comment'),
-        ],
-        'option' => $currentOptions,
+        'columns' => [
+          '#type' => 'container',
+          '#theme' => 'gdpr_dump_table_columns',
+          '#header' => $table_header,
+          '#weight' => 0,
+        ] + $rows,
       ];
+
     }
 
-    $form['tables'][$table] = [
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#title' => $table,
-      'empty_table' => [
-        '#type' => 'checkbox',
-        '#title' => t('Empty this table'),
-        '#default_value' => isset($empty_tables[$table]) ? $empty_tables[$table] : NULL,
-      ],
-      'columns' => [
-        '#type' => 'container',
-        'data' => $rows,
-      ],
-    ];
+    if (!$table_configured && !$table_forced) {
+      $row = [['data' => ['#markup' => '<strong>' . $table . '</strong>']]];
+      $row[] = $table_comment;
+      $row[] = implode(', ', array_keys($table_schema['fields']));
+      $form['more_wrapper']['more_tables']['#options'][$table] = $row;
+    }
   }
 
   $form['actions'] = [
@@ -116,6 +167,8 @@ function gdpr_dump_settings_form($form, &$form_state) {
       '#value' => t('Save configuration'),
     ],
   ];
+
+  $form['more_wrapper']['#access'] = !empty($form['more_wrapper']['more_tables']['#options']);
 
   return $form;
 }
@@ -128,14 +181,14 @@ function gdpr_dump_settings_form_submit($form, &$form_state) {
 
   $config = [];
   $empty_tables = [];
-
   foreach ($tables as $table => $row) {
     if ($row['empty_table'] === 1) {
       $empty_tables[$table] = 1;
     }
-    foreach ($row['columns']['data'] as $data) {
-      if ($data['sanitize'] === 1) {
-        $config[$table][$data['name']] = $data['option'];
+
+    foreach ($row['columns'] as $column_name => $data) {
+      if ($data['option'] !== 'none') {
+        $config[$table][$column_name] = $data['option'];
       }
     }
   }
@@ -244,4 +297,40 @@ function gdpr_dump_service() {
   }
 
   return $service;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gdpr_dump_theme($existing, $type, $theme, $path) {
+  return array(
+    'gdpr_dump_table_columns' => array(
+      'render element' => 'table',
+    ),
+  );
+}
+
+/**
+ * Table format for table columns.
+ */
+function theme_gdpr_dump_table_columns($variables) {
+  $element = $variables['table'];
+
+  $rows = [];
+
+  foreach (element_children($element) as $column_name) {
+    $row = [];
+
+    foreach (element_children($element[$column_name]) as $col) {
+      $data = &$element[$column_name][$col];
+      $row[$col] = drupal_render($data);
+    }
+
+    $rows[] = $row;
+  }
+
+  return theme('table', [
+    'header' => $element['#header'],
+    'rows' => $rows,
+  ]);
 }
