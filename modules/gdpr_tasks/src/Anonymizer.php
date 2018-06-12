@@ -174,15 +174,16 @@ class Anonymizer {
     }
 
     try {
-      $plugin = gdpr_dump_get_gdpr_sanitizer($sanitizer_id);
-      $class = ctools_plugin_get_class($plugin, 'handler');
-      /* @var GDPRSanitizerDefault $sanitizer */
-      $sanitizer = $class::create($plugin);
-
+      $plugin = gdpr_dump_get_sanitizer_plugins($sanitizer_id);
       $wrapper = entity_metadata_wrapper($field_info['entity_type'], $entity);
 
-      $wrapper->{$field} = $sanitizer->sanitize($field_info['value'], $wrapper->{$field});
-      return array(TRUE, NULL, $sanitizer_id);
+      if (function_exists($plugin['sanitize callback'])) {
+        $wrapper->{$field} = call_user_func($plugin['sanitize callback'], $field_info['value']);
+        return array(TRUE, NULL, $sanitizer_id);
+      }
+      else {
+        throw new \Exception("No sanitizer found for field {$field}.");
+      }
     }
     catch (\Exception $e) {
       return array(FALSE, $e->getMessage(), NULL);
