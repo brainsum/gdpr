@@ -366,20 +366,22 @@ function gdpr_tasks_install() {
   // @todo Make email content more useful.
   $default_emails = array(
     'task_requested_self' => array(
-      'enabled' => TRUE,
+      'enabled' => FALSE,
       'subject' => $t('Request submitted'),
       'body' => array(
         'value' => $t('A task has been requested.'),
+        'format' => NULL,
       ),
     ),
     'task_requested_other' => array(
       'enabled' => FALSE,
     ),
     'task_processed' => array(
-      'enabled' => TRUE,
+      'enabled' => FALSE,
       'subject' => $t('Request complete'),
       'body' => array(
         'value' => $t('Your requested task has been completed.'),
+        'format' => NULL,
       ),
     ),
   );

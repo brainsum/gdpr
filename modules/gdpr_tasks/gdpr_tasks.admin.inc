@@ -120,12 +120,22 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
     'maybe' => '[' . t('Maybe') . ']',
   );
 
+  // Don't try to show task details if it has not yet been processed.
+  if ($task->status == 'requested' || empty($task->gdpr_tasks_sar_export_parts)) {
+    return array(
+      'message' => array(
+        '#markup' => 'This task has not yet been processed. Please run cron or check back later.',
+      ),
+    );
+  }
+
   foreach ($task->gdpr_tasks_sar_export_parts[LANGUAGE_NONE] as $part) {
+    $header = array();
+    $rows = array();
     if (($handle = fopen(drupal_realpath($part['uri']), "r")) !== FALSE) {
       $row_type = 'plugin';
       $type = array();
-      $header = array();
-      $rows = array();
+
       while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
         switch ($row_type) {
           case 'plugin':
