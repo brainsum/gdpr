@@ -138,34 +138,43 @@ class Anonymizer {
     $this->collector->getValueEntities($entities, 'user', $user);
 
     foreach ($entities as $bundles) {
-      foreach ($bundles as $bundle_entity) {
+      foreach ($bundles as $bundleEntity) {
         // Re-load a fresh copy of the bundle entity from storage so we don't
         // end up modifying any other references to the entity in memory.
-        $bundle_entity = $this->entityTypeManager->getStorage($bundle_entity->getEntityTypeId())
-          ->loadUnchanged($bundle_entity->id());
+        $bundleEntity = $this->entityTypeManager->getStorage($bundleEntity->getEntityTypeId())
+          ->loadUnchanged($bundleEntity->id());
 
-        $entity_success = TRUE;
+        $entitySuccess = TRUE;
 
-        foreach ($this->getFieldsToProcess($bundle_entity) as $field_info) {
+        try {
+          $fieldsToProcess = $this->getFieldsToProcess($bundleEntity);
+        }
+        catch (\Exception $e) {
+          $fieldsToProcess = [];
+          $entitySuccess = FALSE;
+          // @todo: Log.
+        }
+
+        foreach ($fieldsToProcess as $fieldInfo) {
           /** @var \Drupal\Core\Field\FieldItemListInterface $field */
-          $field = $field_info['field'];
-          $mode = $field_info['mode'];
+          $field = $fieldInfo['field'];
+          $mode = $fieldInfo['mode'];
 
           $success = TRUE;
           $msg = NULL;
           $anonymizer = '';
 
-          if ($mode == 'anonymize') {
-            list($success, $msg, $anonymizer) = $this->anonymize($field, $bundle_entity);
+          if ($mode === 'anonymize') {
+            list($success, $msg, $anonymizer) = $this->anonymize($field, $bundleEntity);
           }
-          elseif ($mode == 'remove') {
+          elseif ($mode === 'remove') {
             list($success, $msg) = $this->remove($field);
           }
 
           if ($success === TRUE) {
             $log[] = [
-              'entity_id' => $bundle_entity->id(),
-              'entity_type' => $bundle_entity->getEntityTypeId() . '.' . $bundle_entity->bundle(),
+              'entity_id' => $bundleEntity->id(),
+              'entity_type' => $bundleEntity->getEntityTypeId() . '.' . $bundleEntity->bundle(),
               'field_name' => $field->getName(),
               'action' => $mode,
               'anonymizer' => $anonymizer,
@@ -174,16 +183,16 @@ class Anonymizer {
           else {
             // Could not anonymize/remove field. Record to errors list.
             // Prevent entity from being saved.
-            $entity_success = FALSE;
+            $entitySuccess = FALSE;
             $errors[] = $msg;
           }
         }
 
-        if ($entity_success) {
-          $successes[] = $bundle_entity;
+        if ($entitySuccess) {
+          $successes[] = $bundleEntity;
         }
         else {
-          $failures[] = $bundle_entity;
+          $failures[] = $bundleEntity;
         }
       }
     }
@@ -238,14 +247,14 @@ class Anonymizer {
    *
    * @param \Drupal\Core\Field\FieldItemListInterface $field
    *   The field to anonymize.
-   * @param \Drupal\Core\Entity\EntityInterface $bundle_entity
+   * @param \Drupal\Core\Entity\EntityInterface $bundleEntity
    *   The parent entity.
    *
    * @return array
    *   First element is success boolean, second element is the error message.
    */
-  private function anonymize(FieldItemListInterface $field, EntityInterface $bundle_entity) {
-    $anonymizer_id = $this->getAnonymizerId($field, $bundle_entity);
+  private function anonymize(FieldItemListInterface $field, EntityInterface $bundleEntity) {
+    $anonymizer_id = $this->getAnonymizerId($field, $bundleEntity);
 
     if (!$anonymizer_id) {
       return [
@@ -271,16 +280,16 @@ class Anonymizer {
    *
    * @param \Drupal\Core\Field\FieldItemListInterface $field
    *   The field to anonymize.
-   * @param \Drupal\Core\Entity\EntityInterface $bundle_entity
+   * @param \Drupal\Core\Entity\EntityInterface $bundleEntity
    *   The parent entity.
    *
    * @return string
    *   The anonymizer ID or null.
    */
-  private function getAnonymizerId(FieldItemListInterface $field, EntityInterface $bundle_entity) {
+  private function getAnonymizerId(FieldItemListInterface $field, EntityInterface $bundleEntity) {
     // First check if this field has a anonymizer defined.
-    $config = GdprFieldConfigEntity::load($bundle_entity->getEntityTypeId());
-    $field_config = $config->getField($bundle_entity->bundle(), $field->getName());
+    $config = GdprFieldConfigEntity::load($bundleEntity->getEntityTypeId());
+    $field_config = $config->getField($bundleEntity->bundle(), $field->getName());
     $anonymizer = $field_config->anonymizer;
     $fieldDefinition = $field->getFieldDefinition();
     $type = $fieldDefinition->getType();
