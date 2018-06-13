@@ -9,7 +9,7 @@
  * Implements hook_requirements().
  */
 function gdpr_requirements($phase) {
-  $requirements = [];
+  $requirements = array();
   $t = get_t();
 
   if ($phase === 'runtime' && $definitions = checklistapi_get_checklist_info()) {
@@ -17,14 +17,14 @@ function gdpr_requirements($phase) {
     if (isset($definitions[$id]) && $checklist = checklistapi_checklist_load($id)) {
 
       $percent = round($checklist->getPercentComplete());
-      $requirements['gdpr_status'] = [
+      $requirements['gdpr_status'] = array(
         'title' => $t('GDPR Preparation'),
-        'value' => $t('Self assessment Checklist: <a href="@url">@percent% done</a>.', [
+        'value' => $t('Self assessment Checklist: <a href="@url">@percent% done</a>.', array(
           '@percent' => $percent,
           '@url' => '/admin/config/gdpr/checklist',
-        ]),
+        )),
         'severity' => REQUIREMENT_INFO,
-      ];
+      );
     }
   }
 
