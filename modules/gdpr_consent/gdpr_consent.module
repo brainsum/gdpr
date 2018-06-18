@@ -1,0 +1,829 @@
+<?php
+
+/**
+ * @file
+ * Contains hook implementations and shared functions.
+ */
+
+// Define consent mode variables.
+define('GDPR_CONSENT_TYPE_IMPLICIT', 0);
+define('GDPR_CONSENT_TYPE_EXPLICIT', 1);
+
+/**
+ * Implements hook_help().
+ */
+function gdpr_consent_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#gdpr_consent':
+      return t('Extends the GDPR module to record consent from users for certain agreements.');
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function gdpr_consent_menu() {
+  $items = array();
+
+  $items['user/%user/gdpr/agreements'] = array(
+    'title' => 'Agreements',
+    'description' => 'List Agreement Entities',
+    'page callback' => 'gdpr_consent_collected_agreements',
+    'page arguments' => array(1),
+    'access arguments' => array('manage gdpr agreements'),
+    'menu_name' => 'navigation',
+    'file' => 'includes/gdpr_consent.agreements.inc',
+  );
+  $items['admin/config/gdpr/agreements/%gdpr_consent_agreement'] = array(
+    'title' => 'Consent Agreement',
+    'page callback' => 'gdpr_consent_agreement_view_entity',
+    'page arguments' => array(3),
+    'access arguments' => array('manage gdpr agreements'),
+    'file' => 'includes/gdpr_consent.agreements.inc',
+  );
+  // 'View' tab for an individual entity.
+  $items['admin/config/gdpr/agreements/%gdpr_consent_agreement/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  // 'Edit' tab for an individual entity.
+  $items['admin/config/gdpr/agreements/%gdpr_consent_agreement/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'entity_ui_get_form',
+    'page arguments' => array('gdpr_consent_agreement', 3),
+    'access arguments' => array('manage gdpr agreements'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+    'file' => 'includes/gdpr_consent.admin.inc',
+  );
+  // 'Revisions' tab for an individual entity.
+  $items['admin/config/gdpr/agreements/%gdpr_consent_agreement/revisions'] = array(
+    'title' => 'Revisions',
+    'page callback' => 'gdpr_consent_agreement_revision_overview',
+    'page arguments' => array(3),
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('manage gdpr agreements'),
+    'file' => 'includes/gdpr_consent.admin.inc',
+    'weight' => -3,
+  );
+  // An individual revision view page.
+  $items['admin/config/gdpr/agreements/%gdpr_consent_agreement/revisions/%/view'] = array(
+    'title' => 'Revision',
+    'page callback' => 'gdpr_consent_agreement_view_revision',
+    'page arguments' => array(5),
+    'access arguments' => array('manage gdpr agreements'),
+    'file' => 'includes/gdpr_consent.agreements.inc',
+    'weight' => -3,
+  );
+  // 'Delete' tab for an individual entity.
+  $items['admin/config/gdpr/agreements/%gdpr_consent_agreement/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gdpr_consent_agreement_form', 3),
+    'access arguments' => array('manage gdpr agreements'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/gdpr_consent.admin.inc',
+    'weight' => 0,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function gdpr_consent_permission() {
+  $permissions = array(
+    'manage gdpr agreements' => array(
+      'title' => t('Manage GDPR Agreements'),
+    ),
+    'grant any consent' => array(
+      'title' => t('Grant Any Consent'),
+    ),
+    'grant own consent' => array(
+      'title' => t('Grant Own Consent'),
+    ),
+  );
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function gdpr_consent_entity_info() {
+  $info = array();
+  $info['gdpr_consent_agreement'] = array(
+    'label' => t('GDPR Consent Agreement'),
+    'base table' => 'gdpr_consent_agreement',
+    'revision table' => 'gdpr_consent_agreement_revision',
+    'entity class' => 'GdprConsentAgreement',
+    'controller class' => 'GdprConsentAgreementController',
+    'fieldable' => TRUE,
+    'bundles' => array(
+      'gdpr_consent_agreement' => array(
+        'label' => t('GDPR Consent Agreement'),
+        'admin' => array(
+          'path' => 'admin/config/gdpr/agreements',
+          'access arguments' => array('administer site configuration'),
+        ),
+      ),
+    ),
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'name',
+      'label' => 'title',
+      'revision' => 'revision_id',
+    ),
+    'uri callback' => 'entity_class_uri',
+    'access callback' => 'gdpr_consent_access_callback',
+    'admin ui' => array(
+      'path' => 'admin/config/gdpr/agreements',
+      'controller class' => 'GdprConsentAgreementEntityUIController',
+      'menu wildcard' => '%gdpr_consent_agreement',
+      'file' => 'includes/gdpr_consent.admin.inc',
+    ),
+    'module' => 'gdpr_consent',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function gdpr_consent_entity_property_info() {
+  $info = array();
+  $properties = &$info['gdpr_consent_agreement']['properties'];
+
+  $properties['id'] = array(
+    'label' => t('GDPR Consent Agreement ID'),
+    'description' => t('The uniquie ID of the consent agreement entity.'),
+    'type' => 'integer',
+    'schema field' => 'id',
+  );
+
+  $properties['title'] = array(
+    'label' => t('Title'),
+    'description' => t('Title of the agreement'),
+    'type' => 'text',
+    'schema field' => 'title',
+  );
+
+  $properties['agreement_type'] = array(
+    'label' => t('Agreement Type'),
+    'description' => t('Whether consent is implicit or explicit. Set to "Explicit" if the user needs to explicitly agree, otherwise "Implicit'),
+    'type' => 'boolean',
+    'schema field' => 'agreement_type',
+  );
+
+  $properties['description'] = array(
+    'label' => t('Description'),
+    'description' => t('Text displayed to the user on the form'),
+    'type' => 'text',
+    'schema field' => 'description',
+  );
+
+  $properties['long_description'] = array(
+    'label' => t('Long Description'),
+    'description' => t('Text shown when the user clicks for more details'),
+    'type' => 'text',
+    'schema field' => 'long_description',
+  );
+
+  $properties['notes'] = array(
+    'label' => t('Notes'),
+    'description' => t('This should contain the rationale behind the agreement.'),
+    'type' => 'text',
+    'schema field' => 'notes',
+  );
+
+  $properties['created'] = array(
+    'label' => t('Created date'),
+    'description' => t('Date the consent agreement was created'),
+    'type' => 'date',
+    'schema field' => 'created',
+  );
+
+  $properties['changed'] = array(
+    'label' => t('Updated date'),
+    'description' => t('Date the consent agreement was last edited'),
+    'type' => 'date',
+    'schema field' => 'changed',
+  );
+
+  $properties['author_uid'] = array(
+    'label' => t('Authored by'),
+    'description' => t('The user ID of author of the Consent Agreement entity'),
+    'type' => 'user',
+    'schema field' => 'author_uid',
+  );
+
+  $properties['revision_uid'] = array(
+    'label' => t('Revised by'),
+    'description' => t('The user ID of author of the Consent Agreement revision'),
+    'type' => 'user',
+    'schema field' => 'revision_uid',
+  );
+
+  $properties['status'] = array(
+    'label' => t('Publishing status'),
+    'description' => t('A boolean indicating whether the Consent Agreement is published.'),
+    'type' => 'boolean',
+    'schema field' => 'status',
+  );
+
+  return $info;
+}
+
+/**
+ * Access callback for agreements.
+ */
+function gdpr_consent_access_callback($op, $entity = NULL, $account = NULL) {
+  return user_access('manage gdpr agreements');
+}
+
+/**
+ * Implements hook_field_access().
+ */
+function gdpr_consent_field_access($op, $field, $entity_type, $entity, $account) {
+  if ($field['type'] == 'gdpr_user_consent' && $op == 'edit') {
+    if (user_access('manage gdpr agreements', $account) || user_access('grant any consent', $account)) {
+      return TRUE;
+    }
+
+    // @todo Check grant own consent when we can consistently find the user.
+    return TRUE;
+  }
+}
+
+/**
+ * Menu autoloader for gdpr agreements.
+ */
+function gdpr_consent_agreement_load($id, $revision_id = NULL) {
+  if (is_numeric($revision_id)) {
+    $entity = entity_revision_load('gdpr_consent_agreement', $revision_id);
+    return $entity;
+  }
+  else {
+    $entity = entity_load_single('gdpr_consent_agreement', $id);
+  }
+  return $entity;
+}
+
+/**
+ * Loads multiple agreements.
+ */
+function gdpr_consent_agreement_load_multiple($ids = array(), $conditions = array(), $reset = FALSE) {
+  if (empty($ids)) {
+    $ids = FALSE;
+  }
+
+  return entity_load('gdpr_consent_agreement', $ids, $conditions, $reset);
+}
+
+/**
+ * Gets an array of all agreements, keyed by the machine name.
+ */
+function gdpr_consent_agreement_load_multiple_by_name($name = NULL) {
+  $signups = entity_load_multiple_by_name('gdpr_consent_agreement', isset($name) ? array($name) : FALSE);
+  return isset($name) ? reset($signups) : $signups;
+}
+
+/**
+ * Implements hook_field_info().
+ *
+ * Provides a user consent field type.
+ */
+function gdpr_consent_field_info() {
+  return array(
+    'gdpr_user_consent' => array(
+      'label' => t('GDPR Consent'),
+      'description' => t('Stores user consent for a particular agreement'),
+      'default_widget' => 'gdpr_consent_widget',
+      'default_formatter' => 'gdpr_consent_formatter',
+      'property_type' => 'struct',
+      'property_callbacks' => array(
+        'gdpr_consent_field_gdpr_user_consent_property_callback',
+      ),
+    ),
+  );
+}
+
+/**
+ * Property info for gdpr consent fields.
+ */
+function gdpr_consent_field_gdpr_user_consent_property_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+
+  $property['getter callback'] = 'entity_metadata_field_verbatim_get';
+  $property['setter callback'] = 'entity_metadata_field_verbatim_set';
+  $property['auto creation'] = 'entity_property_create_array';
+  $property['type'] = ($field['cardinality'] != 1) ? 'list<struct>' : 'struct';
+
+  $property['property info']['target_id'] = array(
+    'label' => 'Agreement ID',
+    'type' => 'int',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'target_id',
+  );
+  $property['property info']['target_revision_id'] = array(
+    'label' => 'Agreement Revision ID',
+    'type' => 'int',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'target_revision_id',
+  );
+  $property['property info']['entity'] = array(
+    'label' => 'Consent Agreement',
+    'type' => 'gdpr_consent_agreement',
+    'getter callback' => 'gdpr_consent_field_property_entity_get',
+  );
+  $property['property info']['date'] = array(
+    'label' => 'Date Agreed',
+    'type' => 'date',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'date',
+  );
+  $property['property info']['agreed'] = array(
+    'label' => 'Agreed',
+    'type' => 'boolean',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'agreed',
+  );
+  $property['property info']['user_consenter'] = array(
+    'label' => 'The Consenting User',
+    'type' => 'user',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'user_consenter',
+  );
+  $property['property info']['user_recorder'] = array(
+    'label' => 'The User recording the Consent',
+    'type' => 'user',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'user_recorder',
+  );
+  $property['property info']['notes'] = array(
+    'label' => 'Notes',
+    'type' => 'text',
+    'getter callback' => 'entity_metadata_verbatim_get',
+    'schema field' => 'notes',
+  );
+}
+
+/**
+ * Getter callback for the consent agreement entity.
+ */
+function gdpr_consent_field_property_entity_get($data, array $options, $name, $type, $info) {
+  if (
+    !empty($data['target_id'])
+    && !empty($data['target_revision_id'])
+    && ($consent = entity_revision_load('gdpr_consent_agreement', $data['target_revision_id']))
+  ) {
+    return $consent;
+  }
+}
+
+/**
+ * Implements hook_field_validate().
+ */
+function gdpr_consent_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+  $valid = TRUE;
+
+  foreach ($items as $delta => $item) {
+    if (!empty($item['target_id'])) {
+      if (!$valid) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'gdpr_user_consent_invalid',
+          'message' => t('Referenced consent agreement entity is invalid.'),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_attach_submit().
+ *
+ * If consent field changes grant/revoke consent and log audit trail.
+ */
+function gdpr_consent_field_attach_submit($entity_type, $entity, $form, &$form_state) {
+  $is_new = FALSE;
+
+  list($id, , $bundle) = entity_extract_ids($entity_type, $entity);
+  // If $entity does not have an id that means it's new.
+  if (!isset($id)) {
+    $is_new = TRUE;
+  }
+  $fields = gdpr_consent_get_consent_fields($entity_type, $bundle);
+
+  if (!$is_new) {
+    $original = entity_load_unchanged($entity_type, $id);
+  }
+
+  foreach ($fields as $field) {
+    $info = field_info_field($field);
+    $agreement = entity_load_single('gdpr_consent_agreement', $info['settings']['target_id']);
+
+    // Don't log implicit consent.
+    if ($agreement->agreement_type != GDPR_CONSENT_TYPE_EXPLICIT) {
+      continue;
+    }
+
+    // Ignore if field not present in form.
+    if (!isset($form[$field])) {
+      continue;
+    }
+
+    $values = drupal_array_get_nested_value($form_state['values'], $form[$field]['#parents']);
+    if (!empty($values)) {
+      $new = isset($values[LANGUAGE_NONE][0]['agreed']) ? (int) $values[LANGUAGE_NONE][0]['agreed'] : NULL;
+
+      // Newly created entities should only log accepted agreements.
+      $old = (!$is_new && isset($original->{$field}[LANGUAGE_NONE][0]['agreed'])) ? (int) $original->{$field}[LANGUAGE_NONE][0]['agreed'] : NULL;
+
+      // @todo Needs test coverage to make sure we aren't logging irrelevant changes.
+      if ($new !== $old) {
+        if ($new) {
+          $message = message_create('consent_agreement_accepted', array('uid' => $values[LANGUAGE_NONE][0]['user_consenter']));
+        }
+        else {
+          $message = message_create('consent_agreement_revoked', array('uid' => $values[LANGUAGE_NONE][0]['user_consenter']));
+        }
+
+        $wrapper = entity_metadata_wrapper('message', $message);
+
+        // @todo fix naming for fields - User owner is giving consent by probably unnecessary?
+        $wrapper->user_consenter->set($values[LANGUAGE_NONE][0]['user_consenter']);
+        $wrapper->user_recorder->set($values[LANGUAGE_NONE][0]['user_recorder']);
+        $wrapper->agreement->set($agreement);
+        $wrapper->notes->set($values[LANGUAGE_NONE][0]['notes']);
+        $wrapper->agreed->set($values[LANGUAGE_NONE][0]['agreed']);
+        $wrapper->save();
+      }
+    }
+  }
+}
+
+/**
+ * Fetches a list of consent fields for an entity.
+ *
+ * @param string $entity_type
+ *   The entity type to get fields for.
+ * @param string|null $bundle
+ *   (Optional) the bundle to get fields for. If none provided, all bundles
+ *   will be checked.
+ *
+ * @return array
+ *   List of consent field names.
+ */
+function gdpr_consent_get_consent_fields($entity_type, $bundle = NULL) {
+  $instances = field_info_instances($entity_type, $bundle);
+  $fields = array();
+
+  foreach ($instances as $field_name => $instance) {
+    $field = field_info_field($field_name);
+    if ($field['type'] == 'gdpr_user_consent') {
+      $fields[] = $field_name;
+    }
+  }
+
+  return $fields;
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function gdpr_consent_field_is_empty($item, $field) {
+  return empty($item['target_id']);
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function gdpr_consent_field_formatter_info() {
+  return array(
+    'gdpr_consent' => array(
+      'label' => t('GDPR user consent formatter'),
+      'field types' => array('gdpr_user_consent'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_settings_form().
+ */
+function gdpr_consent_field_settings_form($field, $instance, $has_data) {
+  $settings = $field['settings'];
+
+  $agreements = array();
+
+  foreach (entity_load('gdpr_consent_agreement') as $agreement) {
+    $agreements[$agreement->id] = $agreement->title;
+  }
+
+  $form['target_id'] = array(
+    '#type' => 'select',
+    '#title' => t('User consent agreement'),
+    '#default_value' => (isset($settings['target_id'])) ? $settings['target_id'] : '',
+    '#required' => FALSE,
+    '#options' => $agreements,
+    '#element_validate' => array(
+      'element_validate_integer_positive',
+    ),
+    '#description' => t('The GDPR User Consent Agreement to display'),
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function gdpr_consent_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  switch ($display['type']) {
+    case 'gdpr_consent':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => t('User Consent ID: @entity', array('@entity' => $item['target_id'])),
+        );
+      }
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ *
+ * Field widget to show consent information.
+ */
+function gdpr_consent_field_widget_info() {
+  return array(
+    'gdpr_consent_widget' => array(
+      'label' => t('GDPR Consent'),
+      'field types' => array('gdpr_user_consent'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function gdpr_consent_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  global $user;
+
+  $agreed = isset($items[$delta]['agreed']) ? (int) $items[$delta]['agreed'] : 0;
+  $notes = isset($items[$delta]['notes']) ? $items[$delta]['notes'] : '';
+
+  $widget = $element;
+  $widget['#delta'] = $delta;
+
+  // Get current revision of the referenced agreement entity.
+  $entity_type = 'gdpr_consent_agreement';
+  $entity = entity_load_single($entity_type, $field['settings']['target_id']);
+
+  list(, $vid) = entity_extract_ids($entity_type, $entity);
+
+  switch ($instance['widget']['type']) {
+    case 'gdpr_consent_widget':
+      $element['agreed'] = array(
+        '#type' => 'checkbox',
+        '#title' => $entity->description,
+        '#default_value' => $agreed,
+        '#weight' => 0,
+        '#attributes' => array(
+          'class' => array('gdpr_consent_agreement'),
+        ),
+        '#attached' => array(
+          'css' => array(drupal_get_path('module', 'gdpr_consent') . '/css/gdpr_consent.css'),
+          'js' => array(drupal_get_path('module', 'gdpr_consent') . '/js/gdpr_consent.js'),
+        ),
+        '#description' => $entity->long_description,
+      ) + $widget;
+
+      if ($entity->agreement_type != GDPR_CONSENT_TYPE_EXPLICIT) {
+        $element['description'] = $element['agreed'];
+        $element['description']['#type'] = 'markup';
+        $element['description']['#markup'] = $element['description']['#title'];
+        $element['agreed']['#type'] = 'value';
+        $element['agreed']['#default_value'] = 1;
+      }
+
+      $element['notes'] = array(
+        '#type' => 'textfield',
+        '#title' => 'Consent Notes',
+        '#default_value' => $notes,
+        '#weight' => 10,
+        '#description' => t('Consent notes only visible for staff.'),
+        '#access' => user_access('grant any consent', $user),
+      ) + $widget;
+      $element['target_id'] = array(
+        '#type' => 'hidden',
+        '#value' => $field['settings']['target_id'],
+      ) + $widget;
+      $element['target_revision_id'] = array(
+        '#type' => 'hidden',
+        '#value' => $vid,
+      ) + $widget;
+      $element['date'] = array(
+        '#type' => 'hidden',
+        '#value' => REQUEST_TIME,
+      ) + $widget;
+      // @todo Build system for automatically finding consenting user.
+      $element['user_consenter'] = array(
+        '#type' => 'hidden',
+        '#value' => $user->uid,
+      ) + $widget;
+      $element['user_recorder'] = array(
+        '#type' => 'hidden',
+        '#value' => $user->uid,
+      ) + $widget;
+
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_default_message_type().
+ */
+function gdpr_consent_default_message_type() {
+  $items = array();
+
+  $items['consent_agreement_accepted'] = entity_import('message_type', '{
+    "name" : "consent_agreement_accepted",
+    "description" : "GDPR Consent Agreement accepted",
+    "argument_keys" : [],
+    "argument" : [],
+    "category" : "message_type",
+    "data" : {
+      "token options" : { "clear" : 0 },
+      "purge" : { "override" : 1, "enabled" : 1, "quota" : "1000", "days" : "30" }
+    },
+    "language" : "",
+    "arguments" : null,
+    "message_text" : { "und" : [
+        {
+          "value" : "\u003Cp\u003EAccepted Agreement: \u003Ca href=\u0022\/admin\/gdpr\/agreements\/[message:agreement:id]\u0022\u003E[message:agreement:title]\u003C\/a\u003E\u003Cbr \/\u003E\r\nAgreed: [message:agreed]\u003Cbr \/\u003E\r\nNotes: [message:notes]\u003C\/p\u003E",
+          "format" : "filtered_html",
+          "safe_value" : "\u003Cp\u003Eu003EAccepted Agreement: \u003Ca href=\u0022\/admin\/gdpr\/agreements\/[message:agreement:id]\u0022\u003E[message:agreement:title]\u003C\/a\u003E\u003Cbr \/\u003E\nAgreed: [message:agreed]\u003Cbr \/\u003E\nNotes: [message:notes]\u003C\/p\u003E\n"
+        }
+      ]
+    },
+    "rdf_mapping" : []
+  }');
+
+  $items['consent_agreement_revoked'] = entity_import('message_type', '{
+    "name" : "consent_agreement_revoked",
+    "description" : "GDPR Consent Agreement revoked",
+    "argument_keys" : [],
+    "argument" : [],
+    "category" : "message_type",
+    "data" : {
+      "token options" : { "clear" : 0 },
+      "purge" : { "override" : 1, "enabled" : 1, "quota" : "1000", "days" : "30" }
+    },
+    "language" : "",
+    "arguments" : null,
+    "message_text" : { "und" : [
+        {
+          "value" : "\u003Cp\u003ERevoked Agreement: \u003Ca href=\u0022\/admin\/gdpr\/agreements\/[message:agreement:id]\u0022\u003E[message:agreement:title]\u003C\/a\u003E\u003Cbr \/\u003E\r\nAgreed: [message:agreed]\u003Cbr \/\u003E\r\nNotes: [message:notes]\u003C\/p\u003E",
+          "format" : "filtered_html",
+          "safe_value" : "\u003Cp\u003ERevoked Agreement: \u003Ca href=\u0022\/admin\/gdpr\/agreements\/[message:agreement:id]\u0022\u003E[message:agreement:title]\u003C\/a\u003E\u003Cbr \/\u003E\nAgreed: [message:agreed]\u003Cbr \/\u003E\nNotes: [message:notes]\u003C\/p\u003E\n"
+        }
+      ]
+    },
+    "rdf_mapping" : []
+  }');
+
+  return $items;
+}
+
+/**
+ * Our custom entity class.
+ */
+class GdprConsentAgreement extends Entity {
+
+  /**
+   * Implement a custom default URI.
+   */
+  public function defaultUri() {
+    return array('path' => 'admin/config/gdpr/agreements/' . $this->identifier());
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function identifier() {
+    return $this->internalIdentifier();
+  }
+
+}
+
+/**
+ * Custom controller for the gdpr_consent_agreement entity type.
+ */
+class GdprConsentAgreementController extends EntityAPIControllerExportable {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    if (isset($entity->is_new)) {
+      global $user;
+
+      $entity->created = REQUEST_TIME;
+      $entity->author_uid = $user->uid;
+    }
+
+    $entity->changed = REQUEST_TIME;
+
+    // Always save new revisions.
+    $entity->is_new_revision = TRUE;
+    $entity->timestamp = REQUEST_TIME;
+    $entity->revision_uid = $user->uid;
+
+    return parent::save($entity, $transaction);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function export($entity, $prefix = '') {
+    $vars = get_object_vars($entity);
+    unset($vars[$this->statusKey], $vars[$this->moduleKey], $vars['is_new']);
+    if ($this->nameKey != $this->idKey) {
+      unset($vars[$this->idKey]);
+    }
+    if ($this->revisionKey) {
+      unset($vars[$this->revisionKey]);
+    }
+    return entity_var_json_export($vars, $prefix);
+  }
+
+}
+
+/**
+ * Custom UI controller for the gdpr_consent_agreement entity type.
+ */
+class GdprConsentAgreementEntityUIController extends EntityDefaultUIController {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildContent($entity, $view_mode = 'default', $langcode = NULL, $content = array()) {
+    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+    $build['description'] = array(
+      '#type' => 'markup',
+      '#markup' => check_plain($entity->description),
+    );
+
+    $build['long_description'] = array(
+      '#type' => 'markup',
+      '#markup' => check_plain($entity->long_description),
+    );
+
+    $build['notes'] = array(
+      '#type' => 'markup',
+      '#markup' => check_plain($entity->notes),
+    );
+
+    $build['agreement_type'] = array(
+      '#type' => 'markup',
+      '#markup' => $entity->agreement_type == GDPR_CONSENT_TYPE_EXPLICIT ? t('Explicit') : t('Implicit'),
+    );
+
+    return $build;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+    $additional_header = array(
+      t('Type'),
+    );
+    return parent::overviewTableHeaders($conditions, $rows, $additional_header);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function overviewTableRow($conditions, $id, $entity, $additional_cols = array()) {
+    $additional_cols = array(
+      $entity->agreement_type == GDPR_CONSENT_TYPE_EXPLICIT ? 'Explicit' : 'Implicit',
+    );
+
+    $row = parent::overviewTableRow($conditions, $id, $entity, $additional_cols);
+    return $row;
+  }
+
+}

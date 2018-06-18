@@ -1,0 +1,605 @@
+<?php
+
+/**
+ * @file
+ * Install file for the GDPR Consent module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function gdpr_consent_schema() {
+  $schema = array();
+
+  $schema['gdpr_consent_agreement'] = array(
+    'description' => 'Base table for GDPR Consent Agreement entity.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key of the GDPR Consent Agreement entity.',
+      ),
+      'name' => array(
+        'description' => 'The machine-readable name of this consent agreement.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'revision_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => 'The ID of consent agreement\'s default revision.',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Title of the consent agreement.',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The Unix timestamp of the entity creation time.',
+      ),
+      'changed' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The Unix timestamp the entity was last edited.',
+      ),
+      'author_uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => "The {users}.uid of the consent author.",
+      ),
+      'agreement_type' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Consent agreement\'s type: implicit (0) or explicit (1).',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Entity status.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'foreign keys' => array(
+      'author_uid' => array(
+        'table' => 'users',
+        'columns' => array('author_uid' => 'uid'),
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'name' => array('name'),
+      'revision_id' => array('revision_id'),
+    ),
+    'indexes' => array(
+      'author_uid' => array('author_uid'),
+      'agreement_type' => array('agreement_type'),
+    ),
+  );
+
+  $schema['gdpr_consent_agreement_revision'] = array(
+    'description' => 'GDPR Consent Agreement entity revisions.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => 'The ID of the GDPR Consent Agreement entity.',
+      ),
+      'revision_id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique revision ID.',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Title of the consent agreement.',
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'A Unix timestamp indicating when this version was created.',
+      ),
+      'author_uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => "The {users}.uid of the consent author.",
+      ),
+      'revision_uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => "The {users}.uid of the revising user.",
+      ),
+      'description' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'A description of the consent agreement.',
+      ),
+      'long_description' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'A long description of the consent agreement.',
+      ),
+      'agreement_type' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Consent agreement\'s type: implicit or explicit.',
+      ),
+      'notes' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+        'description' => 'Notes for staff to put their rationale for why they have done this for auditors.',
+      ),
+      'log' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'description' => 'The log entry explaining the changes in this version.',
+      ),
+    ),
+    'primary key' => array('revision_id'),
+    'indexes' => array(
+      'id' => array('id'),
+      'revision_uid' => array('revision_uid'),
+      'author_uid' => array('author_uid'),
+      'agreement_type' => array('agreement_type'),
+    ),
+    'foreign keys' => array(
+      'author_uid' => array(
+        'table' => 'users',
+        'columns' => array('author_uid' => 'uid'),
+      ),
+      'revision_uid' => array(
+        'table' => 'users',
+        'columns' => array('revision_uid' => 'uid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function gdpr_consent_field_schema($field) {
+  $columns = array(
+    'target_id' => array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'target_revision_id' => array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'agreed' => array(
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+      'size' => 'tiny',
+    ),
+    'date' => array(
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'user_consenter' => array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+      'default' => NULL,
+      'description' => 'The user uid of the user giving consent',
+    ),
+    'user_recorder' => array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+      'default' => NULL,
+      'description' => 'The user uid of the user recording the consent',
+    ),
+    'notes' => array(
+      'type' => 'text',
+      'size' => 'medium',
+      'not null' => FALSE,
+    ),
+  );
+  $indexes = array(
+    'target_id' => array('target_id'),
+    'target_revision_id' => array('target_revision_id'),
+    'agreed' => array('agreed' => 'agreed'),
+    'user_consenter' => array('user_consenter' => 'user_consenter'),
+    'user_recorder' => array('user_recorder' => 'user_recorder'),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+    'foreign keys' => array(
+      'target_id' => array(
+        'table' => 'gdpr_consent_agreement',
+        'columns' => array('target_id' => 'id'),
+      ),
+      'target_revision_id' => array(
+        'table' => 'gdpr_consent_agreement_revision',
+        'columns' => array('target_revision_id' => 'revision_id'),
+      ),
+      'user_consenter' => array(
+        'table' => 'users',
+        'columns' => array('user_consenter' => 'uid'),
+      ),
+      'user_recorder' => array(
+        'table' => 'users',
+        'columns' => array('user_recorder' => 'uid'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_install().
+ */
+function gdpr_consent_install() {
+  $field_bases = array();
+
+  // Exported field_base: 'agreed'.
+  $field_bases['agreed'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'agreed',
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        0 => 'No',
+        1 => 'Yes',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_boolean',
+  );
+  //
+  // Exported field_base: 'agreement'.
+  $field_bases['agreement'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'agreement',
+    'indexes' => array(
+      'target_id' => array(
+        0 => 'target_id',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'entityreference',
+    'settings' => array(
+      'handler' => 'base',
+      'handler_settings' => array(
+        'sort' => array(
+          'type' => 'none',
+        ),
+        'target_bundles' => array(),
+      ),
+      'target_type' => 'gdpr_consent_agreement',
+    ),
+    'translatable' => 0,
+    'type' => 'entityreference',
+  );
+
+  // Exported field_base: 'notes'.
+  $field_bases['notes'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'notes',
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+  );
+
+  // Exported field_base: 'user_consenter'.
+  $field_bases['user_consenter'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'user_consenter',
+    'indexes' => array(
+      'target_id' => array(
+        0 => 'target_id',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'entityreference',
+    'settings' => array(
+      'handler' => 'base',
+      'handler_settings' => array(
+        'sort' => array(
+          'type' => 'none',
+        ),
+        'target_bundles' => array(),
+      ),
+      'target_type' => 'user',
+    ),
+    'translatable' => 0,
+    'type' => 'entityreference',
+  );
+
+  // Exported field_base: 'user_recorder'.
+  $field_bases['user_recorder'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'user_recorder',
+    'indexes' => array(
+      'target_id' => array(
+        0 => 'target_id',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'entityreference',
+    'settings' => array(
+      'handler' => 'base',
+      'handler_settings' => array(
+        'sort' => array(
+          'type' => 'none',
+        ),
+        'target_bundles' => array(),
+      ),
+      'target_type' => 'node',
+    ),
+    'translatable' => 0,
+    'type' => 'entityreference',
+  );
+
+  foreach ($field_bases as $field_base) {
+    if (!field_info_field($field_base['field_name'])) {
+      field_create_field($field_base);
+    }
+  }
+
+  $field_instances = array();
+
+  // Exported field_instance: 'message-consent_agreement_accepted-agreed'.
+  $field_instances['message-consent_agreement_accepted-agreed'] = array(
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'message',
+    'field_name' => 'agreed',
+    'label' => 'Agreed',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 0,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 1,
+    ),
+  );
+
+  // Exported field_instance:
+  // 'message-consent_agreement_accepted-agreement'.
+  $field_instances['message-consent_agreement_accepted-agreement'] = array(
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'entityreference',
+        'settings' => array(
+          'bypass_access' => FALSE,
+          'link' => FALSE,
+        ),
+        'type' => 'entityreference_label',
+        'weight' => 1,
+      ),
+    ),
+    'entity_type' => 'message',
+    'field_name' => 'agreement',
+    'label' => 'Agreement',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => 2,
+    ),
+  );
+
+  // Exported field_instance: 'message-consent_agreement_accepted-notes'.
+  $field_instances['message-consent_agreement_accepted-notes'] = array(
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 2,
+      ),
+    ),
+    'entity_type' => 'message',
+    'field_name' => 'notes',
+    'label' => 'Notes',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'rows' => 5,
+      ),
+      'type' => 'text_textarea',
+      'weight' => 3,
+    ),
+  );
+
+  // Exported instance: 'message-consent_agreement_accepted-user_consenter'.
+  $field_instances['message-consent_agreement_accepted-user_consenter'] = array(
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'entityreference',
+        'settings' => array(
+          'bypass_access' => FALSE,
+          'link' => FALSE,
+        ),
+        'type' => 'entityreference_label',
+        'weight' => 3,
+      ),
+    ),
+    'entity_type' => 'message',
+    'field_name' => 'user_consenter',
+    'label' => 'User',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'entityreference',
+      'settings' => array(
+        'match_operator' => 'CONTAINS',
+        'path' => '',
+        'size' => 60,
+      ),
+      'type' => 'entityreference_autocomplete',
+      'weight' => 4,
+    ),
+  );
+
+  // Exported field_instance:
+  // 'message-consent_agreement_accepted-user_recorder'.
+  $field_instances['message-consent_agreement_accepted-user_recorder'] = array(
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'entityreference',
+        'settings' => array(
+          'bypass_access' => FALSE,
+          'link' => FALSE,
+        ),
+        'type' => 'entityreference_label',
+        'weight' => 4,
+      ),
+    ),
+    'entity_type' => 'message',
+    'field_name' => 'user_recorder',
+    'label' => 'User Accepted',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'entityreference',
+      'settings' => array(
+        'match_operator' => 'CONTAINS',
+        'path' => '',
+        'size' => 60,
+      ),
+      'type' => 'entityreference_autocomplete',
+      'weight' => 5,
+    ),
+  );
+
+  $bundles = array('consent_agreement_accepted', 'consent_agreement_revoked');
+
+  foreach ($field_instances as $field_instance) {
+    foreach ($bundles as $bundle) {
+      if (!field_info_instance($field_instance['entity_type'], $field_instance['field_name'], $bundle)) {
+        $field_instance['bundle'] = $bundle;
+        field_create_instance($field_instance);
+      }
+    }
+  }
+}
