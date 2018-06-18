@@ -6,6 +6,29 @@
 class Anonymizer {
 
   /**
+   * Errors encountered by anonymization.
+   *
+   * @var array
+   */
+  public $errors = array();
+
+  /**
+   * Entities successfully anonymized.
+   *
+   * Array is keyed by entity_type and entity_id.
+   *
+   * @var array
+   */
+  public $successes = array();
+
+  /**
+   * Entities that failed to anonymize.
+   *
+   * @var array
+   */
+  public $failures = array();
+
+  /**
    * Runs anonymization routines against a user.
    *
    * @param GDPRTask $task
@@ -19,13 +42,10 @@ class Anonymizer {
     // so we don't end up affecting any other references to the entity.
     $user = $task->getOwner();
 
-    $errors = array();
-    $successes = array();
-    $failures = array();
     $log = array();
 
     if (!$this->checkExportDirectoryExists()) {
-      $errors[] = 'An export directory has not been set. Please set this under Configuration -> GDPR -> Right to be Forgotten';
+      $this->errors[] = 'An export directory has not been set. Please set this under Configuration -> GDPR -> Right to be Forgotten';
     }
 
     foreach (gdpr_tasks_collect_rtf_data($user, TRUE) as $data) {
@@ -62,7 +82,7 @@ class Anonymizer {
         // Could not anonymize/remove field. Record to errors list.
         // Prevent entity from being saved.
         $entity_success = FALSE;
-        $errors[] = $msg;
+        $this->errors[] = $msg;
         $log[] = 'error';
         $log[] = array(
           'error' => $msg,
@@ -75,22 +95,34 @@ class Anonymizer {
       }
 
       if ($entity_success) {
-        $successes[$entity_type][$entity_id] = $entity;
+        $this->successes[$entity_type][$entity_id] = $entity;
       }
       else {
-        $failures[] = $entity;
+        $this->failures[] = $entity;
       }
     }
 
     // @todo Better log field.
     $task->wrapper()->gdpr_tasks_removal_log = json_encode($log);
 
-    if (count($failures) === 0) {
+    $this->complete($task);
+
+    return $this->errors;
+  }
+
+  /**
+   * Complete anonymization routines.
+   *
+   * @param GDPRTask $task
+   *   The current task being executed.
+   */
+  protected function complete(GDPRTask $task) {
+    if (count($this->failures) === 0) {
       $tx = db_transaction();
 
       try {
         /* @var EntityInterface $entity */
-        foreach ($successes as $entity_type => $entities) {
+        foreach ($this->successes as $entity_type => $entities) {
           foreach ($entities as $entity) {
             entity_save($entity_type, $entity);
           }
@@ -103,11 +135,9 @@ class Anonymizer {
       }
       catch (\Exception $e) {
         $tx->rollback();
-        $errors[] = $e->getMessage();
+        $this->errors[] = $e->getMessage();
       }
     }
-
-    return $errors;
   }
 
   /**
@@ -208,13 +238,11 @@ class Anonymizer {
    *
    * @param array $field_info
    *   The field to anonymise.
-   * @param object|EntityInterface $entity
-   *   The parent entity.
    *
    * @return string
    *   The sanitizer ID or null.
    */
-  private function getSanitizerId(array $field_info, $entity) {
+  private function getSanitizerId(array $field_info) {
     // First check if this field has a sanitizer defined.
     $sanitizer = $field_info['plugin']->settings['gdpr_fields_sanitizer'];
 
