@@ -30,13 +30,9 @@ class GDPRTaskUIController extends EntityBundleableUIController {
   /**
    * Generates the render array for a overview tables for different statuses.
    *
-   * @param array $conditions
-   *   An array of conditions as needed by entity_load().
-   *
-   * @return array
-   *   A renderable array.
+   * {@inheritdoc}
    */
-  public function overviewTable(array $conditions = array()) {
+  public function overviewTable($conditions = array()) {
     $query = new EntityFieldQuery();
     $query->entityCondition('entity_type', $this->entityType);
     $query->propertyOrderBy('created');
@@ -59,7 +55,7 @@ class GDPRTaskUIController extends EntityBundleableUIController {
     // Always show at least requested and complete tables.
     $rows = array(
       'requested' => array(),
-      'complete' => array(),
+      'closed' => array(),
     );
     foreach ($entities as $entity) {
       $rows[$entity->status][] = $this->overviewTableRow($conditions, entity_id($this->entityType, $entity), $entity);

@@ -121,7 +121,7 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
   );
 
   // Don't try to show task details if it has not yet been processed.
-  if ($task->status == 'requested' || empty($task->gdpr_tasks_sar_export_parts)) {
+  if ($task->status == 'requested') {
     return array(
       'message' => array(
         '#markup' => 'This task has not yet been processed. Please run cron or check back later.',
@@ -129,48 +129,50 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
     );
   }
 
-  foreach ($task->gdpr_tasks_sar_export_parts[LANGUAGE_NONE] as $part) {
-    $header = array();
-    $rows = array();
-    if (($handle = fopen(drupal_realpath($part['uri']), "r")) !== FALSE) {
-      $row_type = 'plugin';
-      $type = array();
+  if (!empty($task->gdpr_tasks_sar_export_parts)) {
+    foreach ($task->gdpr_tasks_sar_export_parts[LANGUAGE_NONE] as $part) {
+      $header = array();
+      $rows = array();
+      if (($handle = fopen(drupal_realpath($part['uri']), "r")) !== FALSE) {
+        $row_type = 'plugin';
+        $type = array();
 
-      while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        switch ($row_type) {
-          case 'plugin':
-            foreach ($data as $key => $plugin_id) {
-              if (isset($plugins[$plugin_id])) {
-                $plugin = $plugins[$plugin_id];
-                $inc = $plugin->getSetting('gdpr_fields_rta');
+        while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+          switch ($row_type) {
+            case 'plugin':
+              foreach ($data as $key => $plugin_id) {
+                if (isset($plugins[$plugin_id])) {
+                  $plugin = $plugins[$plugin_id];
+                  $inc = $plugin->getSetting('gdpr_fields_rta');
+                }
+
+                $type[$key] = isset($inc) ? $inc_label_map[$inc] : '';
               }
 
-              $type[$key] = isset($inc) ? $inc_label_map[$inc] : '';
-            }
+              $row_type = 'header';
+              break;
 
-            $row_type = 'header';
-            break;
+            case 'header':
+              $header = $data;
+              $rows[] = $type;
+              $row_type = 'row';
+              break;
 
-          case 'header':
-            $header = $data;
-            $rows[] = $type;
-            $row_type = 'row';
-            break;
-
-          default:
-            $rows[] = $data;
-            break;
+            default:
+              $rows[] = $data;
+              break;
+          }
         }
+        fclose($handle);
       }
-      fclose($handle);
-    }
 
-    $form[$part['filename']] = array(
-      '#theme' => 'table',
-      '#header' => $header,
-      '#rows' => $rows,
-      '#caption' => t('File contents for @filename', array('@filename' => $part['filename'])),
-    );
+      $form[$part['filename']] = array(
+        '#theme' => 'table',
+        '#header' => $header,
+        '#rows' => $rows,
+        '#caption' => t('File contents for @filename', array('@filename' => $part['filename'])),
+      );
+    }
   }
 
   $form['actions']['submit']['#value'] = t('Process');
