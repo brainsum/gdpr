@@ -210,12 +210,14 @@ function gdpr_task_edit_gdpr_sar_form_validate($form, &$form_state) {
     $files = array();
     // Check for filename duplicates.
     foreach ($form_state['values']['gdpr_tasks_sar_export_parts'][LANGUAGE_NONE] as $data) {
-      $file = file_load($data['fid']);
-      if (!isset($files[$file->filename])) {
-        $files[$file->filename] = $file->filename;
-      }
-      else {
-        form_set_error('gdpr_tasks_sar_export_parts', t('Please remove the old file when replacing with a new one.'));
+      if ($data['fid']) {
+        $file = file_load($data['fid']);
+        if (!isset($files[$file->filename])) {
+          $files[$file->filename] = $file->filename;
+        }
+        else {
+          form_set_error('gdpr_tasks_sar_export_parts', t('Please remove the old file when replacing with a new one.'));
+        }
       }
     }
   }
