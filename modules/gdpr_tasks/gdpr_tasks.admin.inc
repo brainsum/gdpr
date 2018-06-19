@@ -60,10 +60,9 @@ function gdpr_task_form_submit($form, &$form_state) {
   // General form submission.
   field_attach_submit('gdpr_task', $task, $form, $form_state);
 
-  // Process and close the task.
+  // Process the task.
   $task->processed_by = $user->uid;
   drupal_set_message(t('Task has been processed.'));
-  $task->status = 'processed';
   $task->save();
 
   // Send confirmation email.
@@ -234,6 +233,7 @@ function gdpr_task_edit_gdpr_remove_form_submit($form, &$form_state) {
   $form_state['values']['gdpr_tasks_removal_log'] = $task->gdpr_tasks_removal_log;
 
   if (empty($errors)) {
+    $task->status = 'closed';
     gdpr_task_form_submit($form, $form_state);
   }
   else {
@@ -248,11 +248,11 @@ function gdpr_task_edit_gdpr_remove_form_submit($form, &$form_state) {
  * Submit handler for export tasks.
  */
 function gdpr_task_edit_gdpr_sar_form_submit($form, &$form_state) {
-  gdpr_task_form_submit($form, $form_state);
-
   // Process the export.
   /* @var GDPRTask $task */
   $task = $form_state['task'];
+  $task->status = 'processed';
+  gdpr_task_form_submit($form, $form_state);
   $queue = \DrupalQueue::get('gdpr_tasks_process_gdpr_sar');
   $queue->createItem($task->identifier());
 }
