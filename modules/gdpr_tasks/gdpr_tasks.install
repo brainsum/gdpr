@@ -1,0 +1,389 @@
+<?php
+
+/**
+ * @file
+ * Install file for the GDPR Tasks module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function gdpr_tasks_schema() {
+  $schema['gdpr_task'] = array(
+    'description' => 'The base table for tasks.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a task.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {gdpr_task_type} of this task.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'language' => array(
+        'description' => 'The {languages}.language of this task.',
+        'type' => 'varchar',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'user_id' => array(
+        'description' => 'The {users}.uid that this task is for.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'The text status of this task.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the task was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the task was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'complete' => array(
+        'description' => 'The Unix timestamp when the task was completed.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'requested_by' => array(
+        'description' => 'The {users}.uid that requested this task.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'processed_by' => array(
+        'description' => 'The {users}.uid that processed this task.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('id'),
+    'foreign keys' => array(
+      'task_author' => array(
+        'table' => 'users',
+        'columns' => array('user_id' => 'uid'),
+      ),
+      'task_requester' => array(
+        'table' => 'users',
+        'columns' => array('requested_by' => 'uid'),
+      ),
+      'task_processor' => array(
+        'table' => 'users',
+        'columns' => array('processed_by' => 'uid'),
+      ),
+    ),
+  );
+
+  $schema['gdpr_task_type'] = array(
+    'description' => 'Stores information about all defined profile types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique profile type ID.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this profile type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this profile type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'The weight of this profile type in relation to others.',
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data related to this profile type.',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        // Set the default to ENTITY_CUSTOM without using the constant as it is
+        // not safe to use it at this point.
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_schema().
+ */
+function gdpr_tasks_install() {
+  $t = get_t();
+
+  // Add an export field to sar task.
+  if (!field_info_field('gdpr_tasks_sar_export')) {
+    $field = array(
+      'field_name' => 'gdpr_tasks_sar_export',
+      'type' => 'file',
+      'locked' => TRUE,
+      'settings' => array(
+        'display_field' => FALSE,
+        'uri_scheme' => 'private',
+      ),
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+  }
+
+  if (!field_info_instance('gdpr_task', 'gdpr_tasks_sar_export', 'gdpr_sar')) {
+    $instance = array(
+      'label' => $t('Data Export'),
+      'field_name' => 'gdpr_tasks_sar_export',
+      'entity_type' => 'gdpr_task',
+      'bundle' => 'gdpr_sar',
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'file_generic',
+      ),
+      'settings' => array(
+        'file_display' => 'gdpr-exports',
+        'file_extensions' => 'zip',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  // Add an export field to sar task.
+  if (!field_info_field('gdpr_tasks_sar_export_parts')) {
+    $field = array(
+      'field_name' => 'gdpr_tasks_sar_export_parts',
+      'type' => 'file',
+      'locked' => TRUE,
+      'settings' => array(
+        'display_field' => FALSE,
+        'uri_scheme' => 'private',
+      ),
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    );
+    field_create_field($field);
+  }
+
+  if (!field_info_instance('gdpr_task', 'gdpr_tasks_sar_export_parts', 'gdpr_sar')) {
+    $instance = array(
+      'label' => $t('Data Export'),
+      'field_name' => 'gdpr_tasks_sar_export_parts',
+      'entity_type' => 'gdpr_task',
+      'bundle' => 'gdpr_sar',
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'file_generic',
+      ),
+      'settings' => array(
+        'file_display' => 'gdpr-exports',
+        'file_extensions' => 'csv',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  // Add an export field to sar task.
+  if (!field_info_field('gdpr_tasks_sar_export_assets')) {
+    $field = array(
+      'field_name' => 'gdpr_tasks_sar_export_assets',
+      'type' => 'file',
+      'locked' => TRUE,
+      'settings' => array(
+        'display_field' => FALSE,
+        'uri_scheme' => 'private',
+      ),
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    );
+    field_create_field($field);
+  }
+
+  if (!field_info_instance('gdpr_task', 'gdpr_tasks_sar_export_assets', 'gdpr_sar')) {
+    $instance = array(
+      'label' => $t('Data Export'),
+      'field_name' => 'gdpr_tasks_sar_export_assets',
+      'entity_type' => 'gdpr_task',
+      'bundle' => 'gdpr_sar',
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'file_generic',
+      ),
+      'settings' => array(
+        'file_display' => 'gdpr-exports',
+        'file_extensions' => '',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  // Add an manual data override field to sar task.
+  if (!field_info_field('gdpr_tasks_manual_data')) {
+    $field = array(
+      'field_name' => 'gdpr_tasks_manual_data',
+      'type' => 'text_long',
+      'locked' => TRUE,
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+  }
+  if (!field_info_instance('gdpr_task', 'gdpr_tasks_manual_data', 'gdpr_sar')) {
+    $instance = array(
+      'label' => $t('Data Override'),
+      'field_name' => 'gdpr_tasks_manual_data',
+      'entity_type' => 'gdpr_task',
+      'bundle' => 'gdpr_sar',
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'text_textarea',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  // Add an manual data override field to sar task.
+  if (!field_info_field('gdpr_tasks_removal_log')) {
+    $field = array(
+      'field_name' => 'gdpr_tasks_removal_log',
+      'type' => 'text_long',
+      'locked' => TRUE,
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+  }
+  if (!field_info_instance('gdpr_task', 'gdpr_tasks_removal_log', 'gdpr_remove')) {
+    $instance = array(
+      'label' => $t('Removal Log'),
+      'field_name' => 'gdpr_tasks_removal_log',
+      'entity_type' => 'gdpr_task',
+      'bundle' => 'gdpr_remove',
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'text_textarea',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  // Add a notes field to all tasks.
+  if (!field_info_field('gdpr_tasks_notes')) {
+    $field = array(
+      'field_name' => 'gdpr_tasks_notes',
+      'type' => 'text_long',
+      'locked' => TRUE,
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+  }
+  foreach (array('gdpr_remove', 'gdpr_sar') as $bundle) {
+    if (!field_info_instance('gdpr_task', 'gdpr_tasks_notes', $bundle)) {
+      $instance = array(
+        'label' => $t('Notes'),
+        'field_name' => 'gdpr_tasks_notes',
+        'entity_type' => 'gdpr_task',
+        'bundle' => $bundle,
+        'required' => FALSE,
+        'widget' => array(
+          'type' => 'text_textarea',
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'hidden',
+          ),
+        ),
+      );
+      field_create_instance($instance);
+    }
+  }
+
+  // Set default email values.
+  // @todo Make email content more useful.
+  $default_emails = array(
+    'task_requested_self' => array(
+      'enabled' => FALSE,
+      'subject' => $t('Request submitted'),
+      'body' => array(
+        'value' => $t('A task has been requested.'),
+        'format' => NULL,
+      ),
+    ),
+    'task_requested_other' => array(
+      'enabled' => FALSE,
+    ),
+    'task_processed' => array(
+      'enabled' => FALSE,
+      'subject' => $t('Request complete'),
+      'body' => array(
+        'value' => $t('Your requested task has been completed.'),
+        'format' => NULL,
+      ),
+    ),
+  );
+  variable_set('gdpr_tasks_emails', $default_emails);
+}

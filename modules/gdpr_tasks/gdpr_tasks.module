@@ -1,0 +1,772 @@
+<?php
+
+/**
+ * @file
+ * Module file for the GDPR Tasks module.
+ */
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function gdpr_tasks_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'menu_alter') {
+    $group = $implementations['gdpr_tasks'];
+    unset($implementations['gdpr_tasks']);
+    $implementations['gdpr_tasks'] = $group;
+  }
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function gdpr_tasks_entity_info() {
+  $entities = array();
+
+  $entities['gdpr_task'] = array(
+    'label' => t('Task'),
+    'base table' => 'gdpr_task',
+    'entity class' => 'GDPRTask',
+    'controller class' => 'GDPRTaskController',
+    'module' => 'gdpr_tasks',
+    'admin ui' => array(
+      'path' => 'admin/structure/gdpr-tasks',
+      'file' => 'gdpr_tasks.admin.inc',
+      'menu wildcard' => '%gdpr_task',
+      'controller class' => 'GDPRTaskUIController',
+    ),
+    'access callback' => 'gdpr_task_access',
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'type',
+      'label' => 'id',
+      'language' => 'language',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(
+      'gdpr_remove' => array(
+        'label' => 'Removal Request',
+        'admin' => array(
+          'path' => 'admin/structure/gdpr-tasks/manage/%',
+          'real path' => 'admin/structure/gdpr-tasks/manage/gdpr_remove',
+          'bundle argument' => 4,
+          'access arguments' => array('administer task entities'),
+        ),
+      ),
+      'gdpr_sar' => array(
+        'label' => 'SARs Request',
+        'admin' => array(
+          'path' => 'admin/structure/gdpr-tasks/manage/%',
+          'real path' => 'admin/structure/gdpr-tasks/manage/gdpr_sar',
+          'bundle argument' => 4,
+          'access arguments' => array('administer task entities'),
+        ),
+      ),
+    ),
+    'fieldable' => TRUE,
+  );
+
+  $entities['gdpr_task_type'] = array(
+    'label' => t('Task type'),
+    'plural label' => t('Task types'),
+    'description' => t('Task types for GDPR Tasks.'),
+    'entity class' => 'GDPRTaskType',
+    'controller class' => 'EntityAPIControllerExportable',
+    'base table' => 'gdpr_task_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'gdpr_task',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'access callback' => 'gdpr_task_type_access',
+    'module' => 'gdpr_tasks',
+    'admin ui' => array(
+      'path' => 'admin/structure/gdpr-tasks',
+      'file' => 'gdpr_tasks.admin.inc',
+      'controller class' => 'EntityDefaultUIController',
+    ),
+  );
+
+  return $entities;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function gdpr_tasks_theme() {
+  return array(
+    'gdpr_task' => array(
+      'render element' => 'elements',
+      'template' => 'templates/gdpr_task',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function gdpr_tasks_menu() {
+  $items['user/%user/gdpr/list'] = array(
+    'title' => 'Summary',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['user/%user/gdpr/requests/gdpr_remove/add'] = array(
+    'title' => 'Request data removal',
+    'page callback' => 'gdpr_tasks_request',
+    'page arguments' => array(1, 4),
+    'access callback' => 'gdpr_tasks_user_tasks_access',
+    'access arguments' => array('request', 1),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'gdpr_tasks.pages.inc',
+  );
+  $items['user/%user/gdpr/requests/gdpr_sar/add'] = array(
+    'title' => 'Request data export',
+    'page callback' => 'gdpr_tasks_request',
+    'page arguments' => array(1, 4),
+    'access callback' => 'gdpr_tasks_user_tasks_access',
+    'access arguments' => array('request', 1),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'gdpr_tasks.pages.inc',
+  );
+
+  $items['admin/config/gdpr/task-email'] = array(
+    'title' => 'Task Emails',
+    'description' => 'Configure email templates to be sent for task requests.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gdpr_tasks_email_settings'),
+    'access arguments' => array('administer gdpr settings'),
+    'file' => 'gdpr_tasks.admin.inc',
+    'weight' => 99,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function gdpr_tasks_menu_alter(&$items) {
+  $items['user/%/gdpr/requests']['access callback'] = 'gdpr_tasks_user_tasks_access';
+  $items['user/%/gdpr/requests']['access arguments'] = array('view', 1);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function gdpr_tasks_permission() {
+  // @todo IMPORTANT!! Permission review.
+  $perms = array(
+    'administer task entities' => array(
+      'title' => t('Administer task entities'),
+      'restrict access' => TRUE,
+    ),
+    'administer task type entities' => array(
+      'title' => t('Administer task entities'),
+      'restrict access' => TRUE,
+    ),
+    'process gdpr tasks' => array(
+      'title' => t('Process GDPR tasks'),
+      'restrict access' => TRUE,
+    ),
+    'view gdpr tasks' => array(
+      'title' => t('View GDPR tasks'),
+    ),
+    'view own gdpr tasks' => array(
+      'title' => t('View you own GDPR tasks'),
+    ),
+    'edit gdpr tasks' => array(
+      'title' => t('Edit GDPR tasks'),
+    ),
+    'request gdpr tasks' => array(
+      'title' => t('Request new GDPR tasks for themselves'),
+    ),
+    'request any gdpr tasks' => array(
+      'title' => t('Request new GDPR tasks for anyone'),
+    ),
+  );
+
+  return $perms;
+}
+
+/**
+ * Access callback for user task permission.
+ */
+function gdpr_tasks_user_tasks_access($op, $account) {
+  global $user;
+  $own = $account == $user->uid ? 'own ' : '';
+  $permission = "{$op} {$own}gdpr tasks";
+  return user_access($permission);
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function gdpr_tasks_views_api($module, $api) {
+  return array('version' => 3);
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function gdpr_tasks_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/' . $plugin_type;
+  }
+}
+
+/**
+ * Implements hook_default_gdpr_task_type().
+ */
+function gdpr_tasks_default_gdpr_task_type() {
+  $types['gdpr_sar'] = new GDPRTaskType(array(
+    'type' => 'gdpr_sar',
+    'label' => t('SARs Request'),
+    'weight' => 0,
+    'locked' => TRUE,
+  ));
+  $types['gdpr_remove'] = new GDPRTaskType(array(
+    'type' => 'gdpr_remove',
+    'label' => t('Removal Request'),
+    'weight' => 0,
+    'locked' => TRUE,
+  ));
+  return $types;
+}
+
+/**
+ * Implements hook_mail().
+ */
+function gdpr_tasks_mail($key, &$message, $params) {
+  $context = $params['context'];
+  $options = array('clear' => TRUE);
+
+  $message['to'] = token_replace($message['to'], $context, $options);
+  $message['subject'] = token_replace($context['subject'], $context, $options);
+  $message['body'][] = token_replace($context['body'], $context, $options);
+  $message['params']['plaintext'] = token_replace($params['plaintext'], $context, $options);
+}
+
+/**
+ * Access callback for task entities.
+ */
+function gdpr_task_access($op, $task = NULL, $account = NULL) {
+  // @todo Support other operations.
+  if (user_access('administer task entities', $account)) {
+    return TRUE;
+  }
+
+  if (user_access('process gdpr tasks', $account)) {
+    return TRUE;
+  }
+}
+
+/**
+ * Access callback for task type entities.
+ */
+function gdpr_task_type_access($op, $task_type = NULL, $account = NULL) {
+  if (user_access('administer task type entities', $account)) {
+    return TRUE;
+  }
+}
+
+/**
+ * Load a GDPR Task entity.
+ *
+ * @param int $id
+ *   The id of the task.
+ *
+ * @return GDPRTask|null
+ *   The fully loaded task entity if available.
+ */
+function gdpr_task_load($id) {
+  return entity_load_single('gdpr_task', $id);
+}
+
+/**
+ * Load tasks from the database.
+ *
+ * @param array|bool $ids
+ *   An array of task IDs.
+ * @param array $conditions
+ *   (deprecated) An associative array of conditions on the {gdpr_task}
+ *   table, where the keys are the database fields and the values are the
+ *   values those fields must have. Instead, it is preferable to use
+ *   EntityFieldQuery to retrieve a list of entity IDs loadable by
+ *   this function.
+ * @param bool $reset
+ *   Whether to reset the internal static entity cache.
+ *
+ * @return array
+ *   An array of task objects, indexed by task ID.
+ *
+ * @see entity_load()
+ * @see EntityFieldQuery
+ */
+function gdpr_task_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
+  return entity_load('gdpr_task', $ids, $conditions, $reset);
+}
+
+/**
+ * Get a list of tasks for a user.
+ *
+ * Optional condition on the type of task if provided.
+ */
+function gdpr_tasks_get_user_tasks($user, $gdpr_task_type = NULL) {
+  $query = db_select('gdpr_task', 't')
+    ->fields('t', array('id'))
+    ->condition('user_id', $user->uid);
+
+  if ($gdpr_task_type) {
+    $query->condition('type', $gdpr_task_type);
+  }
+
+  $result = $query->execute()
+    ->fetchAssoc();
+
+  if (!empty($result)) {
+    return gdpr_task_load_multiple($result);
+  }
+
+  return $result;
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function gdpr_tasks_cron_queue_info() {
+  $queues['gdpr_tasks_process_gdpr_sar'] = array(
+    'worker callback' => 'gdpr_tasks_process_gdpr_sar_worker',
+    'time' => 60,
+  );
+  return $queues;
+}
+
+/**
+ * Worker callback for prcessing SARs requests.
+ */
+function gdpr_tasks_process_gdpr_sar_worker($task_id) {
+  $worker = new \GdprTasksSarWorker();
+  $worker->processItem($task_id);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert().
+ */
+function gdpr_tasks_gdpr_task_insert($task) {
+  /* @var \GDPRTask $task */
+  if ($task->type == 'gdpr_sar') {
+    $queue = DrupalQueue::get('gdpr_tasks_process_gdpr_sar');
+    $queue->createQueue();
+    $queue->createItem($task->identifier());
+  }
+}
+
+/**
+ * Collect RTA data for a specific user.
+ */
+function gdpr_tasks_collect_rta_data($user) {
+  ctools_include('plugins');
+  ctools_include('export');
+
+  $plugins = ctools_export_load_object('gdpr_fields_field_data');
+  $fields = array('_assets' => array());
+
+  $gdpr_entities = gdpr_fields_collect_gdpr_entities('user', $user);
+
+  foreach ($gdpr_entities as $entity_type => $entities) {
+    foreach ($entities as $entity) {
+      /* @var \EntityDrupalWrapper $wrapper */
+      $wrapper = entity_metadata_wrapper($entity_type, $entity);
+      foreach ($wrapper->getPropertyInfo() as $property => $property_info) {
+        $entity_id = $wrapper->getIdentifier();
+        $plugin_name = "{$entity_type}|{$wrapper->getBundle()}|{$property}";
+
+        if (isset($plugins[$plugin_name])) {
+          $field_config = $plugins[$plugin_name];
+
+          /* @var GDPRFieldData $field_config */
+          $allowed_values = array('inc', 'maybe');
+          if ($field_config->disabled || !in_array($field_config->getSetting('gdpr_fields_rta'), $allowed_values)) {
+            continue;
+          }
+
+          if ($field_config->getSetting('gdpr_fields_rta')) {
+            // Figure out what to do based on the type.
+            $type = isset($property_info['type']) ? $property_info['type'] : 'string';
+            $is_list = substr($type, 0, 5) == 'list<';
+            if ($is_list) {
+              $type = entity_property_extract_innermost_type($type);
+            }
+
+            // Check if the type is an entity, except for files.
+            if ($type != 'file' && ($type == 'entity' || entity_get_info($type))) {
+              $type = 'entity';
+            }
+
+            // If this is a list, loop over getting the output.
+            $values = array();
+            if ($is_list) {
+              foreach ($wrapper->{$property} as $value) {
+                $values[] = gdpr_tasks_collect_rta_data_extract_value($type, $value, $fields['_assets']);
+              }
+            }
+            else {
+              $values[] = gdpr_tasks_collect_rta_data_extract_value($type, $wrapper->{$property}, $fields['_assets']);
+            }
+
+            $filename = 'main';
+            if ($entity->_gdpr_source_plugin && isset($plugins[$entity->_gdpr_source_plugin])) {
+              $filename = $plugins[$entity->_gdpr_source_plugin]->getSetting('gdpr_sars_filename', $filename);
+            }
+            $data = array(
+              'plugin_name' => $plugin_name,
+              'entity_type' => $entity_type,
+              'entity_id' => $entity_id,
+              // @todo: Make this configurable.
+              'file' => $filename,
+              'row_id' => $entity->_gdpr_row_id,
+              'label' => $field_config->getSetting('label'),
+              'value' => implode(', ', array_filter($values)),
+              'notes' => $field_config->getSetting('notes'),
+              'rta' => $field_config->getSetting('gdpr_fields_rta'),
+            );
+
+            $fields["{$plugin_name}|{$entity_id}"] = $data;
+          }
+        }
+      }
+    }
+  }
+
+  return $fields;
+}
+
+/**
+ * Extract renderable text from entity property data.
+ */
+function gdpr_tasks_collect_rta_data_extract_value($type, EntityMetadataWrapper $value, array &$assets) {
+  // If there is a callback, pass straight to that.
+  $info = $value->info();
+  if (isset($info['gdpr sars callback']) && is_callable($info['gdpr sars callback'])) {
+    return $info['gdpr sars callback']($value, $assets);
+  }
+
+  // Dont try to render empty data.
+  $test_empty = $value->value();
+  if (empty($test_empty)) {
+    return '';
+  }
+
+  // Make pre adjustment for known multi property values.
+  if ($type == 'field_item_image') {
+    $type = 'file';
+    $value = $value->file;
+  }
+  elseif ($type == 'text_formatted') {
+    $type = 'text';
+    $value = $value->value;
+  }
+
+  // Extract the value appropriately.
+  if ($type == 'entity') {
+    /* @var \EntityDrupalWrapper $value */
+    // @todo: Should we include filename to help people find it?
+    $label = $value->label();
+    $id = $value->getIdentifier();
+    return ($label == $id) ? $id : "{$value->label()} [{$value->getIdentifier()}]";
+  }
+  elseif ($type == 'file') {
+    /* @var \EntityDrupalWrapper $value */
+    $assets[] = array('fid' => $value->getIdentifier(), 'display' => 1);
+    return "assets/{$value->getIdentifier()}." . pathinfo($value->value()->uri, PATHINFO_EXTENSION);
+  }
+  else {
+    $raw_value = $value->value();
+    return is_scalar($raw_value) ? (string) $raw_value : gettype($raw_value);
+  }
+}
+
+/**
+ * Collect RTF data for a specific user.
+ */
+function gdpr_tasks_collect_rtf_data($user, $include_plugins = FALSE) {
+  ctools_include('plugins');
+  ctools_include('export');
+
+  $plugins = ctools_export_load_object('gdpr_fields_field_data');
+  $fields = array();
+
+  $gdpr_entities = gdpr_fields_collect_gdpr_entities('user', $user);
+
+  foreach ($gdpr_entities as $entity_type => $entities) {
+    foreach ($entities as $entity) {
+      $wrapper = entity_metadata_wrapper($entity_type, $entity);
+      foreach ($wrapper->getPropertyInfo() as $property => $property_info) {
+        $entity_id = $wrapper->getIdentifier();
+        $plugin_name = "{$entity_type}|{$wrapper->getBundle()}|{$property}";
+
+        if (isset($plugins[$plugin_name])) {
+          $field_config = $plugins[$plugin_name];
+
+          /* @var GDPRFieldData $field_config */
+          $allowed_values = array('anonymise', 'remove', 'maybe');
+          if ($field_config->disabled || !in_array($field_config->getSetting('gdpr_fields_rtf'), $allowed_values)) {
+            continue;
+          }
+
+          if ($field_config->getSetting('gdpr_fields_rtf')) {
+
+            // Figure out what to do based on the type.
+            $type = isset($property_info['type']) ? $property_info['type'] : 'string';
+            $is_list = substr($type, 0, 5) == 'list<';
+            if ($is_list) {
+              $type = entity_property_extract_innermost_type($type);
+            }
+
+            // Check if the type is an entity, except for files.
+            if ($type != 'file' && ($type == 'entity' || entity_get_info($type))) {
+              $type = 'entity';
+            }
+
+            // If this is a list, loop over getting the output.
+            $values = array();
+            if ($is_list) {
+              foreach ($wrapper->{$property} as $value) {
+                $values[] = gdpr_tasks_collect_rtf_data_extract_value($type, $value);
+              }
+            }
+            else {
+              $values[] = gdpr_tasks_collect_rtf_data_extract_value($type, $wrapper->{$property});
+            }
+
+            $data = array(
+              'label' => $field_config->getSetting('label'),
+              'value' => implode(', ', array_filter($values)),
+              'notes' => $field_config->getSetting('notes'),
+              'rtf' => $field_config->getSetting('gdpr_fields_rtf'),
+            );
+
+            // If entity ID is being removed display as deletion.
+            if ($data['rtf'] == 'remove' && Anonymizer::propertyIsEntityId($field_config->entity_type, $field_config->property_name)) {
+              $data['rtf'] = 'delete entire entity';
+            }
+
+            if ($include_plugins) {
+              $data['plugin'] = $field_config;
+              $data['entity_type'] = $entity_type;
+              $data['entity_id'] = $entity_id;
+              $data['entity'] = $entity;
+            }
+            $fields["{$plugin_name}|{$entity_id}"] = $data;
+          }
+        }
+      }
+    }
+  }
+
+  return $fields;
+}
+
+/**
+ * Extract renderable text from entity property data.
+ */
+function gdpr_tasks_collect_rtf_data_extract_value($type, EntityMetadataWrapper $value) {
+  // If there is a callback, pass straight to that.
+  $info = $value->info();
+  if (isset($info['gdpr sars callback']) && is_callable($info['gdpr sars callback'])) {
+    return $info['gdpr sars callback']($value);
+  }
+
+  // Dont try to render empty data.
+  $test_empty = $value->value();
+  if (empty($test_empty)) {
+    return '';
+  }
+
+  // Make pre adjustment for known multi property values.
+  if ($type == 'field_item_image') {
+    $type = 'file';
+    $value = $value->file;
+  }
+  elseif ($type == 'text_formatted') {
+    $type = 'text';
+    $value = $value->value;
+  }
+
+  // Extract the value appropriately.
+  if ($type == 'entity') {
+    /* @var \EntityDrupalWrapper $value */
+    // @todo: Should we include filename to help people find it?
+    $label = $value->label();
+    $id = $value->getIdentifier();
+    return ($label == $id) ? $id : "{$value->label()} [{$value->getIdentifier()}]";
+  }
+  elseif ($type == 'file') {
+    /* @var \EntityDrupalWrapper $value */
+    return "file/{$value->getIdentifier()}." . pathinfo($value->value()->uri, PATHINFO_EXTENSION);
+  }
+  else {
+    $raw_value = $value->value();
+    return is_scalar($raw_value) ? (string) $raw_value : gettype($raw_value);
+  }
+}
+
+/**
+ * Helper function to send emails notifications to users.
+ *
+ * @param string $key
+ *   The email key to send.
+ * @param GDPRTask $task
+ *   The wrapped ticket entity.
+ * @param array $tokens
+ *   Optional array of tokens suitable for token_replace().
+ *   gdpr_task is be added automatically.
+ */
+function gdpr_tasks_send_mail($key, GDPRTask $task, array $tokens = array()) {
+  $emails = variable_get('gdpr_tasks_emails', array());
+
+  // Allow other modules to alter the task emails.
+  drupal_alter('gdpr_tasks_send_mail', $emails, $key, $task, $tokens);
+
+  if (empty($emails[$key]['enabled'])) {
+    return;
+  }
+  $email = $emails[$key];
+
+  // Gather our params.
+  global $language;
+  $tokens['gdpr_task'] = $task;
+  $params = array(
+    'context' => array(
+      'subject' => $email['subject'],
+      'body' => check_markup($email['body']['value'], $email['body']['format'], $language->language, TRUE),
+    ) + $tokens,
+    'attachments' => NULL,
+    'plaintext' => NULL,
+  );
+
+  $from = variable_get('gdpr_tasks_emails_from', NULL);
+  $to = $task->getOwner()->mail;
+  drupal_mail('gdpr_tasks', 'gdpr_tasks_' . $key, $to, $language, $params, $from);
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+function gdpr_tasks_entity_property_info_alter(&$info) {
+  // If user.picture is not defined, do our best to define it.
+  if (isset($info['user']['properties']['roles'])) {
+    $info['user']['properties']['roles']['gdpr sars callback'] = 'gdpr_tasks_sars_callback_user_roles';
+  }
+}
+
+/**
+ * Implements hook_field_info_alter().
+ */
+function gdpr_tasks_field_info_alter(&$field_info) {
+  $types = array('datetime',
+    'date',
+    'datestampe',
+    'name',
+    'addressfield',
+    'commerce_price',
+  );
+  foreach ($types as $type) {
+    $field_info[$type]['property_callbacks'][] = 'gdpr_tasks_field_metatdata_property_info_alter';
+  }
+}
+
+/**
+ * Field entity metadata property callback.
+ *
+ * @see \gdpr_tasks_field_info_alter()
+ */
+function gdpr_tasks_field_metatdata_property_info_alter(&$info, $entity_type, $field, $instance, $field_type) {
+  $name = $field['field_name'];
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$name];
+  $type = entity_property_extract_innermost_type($property['type']);
+
+  switch ($type) {
+    case 'date':
+      $property['gdpr sars callback'] = 'gdpr_tasks_sars_callback_date';
+      break;
+
+    case 'field_item_name':
+      $property['gdpr sars callback'] = 'gdpr_tasks_sars_callback_name_field';
+      break;
+
+    case 'addressfield':
+      $property['gdpr sars callback'] = 'gdpr_tasks_sars_callback_address_field';
+      break;
+
+    case 'commerce_price';
+      $property['gdpr sars callback'] = 'gdpr_tasks_sars_callback_commerce_price';
+      break;
+  }
+}
+
+/**
+ * GDPR SARs render callback for user roles.
+ */
+function gdpr_tasks_sars_callback_user_roles(EntityMetadataWrapper $value) {
+  $rid = $value->value();
+  if (in_array($rid, array(DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID))) {
+    return NULL;
+  }
+
+  $role = user_role_load($rid);
+  return $role->name;
+}
+
+/**
+ * GDPR SARs render callback for dates.
+ */
+function gdpr_tasks_sars_callback_date(EntityMetadataWrapper $value) {
+  return date('c', $value->value());
+}
+
+/**
+ * GDPR SARs render callback for name fields.
+ */
+function gdpr_tasks_sars_callback_name_field(EntityMetadataWrapper $value) {
+  return name_format($value->value(), '((((t+ig)+im)+if)+is)+jc');
+}
+
+/**
+ * GDPR SARs render callback for address fields.
+ */
+function gdpr_tasks_sars_callback_address_field(EntityMetadataWrapper $value) {
+  $components = array();
+  $address = $value->value();
+
+  $available = array(
+    'name_line',
+    'first_name',
+    'last_name',
+    'organisation_name',
+    'thoroughfare',
+    'premise',
+    'locality',
+    'administrative_area',
+    'postal_code',
+    'country',
+  );
+  foreach ($available as $component) {
+    if (!empty($address[$component])) {
+      $components[] = $address[$component];
+    }
+  }
+
+  return implode(', ', $components);
+}
+
+/**
+ * GDPR SARs render callback for commerce price fields.
+ */
+function gdpr_tasks_sars_callback_commerce_price(EntityMetadataWrapper $value) {
+  return commerce_currency_format($value->amount->value(), $value->currency_code->value());
+}
