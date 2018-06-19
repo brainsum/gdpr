@@ -133,6 +133,9 @@ class GdprTasksSarWorker {
       }
 
       $this->writeCsv($file->uri, $data);
+
+      // Clear file cache so filesize can be recalculated.
+      clearstatcache(TRUE, $file->uri);
       file_save($file);
     }
 

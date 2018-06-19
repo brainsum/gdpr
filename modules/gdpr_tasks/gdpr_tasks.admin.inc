@@ -60,10 +60,9 @@ function gdpr_task_form_submit($form, &$form_state) {
   // General form submission.
   field_attach_submit('gdpr_task', $task, $form, $form_state);
 
-  // Process and close the task.
+  // Process the task.
   $task->processed_by = $user->uid;
   drupal_set_message(t('Task has been processed.'));
-  $task->status = 'processed';
   $task->save();
 
   // Send confirmation email.
@@ -121,7 +120,7 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
   );
 
   // Don't try to show task details if it has not yet been processed.
-  if ($task->status == 'requested' || empty($task->gdpr_tasks_sar_export_parts)) {
+  if ($task->status == 'requested') {
     return array(
       'message' => array(
         '#markup' => 'This task has not yet been processed. Please run cron or check back later.',
@@ -129,48 +128,50 @@ function gdpr_task_edit_gdpr_sar_form($form, &$form_state) {
     );
   }
 
-  foreach ($task->gdpr_tasks_sar_export_parts[LANGUAGE_NONE] as $part) {
-    $header = array();
-    $rows = array();
-    if (($handle = fopen(drupal_realpath($part['uri']), "r")) !== FALSE) {
-      $row_type = 'plugin';
-      $type = array();
+  if (!empty($task->gdpr_tasks_sar_export_parts)) {
+    foreach ($task->gdpr_tasks_sar_export_parts[LANGUAGE_NONE] as $part) {
+      $header = array();
+      $rows = array();
+      if (($handle = fopen(drupal_realpath($part['uri']), "r")) !== FALSE) {
+        $row_type = 'plugin';
+        $type = array();
 
-      while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        switch ($row_type) {
-          case 'plugin':
-            foreach ($data as $key => $plugin_id) {
-              if (isset($plugins[$plugin_id])) {
-                $plugin = $plugins[$plugin_id];
-                $inc = $plugin->getSetting('gdpr_fields_rta');
+        while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+          switch ($row_type) {
+            case 'plugin':
+              foreach ($data as $key => $plugin_id) {
+                if (isset($plugins[$plugin_id])) {
+                  $plugin = $plugins[$plugin_id];
+                  $inc = $plugin->getSetting('gdpr_fields_rta');
+                }
+
+                $type[$key] = isset($inc) ? $inc_label_map[$inc] : '';
               }
 
-              $type[$key] = isset($inc) ? $inc_label_map[$inc] : '';
-            }
+              $row_type = 'header';
+              break;
 
-            $row_type = 'header';
-            break;
+            case 'header':
+              $header = $data;
+              $rows[] = $type;
+              $row_type = 'row';
+              break;
 
-          case 'header':
-            $header = $data;
-            $rows[] = $type;
-            $row_type = 'row';
-            break;
-
-          default:
-            $rows[] = $data;
-            break;
+            default:
+              $rows[] = $data;
+              break;
+          }
         }
+        fclose($handle);
       }
-      fclose($handle);
-    }
 
-    $form[$part['filename']] = array(
-      '#theme' => 'table',
-      '#header' => $header,
-      '#rows' => $rows,
-      '#caption' => t('File contents for @filename', array('@filename' => $part['filename'])),
-    );
+      $form[$part['filename']] = array(
+        '#theme' => 'table',
+        '#header' => $header,
+        '#rows' => $rows,
+        '#caption' => t('File contents for @filename', array('@filename' => $part['filename'])),
+      );
+    }
   }
 
   $form['actions']['submit']['#value'] = t('Process');
@@ -209,12 +210,14 @@ function gdpr_task_edit_gdpr_sar_form_validate($form, &$form_state) {
     $files = array();
     // Check for filename duplicates.
     foreach ($form_state['values']['gdpr_tasks_sar_export_parts'][LANGUAGE_NONE] as $data) {
-      $file = file_load($data['fid']);
-      if (!isset($files[$file->filename])) {
-        $files[$file->filename] = $file->filename;
-      }
-      else {
-        form_set_error('gdpr_tasks_sar_export_parts', t('Please remove the old file when replacing with a new one.'));
+      if ($data['fid']) {
+        $file = file_load($data['fid']);
+        if (!isset($files[$file->filename])) {
+          $files[$file->filename] = $file->filename;
+        }
+        else {
+          form_set_error('gdpr_tasks_sar_export_parts', t('Please remove the old file when replacing with a new one.'));
+        }
       }
     }
   }
@@ -232,6 +235,7 @@ function gdpr_task_edit_gdpr_remove_form_submit($form, &$form_state) {
   $form_state['values']['gdpr_tasks_removal_log'] = $task->gdpr_tasks_removal_log;
 
   if (empty($errors)) {
+    $task->status = 'closed';
     gdpr_task_form_submit($form, $form_state);
   }
   else {
@@ -246,11 +250,11 @@ function gdpr_task_edit_gdpr_remove_form_submit($form, &$form_state) {
  * Submit handler for export tasks.
  */
 function gdpr_task_edit_gdpr_sar_form_submit($form, &$form_state) {
-  gdpr_task_form_submit($form, $form_state);
-
   // Process the export.
   /* @var GDPRTask $task */
   $task = $form_state['task'];
+  $task->status = 'processed';
+  gdpr_task_form_submit($form, $form_state);
   $queue = \DrupalQueue::get('gdpr_tasks_process_gdpr_sar');
   $queue->createItem($task->identifier());
 }
