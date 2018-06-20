@@ -118,7 +118,7 @@ class ConsentAgreementController extends ControllerBase {
   /**
    * Generates an overview table of older revisions of a Consent Agreement .
    *
-   * @param \Drupal\gdpr_consent\Entity\ConsentAgreement $gdprConsentAgreement
+   * @param \Drupal\gdpr_consent\Entity\ConsentAgreement $gdpr_consent_agreement
    *   A Consent Agreement object.
    *
    * @return array
@@ -126,13 +126,12 @@ class ConsentAgreementController extends ControllerBase {
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    */
-  public function revisionOverview(ConsentAgreement $gdprConsentAgreement) {
-    $agreement = ConsentAgreement::load($gdprConsentAgreement);
+  public function revisionOverview(ConsentAgreement $gdpr_consent_agreement) {
     $account = $this->currentUser();
-    /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $storage */
+    /** @var \Drupal\gdpr_consent\ConsentAgreementStorageInterface $storage */
     $storage = $this->entityTypeManager->getStorage('gdpr_consent_agreement');
 
-    $build['#title'] = $this->t('Revisions for %title', ['%title' => $agreement->title->value]);
+    $build['#title'] = $this->t('Revisions for %title', ['%title' => $gdpr_consent_agreement->title->value]);
     $header = [$this->t('Revision'), $this->t('Operations')];
 
     $revert_permission = $account->hasPermission('manage gdpr agreements');
@@ -140,7 +139,7 @@ class ConsentAgreementController extends ControllerBase {
 
     $rows = [];
 
-    $vids = $storage->revisionIds($agreement);
+    $vids = $storage->revisionIds($gdpr_consent_agreement);
 
     $latest_revision = TRUE;
 
@@ -155,14 +154,15 @@ class ConsentAgreementController extends ControllerBase {
 
       // Use revision link to link to revisions that are not active.
       $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
-      if ($vid !== $agreement->getRevisionId()) {
+      if ($vid !== $gdpr_consent_agreement->getRevisionId()) {
         $link = Link::fromTextAndUrl($date, new Url('entity.gdpr_consent_agreement.revision', [
-          'gdpr_consent_agreement' => $agreement->id(),
+          'gdpr_consent_agreement' => $gdpr_consent_agreement->id(),
           'gdpr_consent_agreement_revision' => $vid,
-        ]));
+        ]))->toRenderable();
+        $link = $this->renderer->renderPlain($link);
       }
       else {
-        $link = $agreement->link($date);
+        $link = $gdpr_consent_agreement->link($date);
       }
 
       $row = [];
@@ -202,7 +202,7 @@ class ConsentAgreementController extends ControllerBase {
           $links['revert'] = [
             'title' => $this->t('Revert'),
             'url' => Url::fromRoute('entity.gdpr_consent_agreement.revision_revert', [
-              'gdpr_consent_agreement' => $agreement->id(),
+              'gdpr_consent_agreement' => $gdpr_consent_agreement->id(),
               'gdpr_consent_agreement_revision' => $vid,
             ]),
           ];
@@ -212,7 +212,7 @@ class ConsentAgreementController extends ControllerBase {
           $links['delete'] = [
             'title' => $this->t('Delete'),
             'url' => Url::fromRoute('entity.gdpr_consent_agreement.revision_delete', [
-              'gdpr_consent_agreement' => $agreement->id(),
+              'gdpr_consent_agreement' => $gdpr_consent_agreement->id(),
               'gdpr_consent_agreement_revision' => $vid,
             ]),
           ];

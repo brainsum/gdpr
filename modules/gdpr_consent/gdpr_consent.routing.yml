@@ -1,7 +1,16 @@
 gdpr_consent.agreements:
   path: '/user/{user}/gdpr/agreements'
   defaults:
-    _controller: \Drupal\gdpr_consent\Controller\ConsentAgreementController::myAgreements
+    _controller: '\Drupal\gdpr_consent\Controller\ConsentAgreementController::myAgreements'
   requirements:
     _permission: 'administer users'
     user_id: \d+
+
+entity.gdpr_consent_agreement.version_history:
+  path: '/admin/gdpr/agreements/{gdpr_consent_agreement}/revisions'
+  defaults:
+    _title: 'Revisions'
+    _controller: '\Drupal\gdpr_consent\Controller\ConsentAgreementController::revisionOverview'
+  requirements:
+    _permission: 'manage gdpr agreements'
+    gdpr_consent_agreement: \d+
