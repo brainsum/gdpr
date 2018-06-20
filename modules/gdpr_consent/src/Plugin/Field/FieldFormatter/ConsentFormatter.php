@@ -81,9 +81,19 @@ class ConsentFormatter extends FormatterBase implements ContainerFactoryPluginIn
     foreach ($items as $delta => $item) {
       $agreement = $storage->loadRevision($item->target_revision_id);
 
+      $link = $this->t('Removed');
+      if ($agreement) {
+        $link = $agreement->toLink($agreement->title->value, 'revision')->toString();
+      }
       $output[$delta] = [
         'name' => [
-          '#markup' => $agreement->toLink($agreement->title->value, 'revision')->toString() . ' on ' . $item->date,
+          '#markup' => $this->t(
+            '@title on @date',
+            [
+              '@title' => $link,
+              '@date' => $item->date,
+            ]
+          ),
         ],
       ];
 
