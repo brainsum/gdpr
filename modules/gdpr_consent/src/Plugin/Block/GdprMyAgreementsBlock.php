@@ -3,6 +3,7 @@
 namespace Drupal\gdpr_consent\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -89,6 +90,21 @@ class GdprMyAgreementsBlock extends BlockBase implements ContainerFactoryPluginI
     // Just delegate to the controller to do the work.
     $ctrl = $this->classResolver->getInstanceFromDefinition(ConsentAgreementController::class);
     return $ctrl->myAgreements($this->currentUser);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheContexts() {
+    // Vary caching of this block per user.
+    return Cache::mergeContexts(parent::getCacheContexts(), ['user']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheTags() {
+    return Cache::mergeTags(parent::getCacheTags(), ['user:' . $this->currentUser->id()]);
   }
 
 }
