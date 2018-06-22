@@ -11,8 +11,7 @@ use Drupal\Core\Field\FieldItemListInterface;
  * @Anonymizer(
  *   id = "random_text_anonymizer",
  *   label = @Translation("Random Text anonymizer"),
- *   description = @Translation("Provides anonymization functionality intended to be
- *   used for text fields.")
+ *   description = @Translation("Provides anonymization functionality intended to be used for text fields.")
  * )
  *
  * @package Drupal\anonymizer\Plugin\Anonymizer
