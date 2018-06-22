@@ -153,6 +153,7 @@ class Anonymizer {
           $fieldsToProcess = $this->getFieldsToProcess($bundleEntity);
         }
         catch (\Exception $e) {
+          $errors[] = $e->getMessage();
           $fieldsToProcess = [];
           $entitySuccess = FALSE;
           // @todo: Log.
