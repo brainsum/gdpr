@@ -16,14 +16,14 @@ function gdpr_tasks_views_default_views() {
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'gdpr_task';
-  $view->human_name = 'GDRP User Data Requests';
+  $view->human_name = 'GDPR User Data Requests';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'GDRP User Data Requests';
+  $handler->display->display_options['title'] = 'GDPR User Data Requests';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'view gdpr tasks';
