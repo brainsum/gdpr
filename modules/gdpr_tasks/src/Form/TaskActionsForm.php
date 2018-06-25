@@ -7,8 +7,8 @@ use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Queue\QueueFactory;
 use Drupal\gdpr_tasks\Anonymizer;
-use Drupal\gdpr_tasks\Event\RightToAccessCompleteEvent;
 use Drupal\gdpr_tasks\Event\RightToBeForgottenCompleteEvent;
 use Drupal\gdpr_tasks\TaskManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -43,6 +43,13 @@ class TaskActionsForm extends ContentEntityForm {
   protected $taskManager;
 
   /**
+   * The GDPR Task queue.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $queue;
+
+  /**
    * Constructs a TaskActionsForm object.
    *
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
@@ -57,12 +64,15 @@ class TaskActionsForm extends ContentEntityForm {
    *   The GDPR Task anonymizer.
    * @param \Drupal\gdpr_tasks\TaskManager $task_manager
    *   The GDPR Task manager.
+   * @param \Drupal\Core\Queue\QueueFactory $queue
+   *   The queue factory service.
    */
-  public function __construct(EntityManagerInterface $entity_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL, TimeInterface $time = NULL, EventDispatcherInterface $event_dispatcher, Anonymizer $anonymizer, TaskManager $task_manager) {
+  public function __construct(EntityManagerInterface $entity_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL, TimeInterface $time = NULL, EventDispatcherInterface $event_dispatcher, Anonymizer $anonymizer, TaskManager $task_manager, QueueFactory $queue) {
     parent::__construct($entity_manager, $entity_type_bundle_info, $time);
     $this->eventDispatcher = $event_dispatcher;
     $this->anonymizer = $anonymizer;
     $this->taskManager = $task_manager;
+    $this->queue = $queue->get('gdpr_tasks_process_gdpr_sar');
   }
 
   /**
@@ -75,7 +85,8 @@ class TaskActionsForm extends ContentEntityForm {
       $container->get('datetime.time'),
       $container->get('event_dispatcher'),
       $container->get('gdpr_tasks.anonymizer'),
-      $container->get('gdpr_tasks.manager')
+      $container->get('gdpr_tasks.manager'),
+      $container->get('queue')
     );
   }
 
@@ -172,9 +183,8 @@ class TaskActionsForm extends ContentEntityForm {
     }
     else {
       // Queue task for completion.
-      $queue = \Drupal::queue('gdpr_tasks_process_gdpr_sar');
-      $queue->createQueue();
-      $queue->createItem($entity->id());
+      $this->queue->createQueue();
+      $this->queue->createItem($entity->id());
       $should_save = TRUE;
     }
 

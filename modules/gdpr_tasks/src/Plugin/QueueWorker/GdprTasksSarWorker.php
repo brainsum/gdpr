@@ -159,7 +159,6 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     }
   }
 
-
   /**
    * Initialise our request.
    *
@@ -185,7 +184,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
 
     // Prepare destination.
     $directory = $field_type->getUploadLocation();
-    file_prepare_directory($dirname, FILE_CREATE_DIRECTORY);
+    file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
 
     // Get a suitable namespace for gathering our files.
     do {
@@ -253,13 +252,12 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     $directory = $field_type->getUploadLocation();
     $directory .= '/' . basename($field->entity->uri->value, '.zip');
 
-
     // Gather our entities.
     // @todo: Move this inline.
     $all_data = $this->rtaTraversal->traverse($task->getOwner());
 
     // Build our export files.
-    $csvs = array();
+    $csvs = [];
     foreach ($all_data as $plugin_id => $data) {
       if ($plugin_id == '_assets') {
         $task->sar_export_assets = $data;
@@ -274,7 +272,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
       // Initialise and fill out the row to make sure things come in a
       // consistent order.
       if (!isset($csvs[$data['file']][$data['row_id']])) {
-        $csvs[$data['file']][$data['row_id']] = array();
+        $csvs[$data['file']][$data['row_id']] = [];
       }
       $csvs[$data['file']][$data['row_id']] += array_fill_keys(array_keys($csvs[$data['file']]['_header']), '');
 
@@ -283,7 +281,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     }
 
     // Gather existing files.
-    $files = array();
+    $files = [];
     if (!empty($task->sar_export_parts)) {
       foreach ($task->sar_export_parts as $item) {
         $filename = basename($item->entity->uri->value, '.csv');
@@ -339,7 +337,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     }
 
     // Gather all the files we need to include in this package.
-    $part_files = array();
+    $part_files = [];
     foreach ($task->sar_export_parts as $item) {
       /* @var \Drupal\file\Entity\File $part_file */
       $part_file = $item->entity;
@@ -392,7 +390,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *   CSV file data.
    */
   public static function readCsv($filename) {
-    $data = array();
+    $data = [];
     $handle = fopen($filename, 'r');
     while (!feof($handle)) {
       $data[] = fgetcsv($handle);
@@ -418,6 +416,5 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     }
     fclose($handler);
   }
-
 
 }
