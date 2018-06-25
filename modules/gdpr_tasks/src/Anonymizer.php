@@ -206,9 +206,18 @@ class Anonymizer {
     try {
       $plugin = gdpr_dump_get_sanitizer_plugins($sanitizer_id);
       $wrapper = entity_metadata_wrapper($field_info['entity_type'], $entity);
-
+      $entity_property_info = $wrapper->getPropertyInfo();
       if (function_exists($plugin['sanitize callback'])) {
-        $wrapper->{$field} = call_user_func($plugin['sanitize callback'], $field_info['value']);
+        $type = isset($entity_property_info[$field]['type']) ? $entity_property_info[$field]['type'] : 'string';
+
+        if ($type == 'text_formatted') {
+          $wrapper->{$field} = [
+            'value' => call_user_func($plugin['sanitize callback'], $field_info['value']),
+            'safe_value' => '',
+          ];
+        } else {
+          $wrapper->{$field} = call_user_func($plugin['sanitize callback'], $field_info['value']);
+        }
         return array(TRUE, NULL, $sanitizer_id);
       }
       else {
