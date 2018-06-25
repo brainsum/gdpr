@@ -88,55 +88,15 @@ class TaskActionsForm extends ContentEntityForm {
     /* @var $entity \Drupal\gdpr_tasks\Entity\Task */
     $entity = $this->entity;
 
-    if ($entity->status->value == 'closed') {
-      $form['manual_data']['widget']['#disabled'] = TRUE;
+    if (in_array($entity->getStatus(), ['processed', 'closed'])) {
+      $form['manual_data']['#access'] = FALSE;
+      $form['field_sar_export']['#access'] = FALSE;
+      $form['sar_export_assets']['#access'] = FALSE;
+      $form['sar_export_parts']['#access'] = FALSE;
       $form['actions']['#access'] = FALSE;
     }
 
     return $form;
-  }
-
-  /**
-   * Performs the SAR export.
-   *
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   * @throws \Drupal\Core\Entity\EntityMalformedException
-   */
-  private function doSarExport(FormStateInterface $form_state) {
-    /** @var \Drupal\gdpr_tasks\Entity\TaskInterface $entity */
-    $entity = $this->entity;
-    $manual = $form_state->getValue(['manual_data', 0, 'value']);
-
-    $data = gdpr_tasks_generate_sar_report($entity->getOwner());
-
-    $inc = [];
-    foreach ($data as $key => $values) {
-      $rta = $values['gdpr_rta'];
-      unset($values['gdpr_rta']);
-      if ($rta == 'inc') {
-        $inc[$key] = $values;
-      }
-    }
-
-    $file_name = $entity->sar_export->entity->getFilename();
-    $file_uri = $entity->sar_export->entity->getFileUri();
-    $dirname = str_replace($file_name, '', $file_uri);
-
-    /* @var \Drupal\gdpr_tasks\TaskManager $task_manager */
-    $destination = $this->taskManager->toCsv($inc, $dirname);
-    $export = \file_get_contents($destination);
-
-    $export .= $manual;
-
-    // @todo Add headers to csv export.
-    _gdpr_tasks_file_save_data($export, $entity->getOwner(), $file_uri, FILE_EXISTS_REPLACE);
-
-    $this->eventDispatcher->dispatch(RightToAccessCompleteEvent::EVENT_NAME, new RightToAccessCompleteEvent($entity->getOwner(), $file_uri));
   }
 
   /**
@@ -211,12 +171,15 @@ class TaskActionsForm extends ContentEntityForm {
       }
     }
     else {
-      $this->doSarExport($form_state);
+      // Queue task for completion.
+      $queue = \Drupal::queue('gdpr_tasks_process_gdpr_sar');
+      $queue->createQueue();
+      $queue->createItem($entity->id());
       $should_save = TRUE;
     }
 
     if ($should_save) {
-      $entity->status = 'closed';
+      $entity->status = 'processed';
       $entity->setProcessedById($this->currentUser()->id());
       $this->messenger()->addStatus('Task has been processed.');
       parent::save($form, $form_state);

@@ -2,11 +2,15 @@
 
 namespace Drupal\gdpr_fields\Controller;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\gdpr_fields\GDPRCollector;
-use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\gdpr_fields\Form\GdprFieldFilterForm;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Returns responses for GDPR Field routes.
@@ -21,13 +25,23 @@ class GDPRController extends ControllerBase {
   protected $collector;
 
   /**
+   * Current request.
+   *
+   * @var \Symfony\Component\HttpFoundation\Request
+   */
+  protected $request;
+
+  /**
    * Constructs a new GDPRController.
    *
    * @param \Drupal\gdpr_fields\GDPRCollector $collector
    *   The GDPR collector service.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   HTTP Request stack.
    */
-  public function __construct(GDPRCollector $collector) {
+  public function __construct(GDPRCollector $collector, RequestStack $request_stack) {
     $this->collector = $collector;
+    $this->request = $request_stack->getCurrentRequest();
   }
 
   /**
@@ -35,52 +49,75 @@ class GDPRController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('gdpr_fields.collector')
+      $container->get('gdpr_fields.collector'),
+      $container->get('request_stack')
     );
   }
 
   /**
    * Lists all fields with GDPR sensitivity.
    *
-   * @param string $mode
-   *   The list mode.
-   *
    * @return array
    *   The Views plugins report page.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function fieldsList($mode) {
-    $output = [];
-    $entities = [];
-    $includeNotConfigured = ($mode === 'all');
-    $this->collector->getEntities($entities);
+  public function fieldsList() {
+    $filters = GdprFieldFilterForm::getFilters($this->request);
 
-    $output['filter'] = $this->formBuilder()->getForm(GdprFieldFilterForm::class);
+    $output = [];
+    $output['filter'] = $this->formBuilder()->getForm('Drupal\gdpr_fields\Form\GdprFieldFilterForm');
     $output['#attached']['library'][] = 'gdpr_fields/field-list';
 
-    foreach ($entities as $entityType => $bundles) {
-      $output[$entityType] = [
+    foreach ($this->entityTypeManager()->getDefinitions() as $entity_type_id => $definition) {
+      // Skip non-fieldable/config entities.
+      if (!$definition->entityClassImplements(FieldableEntityInterface::class)) {
+        continue;
+      }
+
+      // If a filter is active, exclude any entities that don't match.
+      if (!empty($filters['entity_type']) && !in_array($entity_type_id, $filters['entity_type'])) {
+        continue;
+      }
+
+      $bundles = $this->collector->getBundles($entity_type_id);
+
+      $output[$entity_type_id] = [
         '#type' => 'details',
-        '#title' => $entityType,
+        '#title' => $definition->getLabel() . " [$entity_type_id]",
         '#open' => TRUE,
       ];
 
-      if (\count($bundles) > 1) {
-        foreach ($bundles as $bundle_id) {
-          $output[$entityType][$bundle_id] = [
-            '#type' => 'details',
-            '#title' => $bundle_id,
-            '#open' => TRUE,
-          ];
-          $output[$entityType][$bundle_id]['fields'] = $this->buildFieldTable($entityType, $bundle_id, $includeNotConfigured);
+      if (count($bundles) > 1) {
+        $at_least_one_bundle_has_fields = FALSE;
+        foreach ($bundles as $bundle_id => $bundle_info) {
+          $field_table = $this->buildFieldTable($definition, $bundle_id, $filters);
+
+          if ($field_table) {
+            $at_least_one_bundle_has_fields = TRUE;
+            $output[$entity_type_id][$bundle_id] = [
+              '#type' => 'details',
+              '#title' => new TranslatableMarkup('%label [%bundle]', ['%label' => $bundle_info['label'], '%bundle' => $bundle_id]),
+              '#open' => TRUE,
+            ];
+            $output[$entity_type_id][$bundle_id]['fields'] = $field_table;
+          }
+        }
+
+        if (!$at_least_one_bundle_has_fields) {
+          unset($output[$entity_type_id]);
         }
       }
       else {
         // Don't add another collapsible wrapper around single bundle entities.
-        $bundle_id = \reset($bundles);
-        $output[$entityType][$bundle_id]['fields'] = $this->buildFieldTable($entityType, $bundle_id, $includeNotConfigured);
+        $bundle_id = $entity_type_id;
+        $field_table = $this->buildFieldTable($definition, $bundle_id, $filters);
+        if ($field_table) {
+          $output[$entity_type_id][$bundle_id]['fields'] = $field_table;
+        }
+        else {
+          // If the entity has no fields because they've been filtered out
+          // don't bother including it.
+          unset($output[$entity_type_id]);
+        }
       }
     }
 
@@ -90,21 +127,23 @@ class GDPRController extends ControllerBase {
   /**
    * Build a table for entity field list.
    *
-   * @param string $entityType
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
    *   The entity type id.
    * @param string $bundle_id
    *   The entity bundle id.
-   * @param bool $includeNotConfigured
-   *   Include fields for entities that have not yet been configured.
+   * @param array $filters
+   *   Filters.
    *
    * @return array
    *   Renderable array for field list table.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  protected function buildFieldTable($entityType, $bundle_id, $includeNotConfigured = FALSE) {
-    $rows = $this->collector->listFields($bundle_id, $entityType, $includeNotConfigured);
+  protected function buildFieldTable(EntityTypeInterface $entity_type, $bundle_id, array $filters) {
+    $rows = $this->collector->listFields($entity_type, $bundle_id, $filters);
+
+    if (count($rows) == 0) {
+      return NULL;
+    }
+
     // Sort rows by field name.
     ksort($rows);
 
@@ -119,7 +158,6 @@ class GDPRController extends ControllerBase {
         '',
       ],
       '#sticky' => TRUE,
-      '#empty' => $this->t('There are no GDPR fields for this entity.'),
     ];
 
     $i = 0;
@@ -128,16 +166,18 @@ class GDPRController extends ControllerBase {
         '#plain_text' => $row['title'],
       ];
 
+      $type_markup = $row['is_id'] || $row['type'] == 'entity_reference' ? "<strong>{$row['type']}</strong>" : $row['type'];
+
       $table[$i]['type'] = [
-        '#plain_text' => $row['type'],
+        '#markup' => new FormattableMarkup($type_markup, []),
       ];
 
-      $table[$i]['gdpr_rta'] = [
-        '#plain_text' => $row['gdpr_rta'],
+      $table[$i]['rta'] = [
+        '#plain_text' => $row['rta'],
       ];
 
-      $table[$i]['gdpr_rtf'] = [
-        '#plain_text' => $row['gdpr_rtf'],
+      $table[$i]['rtf'] = [
+        '#plain_text' => $row['rtf'],
       ];
 
       $table[$i]['notes'] = [
@@ -152,66 +192,6 @@ class GDPRController extends ControllerBase {
     }
 
     return $table;
-  }
-
-  /**
-   * Builds data for Right to Access data requests.
-   *
-   * @param \Drupal\user\UserInterface $user
-   *   The user to fetch data for.
-   *
-   * @return array
-   *   Structured array of user related data.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   * @throws \Drupal\Core\Entity\EntityMalformedException
-   */
-  public function rtaData(UserInterface $user) {
-    $rows = [];
-    $entities = [];
-    $this->collector->getValueEntities($entities, 'user', $user);
-
-    foreach ($entities as $entityType => $bundles) {
-      foreach ($bundles as $bundle_entity) {
-        $rows += $this->collector->fieldValues($bundle_entity, $entityType, ['rta' => 'rta']);
-      }
-    }
-
-    // Sort rows by field name.
-    ksort($rows);
-    return $rows;
-  }
-
-  /**
-   * Builds data for Right to be Forgotten data requests.
-   *
-   * @param \Drupal\user\UserInterface $user
-   *   The user to fetch data for.
-   *
-   * @return array
-   *   Structured array of user related data.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   * @throws \Drupal\Core\Entity\EntityMalformedException
-   */
-  public function rtfData(UserInterface $user) {
-    $rows = [];
-    $entities = [];
-    $this->collector->getValueEntities($entities, 'user', $user);
-
-    foreach ($entities as $entityType => $bundles) {
-      foreach ($bundles as $bundle_entity) {
-        $rows += $this->collector->fieldValues($bundle_entity, $entityType, ['rtf' => 'rtf']);
-      }
-    }
-
-    // Sort rows by field name.
-    ksort($rows);
-    return $rows;
   }
 
 }

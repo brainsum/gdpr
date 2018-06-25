@@ -9,7 +9,6 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\file\FileInterface;
-use Drupal\gdpr_fields\Controller\GDPRController;
 use Drupal\gdpr_tasks\Entity\TaskInterface;
 use Drupal\user\UserInterface;
 
@@ -78,179 +77,6 @@ function gdpr_tasks_theme_suggestions_gdpr_task(array $variables) {
 }
 
 /**
- * Build export data for a user.
- *
- * @param \Drupal\user\UserInterface $user
- *   The user to generate data for.
- *
- * @return array
- *   Structured array of user related data.
- *
- * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
- * @throws \Drupal\Component\Plugin\Exception\PluginException
- * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
- * @throws \Drupal\Core\Entity\EntityMalformedException
- */
-function gdpr_tasks_generate_sar_report(UserInterface $user) {
-  /* @var \Drupal\gdpr_fields\Controller\GDPRController $controller */
-  $controller = \Drupal::classResolver()->getInstanceFromDefinition(GDPRController::class);
-
-  return $controller->rtaData($user);
-}
-
-/**
- * Implements hook_ENTITY_TYPE_presave().
- *
- * Process data for task requests.
- *
- * @todo Consider creating plugin or event listeners for task processing.
- */
-function gdpr_tasks_gdpr_task_presave(TaskInterface $gdprTask) {
-  switch ($gdprTask->bundle()) {
-    case 'gdpr_remove':
-      break;
-
-    // Collect relevant data and save to downloadable csv.
-    case 'gdpr_sar':
-      if (0 < $gdprTask->get('sar_export')->count()) {
-        break;
-      }
-
-      /* @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field */
-      $field = $gdprTask->get('sar_export');
-      /* @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
-      $field_definition = $field->getFieldDefinition();
-      $settings = $field_definition->getSettings();
-
-      $config = [
-        'field_definition' => $field_definition,
-        'name' => $field->getName(),
-        'parent' => $field->getParent(),
-      ];
-      /* @var \Drupal\file\Plugin\Field\FieldType\FileItem $field_type */
-      $field_type = \Drupal::service('plugin.manager.field.field_type')->createInstance($field_definition->getType(), $config);
-
-      // Prepare destination.
-      $dirname = $field_type->getUploadLocation();
-      \file_prepare_directory($dirname, FILE_CREATE_DIRECTORY);
-
-      $user = $gdprTask->getOwner();
-      $data = gdpr_tasks_generate_sar_report($user);
-
-      $inc = [];
-      $maybe = [];
-      foreach ($data as $key => $values) {
-        $rta = $values['gdpr_rta'];
-        unset($values['gdpr_rta']);
-        $inc[$key] = $values;
-
-        if ('maybe' === $rta) {
-          $maybe[$key] = $values;
-        }
-      }
-
-      /* @var \Drupal\gdpr_tasks\TaskManager $task_manager */
-      $task_manager = \Drupal::service('gdpr_tasks.manager');
-      $destination = $task_manager->toCsv($inc, $dirname);
-      $export = \file_get_contents($destination);
-
-      // Generate a file entity.
-      // @todo Add headers to csv export.
-      /** @var \Drupal\file\FileInterface $file */
-      $file = _gdpr_tasks_file_save_data($export, $user, $destination, FILE_EXISTS_REPLACE);
-
-      if (FALSE === $file) {
-        drupal_set_message(t('An error occurred while saving the data export file!'), 'error');
-      }
-      else {
-        $values = [
-          'target_id' => $file->id(),
-          'display' => (int) $settings['display_default'],
-          'description' => '',
-        ];
-
-        $gdprTask->sar_export = $values;
-
-        $temp = $task_manager->toCsv($maybe, $dirname);
-        $gdprTask->manual_data = \file_get_contents($temp);
-      }
-
-      break;
-  }
-}
-
-/**
- * Saves a file to the specified destination and creates a database entry.
- *
- * @param string $data
- *   A string containing the contents of the file.
- * @param \Drupal\Core\Session\AccountInterface $user
- *   The owner of the file.
- * @param string|null $destination
- *   (optional) A string containing the destination URI. This must be a stream
- *   wrapper URI. If no value or NULL is provided, a randomized name will be
- *   generated and the file will be saved using Drupal's default files scheme,
- *   usually "public://".
- * @param int $replace
- *   (optional) The replace behavior when the destination file already exists.
- *   Possible values include:
- *   - FILE_EXISTS_REPLACE: Replace the existing file. If a managed file with
- *     the destination name exists, then its database entry will be updated. If
- *     no database entry is found, then a new one will be created.
- *   - FILE_EXISTS_RENAME: (default) Append _{incrementing number} until the
- *     filename is unique.
- *   - FILE_EXISTS_ERROR: Do nothing and return FALSE.
- *
- * @return \Drupal\file\FileInterface|false
- *   A file entity, or FALSE on error.
- *
- * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
- * @throws \Drupal\Core\Entity\EntityStorageException
- *
- * @see file_unmanaged_save_data()
- */
-function _gdpr_tasks_file_save_data($data, AccountInterface $user, $destination = NULL, $replace = FILE_EXISTS_RENAME) {
-  if (!file_valid_uri($destination)) {
-    \Drupal::logger('file')->notice('The data could not be saved because the destination %destination is invalid. This may be caused by improper use of file_save_data() or a missing stream wrapper.', ['%destination' => $destination]);
-    drupal_set_message(t('The data could not be saved because the destination is invalid. More information is available in the system log.'), 'error');
-    return FALSE;
-  }
-
-  if ($uri = \file_unmanaged_save_data($data, $destination, $replace)) {
-    /** @var \Drupal\file\FileStorageInterface $fileStorage */
-    $fileStorage = \Drupal::entityTypeManager()->getStorage('file');
-    // Create a file entity.
-    /** @var \Drupal\file\FileInterface $file */
-    $file = $fileStorage->create([
-      'uri' => $uri,
-      'uid' => $user->id(),
-      'status' => FILE_STATUS_PERMANENT,
-    ]);
-    // If we are replacing an existing file re-use its database record.
-    // @todo Do not create a new entity in order to update it. See
-    //   https://www.drupal.org/node/2241865.
-    if ($replace === FILE_EXISTS_REPLACE) {
-      $existing_files = $fileStorage->loadByProperties(['uri' => $uri]);
-      if (\count($existing_files)) {
-        $existing = reset($existing_files);
-        $file->fid = $existing->id();
-        $file->setOriginalId($existing->id());
-        $file->setFilename($existing->getFilename());
-      }
-    }
-    // If we are renaming around an existing file (rather than a directory),
-    // use its basename for the filename.
-    elseif ($replace === FILE_EXISTS_RENAME && \is_file($destination)) {
-      $file->setFilename(\Drupal::service('file_system')->basename($destination));
-    }
-
-    $file->save();
-    return $file;
-  }
-  return FALSE;
-}
-
-/**
  * Implements hook_ENTITY_TYPE_access().
  */
 function gdpr_tasks_file_access(FileInterface $file, $operation, AccountInterface $account) {
@@ -259,4 +85,24 @@ function gdpr_tasks_file_access(FileInterface $file, $operation, AccountInterfac
   }
 
   return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_entity_type_alter().
+ *
+ * Update entity definitions of certain entity types to be excluded from entity
+ * traversal.
+ */
+function gdpr_fields_entity_type_alter(array &$entity_types) {
+  /* @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types */
+  // Excluded entity types.
+  $exlude_entity_types = [
+    'gdpr_tasks',
+  ];
+
+  foreach ($exlude_entity_types as $type) {
+    if (isset($entity_types[$type])) {
+      $entity_types[$type]->set('gdpr_entity_traversal_exclude', TRUE);
+    }
+  }
 }
