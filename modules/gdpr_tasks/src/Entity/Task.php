@@ -152,8 +152,15 @@ class Task extends ContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function getStatus() {
+    return $this->status->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getStatusLabel() {
     $statuses = $this->getStatuses();
-    $value = $this->status->value;
+    $value = $this->getStatus();
     if (isset($statuses[$value])) {
       $value = $statuses[$value];
     }
@@ -284,6 +291,9 @@ class Task extends ContentEntityBase implements TaskInterface {
   public static function getStatuses() {
     return [
       'requested' => t('Requested'),
+      'building' => t('Building data'),
+      'reviewing' => t('Needs review'),
+      'processed' => t('Processed'),
       'closed' => t('Closed'),
     ];
   }

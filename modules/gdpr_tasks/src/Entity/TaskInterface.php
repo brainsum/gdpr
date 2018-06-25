@@ -40,4 +40,12 @@ interface TaskInterface extends ContentEntityInterface, EntityChangedInterface, 
    */
   public function getStatus();
 
+  /**
+   * Gets the current human readable status of the task.
+   *
+   * @return string
+   *   The human readable status of the Task entity.
+   */
+  public function getStatusLabel();
+
 }

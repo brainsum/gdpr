@@ -1,4 +1,4 @@
 services:
   gdpr_fields.collector:
     class: Drupal\gdpr_fields\GDPRCollector
-    arguments: ['@entity_type.manager', '@plugin.manager.ctools.relationship']
+    arguments: ['@entity_type.manager', '@entity_field.manager', '@entity_type.bundle.info']

@@ -8,7 +8,6 @@
  */
 
 use Drupal\Core\Render\Element;
-use Drupal\gdpr_fields\Controller\GDPRController;
 
 /**
  * Prepares variables for Task templates.
@@ -33,13 +32,12 @@ function template_preprocess_gdpr_task(array &$variables) {
   $bundleStorage = \Drupal::entityTypeManager()->getStorage($gdprTask->getEntityType()->getBundleEntityType());
   $variables['type'] = $bundleStorage->load($gdprTask->bundle())->label();
 
-  /* @var \Drupal\gdpr_fields\Controller\GDPRController $controller */
-  $controller = \Drupal::classResolver()->getInstanceFromDefinition(GDPRController::class);
-
   /* @var \Drupal\gdpr_tasks\Entity\TaskInterface $entity */
   switch ($gdprTask->bundle()) {
     case 'gdpr_remove':
-      $rows = $controller->rtfData($gdprTask->getOwner());
+      /* @var \Drupal\gdpr_tasks\Traversal\RightToBeForgottenDisplayTraversal $traverser */
+      $traverser = \Drupal::service('gdpr_tasks.rtf_display_traversal')->getTraversal($gdprTask->getOwner());
+      $rows = $traverser->getResults();
 
       $variables['data'] = [
         '#type' => 'table',
@@ -61,7 +59,9 @@ function template_preprocess_gdpr_task(array &$variables) {
       break;
 
     case 'gdpr_sar':
-      $rows = $controller->rtaData($gdprTask->getOwner());
+      /* @var \Drupal\gdpr_tasks\Traversal\RightToAccessDisplayTraversal $traverser */
+      $traverser = \Drupal::service('gdpr_tasks.rta_display_traversal')->getTraversal($gdprTask->getOwner());
+      $rows = $traverser->getResults();
 
       $variables['data'] = [
         '#type' => 'table',

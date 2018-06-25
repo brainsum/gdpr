@@ -2,18 +2,14 @@
 
 namespace Drupal\gdpr_tasks;
 
-use Drupal\anonymizer\Anonymizer\AnonymizerFactory;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\TypedData\Exception\ReadOnlyException;
-use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
-use Drupal\gdpr_fields\GDPRCollector;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
+use Drupal\gdpr_fields\EntityTraversalFactory;
 use Drupal\gdpr_tasks\Entity\TaskInterface;
 use Drupal\gdpr_tasks\Form\RemovalSettingsForm;
 
@@ -23,13 +19,6 @@ use Drupal\gdpr_tasks\Form\RemovalSettingsForm;
 class Anonymizer {
 
   use StringTranslationTrait;
-
-  /**
-   * Collector used to retrieve properties to anonymize.
-   *
-   * @var \Drupal\gdpr_fields\GDPRCollector
-   */
-  private $collector;
 
   /**
    * Database instance for the request.
@@ -46,25 +35,11 @@ class Anonymizer {
   private $entityTypeManager;
 
   /**
-   * Drupal module handler for hooks.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  private $moduleHandler;
-
-  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   private $currentUser;
-
-  /**
-   * Factory used to retrieve anonymizer to use on a particular field.
-   *
-   * @var \Drupal\anonymizer\Anonymizer\AnonymizerFactory
-   */
-  private $anonymizerFactory;
 
   /**
    * Config factory.
@@ -74,39 +49,38 @@ class Anonymizer {
   private $configFactory;
 
   /**
+   * Traverses the entity hierarchy finding GDPR fields.
+   *
+   * @var \Drupal\gdpr_tasks\Traversal\RightToBeForgottenEntityTraversal
+   */
+  private $traversalFactory;
+
+  /**
    * Anonymizer constructor.
    *
-   * @param \Drupal\gdpr_fields\GDPRCollector $collector
-   *   Fields collector.
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
-   *   The module handler.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
-   * @param \Drupal\anonymizer\Anonymizer\AnonymizerFactory $anonymizerFactory
-   *   The anonymizer plugin factory.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
+   * @param \Drupal\gdpr_fields\EntityTraversalFactory $traversalFactory
+   *   Instantiates a traverser class.
    */
   public function __construct(
-    GDPRCollector $collector,
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
-    ModuleHandlerInterface $moduleHandler,
     AccountProxyInterface $currentUser,
-    AnonymizerFactory $anonymizerFactory,
-    ConfigFactoryInterface $configFactory
+    ConfigFactoryInterface $configFactory,
+    EntityTraversalFactory $traversalFactory
   ) {
-    $this->collector = $collector;
     $this->database = $database;
     $this->entityTypeManager = $entityTypeManager;
-    $this->moduleHandler = $moduleHandler;
     $this->currentUser = $currentUser;
-    $this->anonymizerFactory = $anonymizerFactory;
     $this->configFactory = $configFactory;
+    $this->traversalFactory = $traversalFactory;
   }
 
   /**
@@ -127,90 +101,39 @@ class Anonymizer {
     // Make sure we load a fresh copy of the entity (bypassing the cache)
     // so we don't end up affecting any other references to the entity.
     $user = $task->getOwner();
-
     $errors = [];
-    $entities = [];
-    $successes = [];
-    $failures = [];
-    $log = [];
 
     if (!$this->checkExportDirectoryExists()) {
-      $errors[] = $this->t('An export directory has not been set. Please set this under Configuration -> GDPR -> Right to be Forgotten');
+      $link = Link::fromTextAndUrl('here', Url::fromRoute('gdpr_tasks.remove_settings'))->toString();
+      $errors[] = new TranslatableMarkup('An export directory has not been set. Please set this %link.', ['%link', $link]);
+      return $errors;
     }
 
-    $this->collector->getValueEntities($entities, 'user', $user);
+    // Traverser does the actual anonymizing.
+    $traverser = $this->traversalFactory->getTraversal($user);
+    $result = $traverser->getResults();
 
-    foreach ($entities as $bundles) {
-      foreach ($bundles as $bundleEntity) {
-        // Re-load a fresh copy of the bundle entity from storage so we don't
-        // end up modifying any other references to the entity in memory.
-        $bundleEntity = $this->entityTypeManager->getStorage($bundleEntity->getEntityTypeId())
-          ->loadUnchanged($bundleEntity->id());
-
-        $entitySuccess = TRUE;
-
-        try {
-          $fieldsToProcess = $this->getFieldsToProcess($bundleEntity);
-        }
-        catch (\Exception $e) {
-          $errors[] = $e->getMessage();
-          $fieldsToProcess = [];
-          $entitySuccess = FALSE;
-          // @todo: Log.
-        }
-
-        foreach ($fieldsToProcess as $fieldInfo) {
-          /** @var \Drupal\Core\Field\FieldItemListInterface $field */
-          $field = $fieldInfo['field'];
-          $mode = $fieldInfo['mode'];
-
-          $success = TRUE;
-          $msg = NULL;
-          $anonymizer = '';
-
-          if ($mode === 'anonymize') {
-            list($success, $msg, $anonymizer) = $this->anonymize($field, $bundleEntity);
-          }
-          elseif ($mode === 'remove') {
-            list($success, $msg) = $this->remove($field);
-          }
-
-          if ($success === TRUE) {
-            $log[] = [
-              'entity_id' => $bundleEntity->id(),
-              'entity_type' => $bundleEntity->getEntityTypeId() . '.' . $bundleEntity->bundle(),
-              'field_name' => $field->getName(),
-              'action' => $mode,
-              'anonymizer' => $anonymizer,
-            ];
-          }
-          else {
-            // Could not anonymize/remove field. Record to errors list.
-            // Prevent entity from being saved.
-            $entitySuccess = FALSE;
-            $errors[] = $msg;
-          }
-        }
-
-        if ($entitySuccess) {
-          $successes[] = $bundleEntity;
-        }
-        else {
-          $failures[] = $bundleEntity;
-        }
-      }
-    }
+    $log = $result['log'];
+    $errors = $result['errors'];
+    $successes = $result['successes'];
+    $failures = $result['failures'];
+    $deletions = $result['to_delete'];
 
     $task->get('removal_log')->setValue($log);
 
-    if (\count($failures) === 0) {
+    if (count($failures) === 0) {
       $transaction = $this->database->startTransaction();
 
       try {
-        /* @var EntityInterface $entity */
+        /* @var \Drupal\Core\Entity\EntityInterface $entity */
         foreach ($successes as $entity) {
           $entity->save();
         }
+
+        foreach ($deletions as $entity) {
+          $entity->delete();
+        }
+
         // Re-fetch the user so we see any changes that were made.
         $user = $this->refetchUser($task->getOwnerId());
         $user->block();
@@ -225,138 +148,6 @@ class Anonymizer {
     }
 
     return $errors;
-  }
-
-  /**
-   * Removes the field value.
-   *
-   * @param \Drupal\Core\Field\FieldItemListInterface $field
-   *   The current field to process.
-   *
-   * @return array
-   *   First element is success boolean, second element is the error message.
-   */
-  private function remove(FieldItemListInterface $field) {
-    try {
-      $field->setValue(NULL);
-      return [TRUE, NULL];
-    }
-    catch (ReadOnlyException $e) {
-      return [FALSE, $e->getMessage()];
-    }
-  }
-
-  /**
-   * Runs anonymize functionality against a field.
-   *
-   * @param \Drupal\Core\Field\FieldItemListInterface $field
-   *   The field to anonymize.
-   * @param \Drupal\Core\Entity\EntityInterface $bundleEntity
-   *   The parent entity.
-   *
-   * @return array
-   *   First element is success boolean, second element is the error message.
-   */
-  private function anonymize(FieldItemListInterface $field, EntityInterface $bundleEntity) {
-    $anonymizer_id = $this->getAnonymizerId($field, $bundleEntity);
-
-    if (!$anonymizer_id) {
-      return [
-        FALSE,
-        "Could not anonymize field {$field->getName()}. Please consider changing this field from 'anonymize' to 'remove', or register a custom anonymizer.",
-        NULL,
-      ];
-    }
-
-    try {
-      $anonymizer = $this->anonymizerFactory->get($anonymizer_id);
-      $field->setValue($anonymizer->anonymize($field->value, $field));
-      return [TRUE, NULL, $anonymizer_id];
-    }
-    catch (\Exception $e) {
-      return [FALSE, $e->getMessage(), NULL];
-    }
-
-  }
-
-  /**
-   * Gets the ID of the anonymizer plugin to use on this field.
-   *
-   * @param \Drupal\Core\Field\FieldItemListInterface $field
-   *   The field to anonymize.
-   * @param \Drupal\Core\Entity\EntityInterface $bundleEntity
-   *   The parent entity.
-   *
-   * @return string
-   *   The anonymizer ID or null.
-   */
-  private function getAnonymizerId(FieldItemListInterface $field, EntityInterface $bundleEntity) {
-    // First check if this field has a anonymizer defined.
-    $config = GdprFieldConfigEntity::load($bundleEntity->getEntityTypeId());
-    $fieldConfig = $config->getField($bundleEntity->bundle(), $field->getName());
-    $anonymizer = $fieldConfig->anonymizer;
-    $fieldDefinition = $field->getFieldDefinition();
-    $type = $fieldDefinition->getType();
-
-    if (!$anonymizer) {
-      // No anonymizer defined directly on the field.
-      // Instead try and get one for the datatype.
-      $anonymizers = [
-        'string' => 'gdpr_text_anonymizer',
-        'datetime' => 'gdpr_date_anonymizer',
-      ];
-
-      $this->moduleHandler->alter('gdpr_type_anonymizers', $anonymizers);
-      $anonymizer = $anonymizers[$type];
-    }
-    return $anonymizer;
-  }
-
-  /**
-   * Gets fields to anonymize/remove.
-   *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
-   *   The entity to anonymize.
-   *
-   * @return array
-   *   Array containing metadata about the entity.
-   *   Elements are entity_type, bundle, field and mode.
-   *
-   * @throws \Exception
-   */
-  private function getFieldsToProcess(EntityInterface $entity) {
-    $bundleId = $entity->bundle();
-    $entityTypeId = $entity->getEntityTypeId();
-    $config = GdprFieldConfigEntity::load($entityTypeId);
-
-    if (NULL === $config) {
-      throw new \Exception('The GDPR field config could not be loaded for the "' . $entityTypeId . '" entity type.');
-    }
-
-    // Get fields for entity.
-    $fields = [];
-    foreach ($entity as $field) {
-      /** @var \Drupal\Core\Field\FieldItemListInterface $field */
-      $fieldConfig = $config->getField($bundleId, $field->getName());
-
-      if (!$fieldConfig->enabled) {
-        continue;
-      }
-
-      $rtfValue = $fieldConfig->rtf;
-
-      if ($rtfValue && $rtfValue !== 'no') {
-        $fields[] = [
-          'entity_type' => $entity->getEntityTypeId(),
-          'bundle' => $bundleId,
-          'field' => $field,
-          'mode' => $rtfValue,
-        ];
-      }
-
-    }
-
-    return $fields;
   }
 
   /**
