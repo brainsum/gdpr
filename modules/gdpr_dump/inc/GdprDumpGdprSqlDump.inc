@@ -211,6 +211,11 @@ class GdprDumpGdprSqlDump {
       $insertQuery = db_insert($clonedTable);
       $insertQuery->fields($tableColumns);
 
+      $unique_data = [];
+      $schema = drupal_get_schema($table);
+      $uniq_keys = $schema['unique keys'];
+      $primary_key = $schema['primary key'][0];
+
       while ($row = $oldRows->fetchAssoc()) {
         foreach ($sanitationOptions as $column => $pluginId) {
           /* @todo
@@ -228,6 +233,12 @@ class GdprDumpGdprSqlDump {
 
           if (function_exists($plugin['sanitize callback'])) {
             $row[$column] = call_user_func($plugin['sanitize callback'], $row[$column]);
+            if (isset($uniq_keys[$column]) || $column == $primary_key) {
+              while (in_array($row[$column], $unique_data)) {
+                $row[$column] = call_user_func($plugin['sanitize callback'], $row[$column]);
+              }
+              $unique_data[] = $row[$column];
+            }
           }
         }
         $insertQuery->values($row);
