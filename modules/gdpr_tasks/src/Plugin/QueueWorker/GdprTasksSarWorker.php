@@ -94,7 +94,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *   The field type plugin manager.
    * @param \Drupal\Core\Queue\QueueInterface $queue
    *   The gdpr sars task queue.
-   * @param \Drupal\gdpr_tasks\Traversal\RightToAccessDisplayTraversal $rta_traversal
+   * @param \Drupal\gdpr_fields\EntityTraversalFactory $rta_traversal
    *   The rta traversal service.
    * @param \Drupal\Core\File\FileSystem $file_system
    *   The file system.
