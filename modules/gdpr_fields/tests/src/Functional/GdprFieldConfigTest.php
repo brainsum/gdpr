@@ -20,7 +20,6 @@ class GdprFieldConfigTest extends BrowserTestBase {
     'gdpr_tasks',
     'gdpr_consent',
     'anonymizer',
-    'ctools',
     'file',
   ];
 
