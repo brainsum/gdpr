@@ -10,8 +10,8 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
+use Drupal\gdpr_fields\EntityTraversalFactory;
 use Drupal\gdpr_tasks\Entity\TaskInterface;
-use Drupal\gdpr_tasks\Traversal\RightToAccessDisplayTraversal;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -101,7 +101,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, EntityTypeManagerInterface $entity_type_manager, Php $uuid, FieldTypePluginManager $field_type_plugin_manager, QueueInterface $queue, RightToAccessDisplayTraversal $rta_traversal, FileSystem $file_system, MessengerInterface $messenger) {
+  public function __construct(array $configuration, $plugin_id, array $plugin_definition, EntityTypeManagerInterface $entity_type_manager, Php $uuid, FieldTypePluginManager $field_type_plugin_manager, QueueInterface $queue, EntityTraversalFactory $rta_traversal, FileSystem $file_system, MessengerInterface $messenger) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->taskStorage = $entity_type_manager->getStorage('gdpr_task');
     $this->uuid = $uuid;
