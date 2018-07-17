@@ -78,6 +78,14 @@ function template_preprocess_gdpr_task(array &$variables) {
         '#empty' => t('There are no GDPR fields.'),
       ];
       $variables['actions'] = \Drupal::service('entity.form_builder')->getForm($gdprTask, 'process');
+
+      $exportFiles = $gdprTask->sar_export->getValue();
+      if (empty($exportFiles)) {
+        unset($variables['actions']['actions']['submit']);
+        /** @var \Drupal\Core\Messenger\MessengerInterface $messenger */
+        $messenger = \Drupal::service('messenger');
+        $messenger->addWarning(t('This SARs Request does not have any files attached, so it cannot be processed. Please run the site cron to generate the files.'));
+      }
       break;
   }
 

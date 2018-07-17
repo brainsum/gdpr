@@ -3,8 +3,10 @@
 namespace Drupal\gdpr_tasks\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\gdpr_tasks\TaskManager;
@@ -24,6 +26,13 @@ class GDPRController extends ControllerBase {
   protected $taskManager;
 
   /**
+   * The gdpr_tasks_process_gdpr_sar queue.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $queue;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -31,7 +40,8 @@ class GDPRController extends ControllerBase {
       $container->get('entity_type.manager'),
       $container->get('current_user'),
       $container->get('messenger'),
-      $container->get('gdpr_tasks.manager')
+      $container->get('gdpr_tasks.manager'),
+      $container->get('queue')
     );
   }
 
@@ -46,17 +56,21 @@ class GDPRController extends ControllerBase {
    *   The messenger service.
    * @param \Drupal\gdpr_tasks\TaskManager $task_manager
    *   The task manager service.
+   * @param \Drupal\Core\Queue\QueueFactory $queue
+   *   Queue factory.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     AccountProxyInterface $current_user,
     MessengerInterface $messenger,
-    TaskManager $task_manager
+    TaskManager $task_manager,
+    QueueFactory $queue
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->currentUser = $current_user;
     $this->messenger = $messenger;
     $this->taskManager = $task_manager;
+    $this->queue = $queue->get('gdpr_tasks_process_gdpr_sar');
   }
 
   /**
@@ -81,7 +95,7 @@ class GDPRController extends ControllerBase {
    *   Either the task request form or a redirect response to requests page.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function requestPage(AccountInterface $user, $gdpr_task_type) {
     $tasks = $this->taskManager->getUserTasks($user, $gdpr_task_type);
@@ -104,10 +118,23 @@ class GDPRController extends ControllerBase {
         'type' => $gdpr_task_type,
         'user_id' => $user->id(),
       ];
-      $this->entityTypeManager->getStorage('gdpr_task')
-        ->create($values)
-        ->save();
-      $this->messenger->addStatus('Your request has been logged');
+      $newTask = $this->entityTypeManager->getStorage('gdpr_task')
+        ->create($values);
+      try {
+        $newTask->save();
+        $this->messenger->addStatus($this->t('Your request has been logged.'));
+
+        $this->queue->createQueue();
+        $this->queue->createItem($newTask->id());
+      }
+      catch (EntityStorageException $exception) {
+        $this->messenger->addError($this->t('There was an error while logging your request.'));
+        $this->loggerFactory->get('gdpr_tasks')->error($this->t('Error while trying to create a(n) "@taskType" GDPR task for user "@userName (@userId)."', [
+          '@taskType' => $gdpr_task_type,
+          '@userName' => $user->getDisplayName(),
+          '@userId' => $user->id(),
+        ]));
+      }
     }
 
     return $this->redirect('view.gdpr_tasks_my_data_requests.page_1', ['user' => $user->id()]);

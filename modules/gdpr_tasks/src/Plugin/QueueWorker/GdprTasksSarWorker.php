@@ -166,6 +166,11 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *   The task.
    * @param bool $build_now
    *   Whether to build the entity data immediate or defer to cron.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   protected function initialise(TaskInterface $task, $build_now = FALSE) {
     /* @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field */
@@ -197,7 +202,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
       }
 
       // Generate the zip file to reserve our namespace.
-      $file = file_save_data('', "{$directory}/{$uuid}.zip", FILE_EXISTS_ERROR);
+      $file = _gdpr_tasks_file_save_data('', $task->getOwner(), "{$directory}/{$uuid}.zip", FILE_EXISTS_ERROR);
     } while (!$file);
 
     // Prepare the directory for our sub-files.
@@ -232,6 +237,11 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *
    * @param \Drupal\gdpr_tasks\Entity\TaskInterface $task
    *   The task.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function build(TaskInterface $task) {
     /* @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field */
@@ -293,7 +303,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     foreach ($csvs as $filename => $data) {
       if (!isset($files[$filename])) {
         // Create an empty file.
-        $file = file_save_data('', "{$directory}/{$filename}.csv", FILE_EXISTS_REPLACE);
+        $file = _gdpr_tasks_file_save_data('', $task->getOwner(), "{$directory}/{$filename}.csv", FILE_EXISTS_REPLACE);
 
         $values = [
           'target_id' => $file->id(),
