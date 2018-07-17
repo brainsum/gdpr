@@ -232,13 +232,31 @@ class GdprDumpGdprSqlDump {
           $plugin = gdpr_dump_get_sanitizer_plugins($pluginId);
 
           if (function_exists($plugin['sanitize callback'])) {
-            $row[$column] = call_user_func($plugin['sanitize callback'], $row[$column]);
-            if (isset($uniq_keys[$column]) || $column == $primary_key) {
-              while (in_array($row[$column], $unique_data)) {
-                $row[$column] = call_user_func($plugin['sanitize callback'], $row[$column]);
+            $tries = 0;
+            do {
+              $is_valid = TRUE;
+              $value = call_user_func($plugin['sanitize callback'], $row[$column]);
+
+              if (isset($schema['fields'][$column]['length'])
+                && strlen($value) > $schema['fields'][$column]['length']) {
+                $is_valid = FALSE;
               }
-              $unique_data[] = $row[$column];
+
+              if (isset($uniq_keys[$column]) || $column == $primary_key) {
+                if (in_array($value, $unique_data)) {
+                  $is_valid = FALSE;
+                }
+                else {
+                  $unique_data[] = $value;
+                }
+              }
+            } while (!$is_valid && $tries++ < 50);
+
+            if ($tries >= 50) {
+              drush_log("Too many tries for column '$column'", 'error');
+              exit;
             }
+            $row[$column] = $value;
           }
         }
         $insertQuery->values($row);
