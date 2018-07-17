@@ -124,6 +124,23 @@ class TaskListBuilder extends EntityListBuilder {
       ],
     ];
 
+    $build['processed']['title'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'h3',
+      '#value' => 'Processed tasks',
+    ];
+
+    $build['processed']['table'] = [
+      '#type' => 'table',
+      '#header' => $this->buildHeader(),
+      '#rows' => [],
+      '#empty' => $this->t('There are no processed tasks yet.'),
+      '#cache' => [
+        'contexts' => $this->entityType->getListCacheContexts(),
+        'tags' => $this->entityType->getListCacheTags(),
+      ],
+    ];
+
     $build['closed']['title'] = [
       '#type' => 'html_tag',
       '#tag' => 'h3',
@@ -140,6 +157,7 @@ class TaskListBuilder extends EntityListBuilder {
         'tags' => $this->entityType->getListCacheTags(),
       ],
     ];
+    /* @var $entity \Drupal\gdpr_tasks\Entity\Task */
     foreach ($this->load() as $entity) {
       if ($row = $this->buildRow($entity)) {
         $build[$entity->status->value]['table']['#rows'][$entity->id()] = $row;
