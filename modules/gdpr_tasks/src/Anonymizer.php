@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -105,8 +106,9 @@ class Anonymizer {
     $errors = [];
 
     if (!$this->checkExportDirectoryExists()) {
-      $link = Link::fromTextAndUrl('here', Url::fromRoute('gdpr_tasks.remove_settings'))->toString();
-      $errors[] = new TranslatableMarkup('An export directory has not been set. Please set this %link.', ['%link', $link]);
+      $errors[] = $this->t('An export directory has not been set. Please set this %link.', [
+        '%link' => Link::fromTextAndUrl('here', Url::fromRoute('gdpr_tasks.remove_settings'))->toString(),
+      ]);
       return $errors;
     }
 
