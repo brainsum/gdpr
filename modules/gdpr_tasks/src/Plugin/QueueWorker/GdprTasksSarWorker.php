@@ -327,6 +327,11 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
     // Compile all files into a single zip.
     /* @var \Drupal\file\Entity\File $file */
     $file = $task->sar_export->entity;
+    if (NULL === $file) {
+      $this->messenger->addError(t('SARs Export File not found for task @task_id.', ['@task_id' => $task->id()]));
+      return;
+    }
+
     $file_path = $this->fileSystem->realpath($file->uri->value);
 
     $zip = new \ZipArchive();
@@ -388,6 +393,9 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *
    * @return array
    *   CSV file data.
+   *
+   * @todo: Use something like this instead:
+   *        \Consolidation\OutputFormatters\Formatters\CsvFormatter
    */
   public static function readCsv($filename) {
     $data = [];
@@ -406,6 +414,9 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *   The filename to write to (supports streams).
    * @param array $content
    *   The data to write, an array containing each row as an array.
+   *
+   * @todo: Use something like this instead:
+   *        \Consolidation\OutputFormatters\Formatters\CsvFormatter
    */
   protected function writeCsv($filename, array $content) {
     $handler = fopen($filename, 'w');
