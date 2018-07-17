@@ -14,6 +14,7 @@ use Drupal\Core\TypedData\Exception\ReadOnlyException;
 use Drupal\gdpr_fields\Entity\GdprField;
 use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
 use Drupal\gdpr_fields\EntityTraversal;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Entity traversal used for Right to be Forgotten requests.
@@ -39,7 +40,26 @@ class RightToBeForgottenEntityTraversal extends EntityTraversal {
   /**
    * {@inheritdoc}
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, EntityFieldManagerInterface $entityFieldManager, ModuleHandlerInterface $module_handler, AnonymizerFactory $anonymizer_factory, $base_entity) {
+  public static function create(ContainerInterface $container, EntityInterface $base_entity) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('entity_field.manager'),
+      $base_entity,
+      $container->get('module_handler'),
+      $container->get('anonymizer.anonymizer_factory')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(
+    EntityTypeManagerInterface $entityTypeManager,
+    EntityFieldManagerInterface $entityFieldManager,
+    $base_entity,
+    ModuleHandlerInterface $module_handler,
+    AnonymizerFactory $anonymizer_factory
+  ) {
     parent::__construct($entityTypeManager, $entityFieldManager, $base_entity);
     $this->moduleHandler = $module_handler;
     $this->anonymizerFactory = $anonymizer_factory;
