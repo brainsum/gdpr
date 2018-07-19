@@ -49,7 +49,7 @@ class GdprDumpCommands extends DrushCommands {
    * @usage drush gdpr:sql:dump --extra-dump=--no-data
    *   Pass extra option to mysqldump command.
    * @hidden-options create-db
-   * @bootstrap max
+   * @bootstrap max configuration
    *
    * @notes
    *   The createdb command is used by sql-sync, since including the
