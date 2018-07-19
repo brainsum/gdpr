@@ -13,3 +13,9 @@ entity.gdpr_task_type.collection:
   description: 'List Task type (bundles)'
   parent: system.admin_structure
   weight: 99
+
+gdpr_tasks.remove_settings:
+  title: 'Right to be Forgotten'
+  description: 'GDPR Right to be Forgotten Settings'
+  parent: gdpr.admin_config
+  route_name: gdpr_tasks.remove_settings

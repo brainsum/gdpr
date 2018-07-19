@@ -50,19 +50,19 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
   }
 
   /**
-   * Finds a resolver for the specified entity type/bundle.
+   * Check for an existing resolver for the specified entity type/bundle.
    *
    * @param string $entityType
    *   The entity type.
    * @param string $bundle
    *   The bundle.
    *
-   * @return \Drupal\gdpr_consent\ConsentUserResolver\GdprConsentUserResolverInterface
-   *   The resolver that will be used to find the User for a specific entity.
+   * @return array|bool
+   *   The resolver definition, if it exists, or NULL.
    *
    * @throws \Exception
    */
-  public function getForEntityType($entityType, $bundle) {
+  public function getDefinitionForType($entityType, $bundle) {
     $definitions = $this->getDefinitions();
 
     // Get all plugins that act on the entity type.
@@ -92,7 +92,30 @@ class ConsentUserResolverPluginManager extends DefaultPluginManager {
       }
     }
 
-    if ($definition === NULL) {
+    if (NULL === $definition) {
+      return FALSE;
+    }
+
+    return $definition;
+  }
+
+  /**
+   * Finds a resolver for the specified entity type/bundle.
+   *
+   * @param string $entityType
+   *   The entity type.
+   * @param string $bundle
+   *   The bundle.
+   *
+   * @return \Drupal\gdpr_consent\ConsentUserResolver\GdprConsentUserResolverInterface
+   *   The resolver that will be used to find the User for a specific entity.
+   *
+   * @throws \Exception
+   */
+  public function getForEntityType($entityType, $bundle) {
+    $definition = $this->getDefinitionForType($entityType, $bundle);
+
+    if (FALSE === $definition) {
       throw new \Exception("Could not determine user ID for entity type $entityType. Please ensure there is a resolver registered.");
     }
 

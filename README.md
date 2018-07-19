@@ -38,14 +38,6 @@ This module requires the following outside of Drupal core.
 
  * Checklist API - https://www.drupal.org/project/checklistapi
 
-The D8 gdpr_fields sub-module requires ctools 3 with this patch:
-https://www.drupal.org/files/issues/2951267-2.patch
-
-Note: If you use composer for dependency management, you need to add
-```"enable-patching": true``` to the ```extra``` key in your project
-composer.json file. See: https://github.com/cweagans/composer-patches#allowing-patches-to-be-applied-from-dependencies
-
-
 INSTALLATION
 ------------
 

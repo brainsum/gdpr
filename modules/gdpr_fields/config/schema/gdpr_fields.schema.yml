@@ -5,6 +5,12 @@ gdpr_fields.gdpr_fields_config.*:
     id:
       type: string
       label: 'ID'
+    filenames:
+      type: sequence
+      label: 'Export filenames'
+      sequence:
+        type: string
+        label: 'Filename'
     bundles:
       type: sequence
       label: 'Entity Bundles'
@@ -27,4 +33,10 @@ gdpr_fields.gdpr_fields_config.*:
             anonymizer:
               type: string
             notes:
+              type: string
+            relationship:
+              type: integer
+            sars_filename:
+              type: string
+            entity_type_id:
               type: string

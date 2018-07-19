@@ -3,3 +3,8 @@ description: Provides ways to anonymize data.
 core: 8.x
 type: module
 package: General Data Protection Regulation
+
+php: 5.6
+
+dependencies:
+  - drupal:system (>=8.0.0)

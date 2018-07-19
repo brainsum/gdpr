@@ -5,6 +5,7 @@ namespace Drupal\gdpr_dump\Service;
 use Drupal\anonymizer\Anonymizer\AnonymizerFactory;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\gdpr_dump\Exception\GdprDumpAnonymizationException;
 use Drupal\gdpr_dump\Form\SettingsForm;
 use Drush\Sql\SqlException;
 
@@ -297,6 +298,13 @@ class GdprSqlDump {
       $insertQuery = $this->database->insert($clonedTable);
       $insertQuery->fields($tableColumns);
 
+      $query = $this->database->select('information_schema.columns', 'columns');
+      $query->fields('columns', ['COLUMN_NAME', 'CHARACTER_MAXIMUM_LENGTH']);
+      $query->condition('TABLE_SCHEMA', $this->database->getConnectionOptions()['database']);
+      $query->condition('TABLE_NAME', $table);
+
+      $columnDetails = $query->execute()->fetchAllAssoc('COLUMN_NAME');
+
       while ($row = $oldRows->fetchAssoc()) {
         foreach ($anonymizationOptions as $column => $pluginId) {
           /* @todo
@@ -309,7 +317,25 @@ class GdprSqlDump {
            * Also add a way to make exceptions
            * e.g option for 'don't alter uid 1 name', etc.
            */
-          $row[$column] = $this->pluginFactory->get($pluginId)->anonymize($row[$column]);
+
+          $tries = 0;
+
+          do {
+            $isValid = TRUE;
+            $value = $this->pluginFactory->get($pluginId)->anonymize($row[$column]);
+            if (
+              !empty($columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH)
+              && strlen($value) > $columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH
+              ) {
+              $isValid = FALSE;
+            }
+          } while (!$isValid && $tries++ < 50);
+
+          if ($tries > 50) {
+            throw new GdprDumpAnonymizationException("Too many retries for column '$column'.");
+          }
+
+          $row[$column] = $value;
         }
         $insertQuery->values($row);
       }

@@ -28,7 +28,7 @@ env:
 
   matrix:
     # Latest stable release
-    - DRUPAL_CORE="~8.5@alpha"
+    - DRUPAL_CORE="~8.5"
     # Latest current dev branch
     - DRUPAL_CORE="8.5.x-dev@dev"
     # Latest future dev branch
@@ -37,6 +37,8 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
+    - php: 5.6.36
+      env: DRUPAL_CORE="8.5.x-dev@dev"
     - php: 5.6.36
       env: DRUPAL_CORE="8.6.x-dev@dev"
     - php: 7.0.30

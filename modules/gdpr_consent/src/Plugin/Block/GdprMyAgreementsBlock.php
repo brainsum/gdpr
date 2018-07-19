@@ -3,8 +3,10 @@
 namespace Drupal\gdpr_consent\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\gdpr_consent\Controller\ConsentAgreementController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -13,9 +15,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @Block(
  *   id = "gdpr_agreements_block",
+ *   admin_label = @Translation("GDPR Agreements Accepted"),
  *   category = @Translation("Dashboard Blocks"),
- *   deriver = "Drupal\gdpr_consent\Plugin\Deriver\GdprMyAgreementsDeriver",
- *   dashboard_block = TRUE,
+ *   dashboard_block = TRUE
  * )
  */
 class GdprMyAgreementsBlock extends BlockBase implements ContainerFactoryPluginInterface {
@@ -28,6 +30,31 @@ class GdprMyAgreementsBlock extends BlockBase implements ContainerFactoryPluginI
   protected $classResolver;
 
   /**
+   * The user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(
+    ContainerInterface $container,
+    array $configuration,
+    $pluginId,
+    $pluginDefinition
+  ) {
+    return new static(
+      $configuration,
+      $pluginId,
+      $pluginDefinition,
+      $container->get('class_resolver'),
+      $container->get('current_user')
+    );
+  }
+
+  /**
    * {@inheritdoc}
    *
    * @param array $configuration
@@ -35,35 +62,49 @@ class GdprMyAgreementsBlock extends BlockBase implements ContainerFactoryPluginI
    *   by configuration option name. The special key 'context' may be used to
    *   initialize the defined contexts by setting it to an array of context
    *   values keyed by context names.
-   * @param string $plugin_id
+   * @param string $pluginId
    *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
+   * @param mixed $pluginDefinition
    *   The plugin implementation definition.
-   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
+   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $classResolver
    *   The class resolver service.
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The user.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ClassResolverInterface $class_resolver) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->classResolver = $class_resolver;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition,
-      $container->get('class_resolver')
-    );
+  public function __construct(
+    array $configuration,
+    $pluginId,
+    $pluginDefinition,
+    ClassResolverInterface $classResolver,
+    AccountProxyInterface $currentUser
+  ) {
+    parent::__construct($configuration, $pluginId, $pluginDefinition);
+    $this->classResolver = $classResolver;
+    $this->currentUser = $currentUser;
   }
 
   /**
    * {@inheritdoc}
    */
   public function build() {
-    $user = $this->getContextValue('user');
     // Just delegate to the controller to do the work.
     $ctrl = $this->classResolver->getInstanceFromDefinition(ConsentAgreementController::class);
-    return $ctrl->myAgreements($user->id());
+    return $ctrl->myAgreements($this->currentUser);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheContexts() {
+    // Vary caching of this block per user.
+    return Cache::mergeContexts(parent::getCacheContexts(), ['user']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheTags() {
+    return Cache::mergeTags(parent::getCacheTags(), ['user:' . $this->currentUser->id()]);
   }
 
 }

@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * @file
+ * Install file for gdpr_tasks.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function gdpr_tasks_requirements() {
+  $requirements = [];
+  if (
+    FALSE === \Drupal::hasService('stream_wrapper.private')
+    && FALSE === \Drupal::service('file_system')->validScheme('private')
+  ) {
+    $requirements['gdpr_tasks']['title'] = t('Private Files');
+    $requirements['gdpr_tasks']['description'] = t('The private files folder is not set up.');
+    $requirements['gdpr_tasks']['severity'] = REQUIREMENT_ERROR;
+    return $requirements;
+  }
+
+  $destination = 'private://';
+  if (!\is_dir($destination)) {
+    $requirements['gdpr_tasks']['title'] = t('Private Files');
+    $requirements['gdpr_tasks']['description'] = t('The private files folder does not exist.');
+    $requirements['gdpr_tasks']['severity'] = REQUIREMENT_ERROR;
+    return $requirements;
+  }
+
+  if (!\is_writable($destination)) {
+    $requirements['gdpr_tasks']['title'] = t('Private Files');
+    $requirements['gdpr_tasks']['description'] = t('The private files is not writable.');
+    $requirements['gdpr_tasks']['severity'] = REQUIREMENT_ERROR;
+    return $requirements;
+  }
+
+  return $requirements;
+}

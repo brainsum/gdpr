@@ -13,7 +13,6 @@ use Drupal\Core\Form\FormStateInterface;
 class RemovalSettingsForm extends ConfigFormBase {
 
   const CONFIG_KEY = 'gdpr_tasks.settings';
-
   const EXPORT_DIRECTORY = 'export_directory';
 
   /**
@@ -36,8 +35,9 @@ class RemovalSettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['directory'] = [
       '#type' => 'textfield',
-      '#title' => 'Export Directory',
+      '#title' => $this->t('Export Directory'),
       '#description' => $this->t('Specifies the path to the directory where Right to be Forgotten tasks are exported after being processed'),
+      '#required' => TRUE,
       '#default_value' => $this->config(self::CONFIG_KEY)
         ->get(self::EXPORT_DIRECTORY),
     ];
@@ -50,9 +50,14 @@ class RemovalSettingsForm extends ConfigFormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
     if ($form_state->hasValue('directory')) {
-      $dir = $form_state->getValue('directory');
-      if (!empty($dir) && !file_prepare_directory($dir)) {
-        $form_state->setErrorByName('directory', $this->t('The directory does not exist.'));
+      $directory = $form_state->getValue('directory');
+      if (empty($directory)) {
+        $form_state->setErrorByName('directory', $this->t('The directory is required.'));
+        return;
+      }
+      if (!\file_prepare_directory($directory)) {
+        $form_state->setErrorByName('directory', $this->t("The directory does not exist or it's not writable."));
+        return;
       }
     }
   }
@@ -61,7 +66,6 @@ class RemovalSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-
     $this->config(self::CONFIG_KEY)
       ->set(self::EXPORT_DIRECTORY, $form_state->getValue('directory'))
       ->save();

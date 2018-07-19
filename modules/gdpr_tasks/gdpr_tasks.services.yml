@@ -4,4 +4,16 @@ services:
     arguments: ['@entity_type.manager', '@current_user']
   gdpr_tasks.anonymizer:
     class: Drupal\gdpr_tasks\Anonymizer
-    arguments: ['@gdpr_fields.collector', '@database', '@entity_type.manager', '@module_handler', '@current_user', '@anonymizer.anonymizer_factory', '@config.factory']
+    arguments: ['@database', '@entity_type.manager', '@current_user', '@config.factory', '@gdpr_tasks.rtf_traversal']
+  gdpr_tasks.rta_traversal:
+    class: Drupal\gdpr_fields\EntityTraversalFactory
+    arguments: ['@service_container', 'Drupal\gdpr_tasks\Traversal\RightToAccessEntityTraversal']
+  gdpr_tasks.rta_display_traversal:
+    class: Drupal\gdpr_fields\EntityTraversalFactory
+    arguments: ['@service_container', '\Drupal\gdpr_tasks\Traversal\RightToAccessDisplayTraversal']
+  gdpr_tasks.rtf_traversal:
+    class: Drupal\gdpr_fields\EntityTraversalFactory
+    arguments: ['@service_container', '\Drupal\gdpr_tasks\Traversal\RightToBeForgottenEntityTraversal']
+  gdpr_tasks.rtf_display_traversal:
+    class: Drupal\gdpr_fields\EntityTraversalFactory
+    arguments: ['@service_container', '\Drupal\gdpr_tasks\Traversal\RightToBeForgottenDisplayTraversal']

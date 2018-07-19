@@ -3,6 +3,7 @@
     "description": "Provides ways to anonymize data.",
     "type": "drupal-module",
     "require": {
+        "drupal/core": "~8.0",
         "fzaninotto/faker": "^1.7"
     },
     "license": "GPL-2.0+",

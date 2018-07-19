@@ -20,7 +20,9 @@ use Drupal\user\UserInterface;
  *   label = @Translation("Consent Agreement"),
  *   description = @Translation("Consent Agreement"),
  *   base_table = "gdpr_consent_agreement",
+ *   data_table = "gdpr_consent_agreement_field_data",
  *   revision_table = "gdpr_consent_agreement_revision",
+ *   translatable = TRUE,
  *   handlers = {
  *     "storage" = "Drupal\gdpr_consent\ConsentAgreementStorage",
  *     "list_builder" = "Drupal\gdpr_consent\Entity\ConsentAgreementListBuilder",
@@ -39,6 +41,7 @@ use Drupal\user\UserInterface;
  *     "id" = "id",
  *     "uuid" = "uuid",
  *     "uid" = "user_id",
+ *     "langcode" = "langcode",
  *     "status" = "status",
  *     "revision" = "revision_id",
  *   },
@@ -215,6 +218,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
       ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
       ->setDescription(t('Agreement title.'))
       ->setRequired(TRUE)
       ->setDisplayOptions('view', [
@@ -232,7 +236,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
       ->setRevisionable(TRUE)
       ->setDescription(t('Whether consent is implicit or explicit. Set to "Explicit" if the user needs to explicitly agree, otherwise "Implicit".'))
       ->setDefaultValue('explicit')
-      ->setSetting('allowed_values_function', [ConsentAgreement::class, 'getModes'])
+      ->setSetting('allowed_values_function', [static::class, 'getModes'])
       ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'type' => 'select',
@@ -247,6 +251,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     $fields['description'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Description'))
       ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
       ->setDescription(t('Text displayed to the user on the form'))
       ->setRequired(TRUE)
       ->setDisplayOptions('view', [
@@ -262,6 +267,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     $fields['long_description'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Long description'))
       ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
       ->setDescription(t('Text shown when the user clicks for more details.'))
       ->setDisplayOptions('view', [
         'type' => 'textarea',
@@ -276,6 +282,7 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
     $fields['notes'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Notes'))
       ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
       ->setDescription(t('This should contain the rationale behind the agreement.'))
       ->setDisplayOptions('view', [
         'type' => 'textarea',
@@ -329,6 +336,18 @@ class ConsentAgreement extends RevisionableContentEntityBase implements ConsentA
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
+
+    $fields['langcode'] = BaseFieldDefinition::create('language')
+      ->setLabel(t('Language'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
+      ->setDisplayOptions('view', [
+        'region' => 'hidden',
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'language_select',
+        'weight' => 2,
+      ]);
 
     return $fields;
   }

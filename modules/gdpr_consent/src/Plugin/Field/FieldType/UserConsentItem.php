@@ -16,9 +16,10 @@ use Drupal\message\Entity\Message;
  * @FieldType(
  *   id = "gdpr_user_consent",
  *   label = @Translation("GDPR Consent"),
- *   description = @Translation("Stores user consent for a particular
- *   agreement"), category = @Translation("GDPR"), default_widget
- *   ="gdpr_consent_widget", default_formatter = "gdpr_consent_formatter"
+ *   description = @Translation("Stores user consent for a particular agreement"),
+ *   category = @Translation("GDPR"),
+ *   default_widget = "gdpr_consent_widget",
+ *   default_formatter = "gdpr_consent_formatter"
  * )
  */
 class UserConsentItem extends FieldItemBase {
@@ -64,7 +65,7 @@ class UserConsentItem extends FieldItemBase {
   /**
    * {@inheritdoc}
    */
-  public function preSave() {
+  public function postSave($update) {
     $definition = $this->getFieldDefinition();
 
     /* @var \Drupal\gdpr_consent\ConsentUserResolver\ConsentUserResolverPluginManager $plugin_manager */
@@ -75,12 +76,7 @@ class UserConsentItem extends FieldItemBase {
     if ($user != NULL) {
       $this->set('user_id', $user->id());
     }
-  }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function postSave($update) {
     $should_log = FALSE;
 
     if (!$update) {
@@ -104,6 +100,11 @@ class UserConsentItem extends FieldItemBase {
       $msg->set('agreed', $this->agreed);
       $msg->save();
     }
+
+    if ($user != NULL) {
+      return TRUE;
+    }
+
   }
 
   /**
