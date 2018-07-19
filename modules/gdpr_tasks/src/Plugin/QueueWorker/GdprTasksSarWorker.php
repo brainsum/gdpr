@@ -189,7 +189,9 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
 
     // Prepare destination.
     $directory = $field_type->getUploadLocation();
-    file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+    if (!\file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      throw new \RuntimeException('GDPR SARs upload directory is not writable.');
+    }
 
     // Get a suitable namespace for gathering our files.
     do {
@@ -264,7 +266,9 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
 
     // Gather our entities.
     // @todo: Move this inline.
-    $all_data = $this->rtaTraversal->traverse($task->getOwner());
+    $rtaTraversal = $this->rtaTraversal->getTraversal($task->getOwner());
+    $rtaTraversal->traverse();
+    $all_data = $rtaTraversal->getResults();
 
     // Build our export files.
     $csvs = [];

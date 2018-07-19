@@ -79,9 +79,9 @@ class TaskListBuilder extends EntityListBuilder {
     $row['created'] = DateTimePlus::createFromTimestamp($entity->getCreatedTime())->format('j/m/Y - H:m');
 
     $date_formatter = \Drupal::service('date.formatter');
-    $row['created'] .= ' - ' . $date_formatter->formatDiff($entity->getCreatedTime(), \Drupal::time()->getRequestTime(), [
-      'granularity' => 1,
-    ]) . ' ago';
+    $row['created'] .= ' - ' . $date_formatter->formatDiff(
+      $entity->getCreatedTime(),
+      \Drupal::time()->getRequestTime(), ['granularity' => 1]) . ' ago';
 
     $row['requested_by'] = $entity->requested_by->entity->toLink()->toString();
     return $row + parent::buildRow($entity);
@@ -118,6 +118,23 @@ class TaskListBuilder extends EntityListBuilder {
       '#header' => $this->buildHeader(),
       '#rows' => [],
       '#empty' => $this->t('There is no open @label yet.', ['@label' => $this->entityType->getLabel()]),
+      '#cache' => [
+        'contexts' => $this->entityType->getListCacheContexts(),
+        'tags' => $this->entityType->getListCacheTags(),
+      ],
+    ];
+
+    $build['reviewing']['title'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'h3',
+      '#value' => 'In-review tasks',
+    ];
+
+    $build['reviewing']['table'] = [
+      '#type' => 'table',
+      '#header' => $this->buildHeader(),
+      '#rows' => [],
+      '#empty' => $this->t('There are no tasks to be reviewed yet.'),
       '#cache' => [
         'contexts' => $this->entityType->getListCacheContexts(),
         'tags' => $this->entityType->getListCacheTags(),
