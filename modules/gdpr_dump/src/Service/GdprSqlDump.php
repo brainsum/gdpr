@@ -326,7 +326,7 @@ class GdprSqlDump {
             if (
               !empty($columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH)
               && strlen($value) > $columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH
-              ) {
+            ) {
               $isValid = FALSE;
             }
           } while (!$isValid && $tries++ < 50);

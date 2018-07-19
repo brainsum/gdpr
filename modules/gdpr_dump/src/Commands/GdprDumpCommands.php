@@ -2,7 +2,6 @@
 
 namespace Drupal\gdpr_dump\Commands;
 
-use Drupal\gdpr_dump\Service\GdprSqlDump;
 use Drupal\gdpr_dump\Sql\GdprSqlBase;
 use Drush\Commands\DrushCommands;
 
@@ -65,6 +64,21 @@ class GdprDumpCommands extends DrushCommands {
     if (FALSE === $sql->dump()) {
       throw new \Exception('Unable to dump database. Rerun with --debug to see any error message.');
     }
+  }
+
+  /**
+   * Sanitizes the current environment.
+   *
+   * @command gdpr:sanitize
+   * @aliases gdpr-sanitize
+   * @bootstrap max configuration
+   *
+   * @throws \Exception
+   */
+  public function sanitize() {
+    /** @var \Drupal\gdpr_dump\Service\GdprSanitize $service */
+    $service = \Drupal::service('gdpr_dump.sanitize');
+    $service->sanitize();
   }
 
 }

@@ -12,7 +12,7 @@ function gdpr_dump_requirements() {
   $requirements = [];
   $requirements['gdpr_dump_drush'] = [
     'title' => t('GDPR Dump - Drush'),
-    'value' => t('This module needs Drush 8 to function.'),
+    'value' => t('This module needs Drush 9 to function.'),
     'severity' => REQUIREMENT_INFO,
   ];
 
