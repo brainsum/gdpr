@@ -5,6 +5,7 @@ namespace Drupal\gdpr_dump\Service;
 use Drupal\anonymizer\Anonymizer\AnonymizerFactory;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\gdpr_dump\Exception\GdprDumpAnonymizationException;
 use Drupal\gdpr_dump\Form\SettingsForm;
 use Drush\Sql\SqlException;
 
@@ -328,11 +329,10 @@ class GdprSqlDump {
               ) {
               $isValid = FALSE;
             }
-          } while(!$isValid && $tries++ < 50);
+          } while (!$isValid && $tries++ < 50);
 
           if ($tries > 50) {
-            drush_log("Too many retries for column '$column'.", 'error');
-            exit;
+            throw new GdprDumpAnonymizationException("Too many retries for column '$column'.");
           }
 
           $row[$column] = $value;
