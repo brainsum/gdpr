@@ -9,10 +9,7 @@
             "email": "mhavelant@brainsum.com"
         }
     ],
-    "require": {
-        "drush/drush": "^9",
-        "drupal/gdpr": "^1.0"
-    },
+    "require": {},
     "extra": {
         "drush": {
             "services": {
