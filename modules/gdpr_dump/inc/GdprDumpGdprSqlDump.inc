@@ -233,28 +233,29 @@ class GdprDumpGdprSqlDump {
 
           if (function_exists($plugin['sanitize callback'])) {
             $tries = 0;
+            $unique_field = isset($uniq_keys[$column]) || $column == $primary_key;
             do {
               $is_valid = TRUE;
               $value = call_user_func($plugin['sanitize callback'], $row[$column]);
 
               if (isset($schema['fields'][$column]['length'])
                 && strlen($value) > $schema['fields'][$column]['length']) {
+                $value = truncate_utf8($value, $schema['fields'][$column]['length']);
+              }
+
+              if ($unique_field && in_array($value, $unique_data)) {
                 $is_valid = FALSE;
               }
 
-              if (isset($uniq_keys[$column]) || $column == $primary_key) {
-                if (in_array($value, $unique_data)) {
-                  $is_valid = FALSE;
-                }
-                else {
-                  $unique_data[] = $value;
-                }
-              }
             } while (!$is_valid && $tries++ < 50);
 
             if ($tries >= 50) {
               drush_log("Too many tries for column '$column'", 'error');
               exit;
+            }
+
+            if ($unique_field) {
+              $unique_data[] = $value;
             }
             $row[$column] = $value;
           }
