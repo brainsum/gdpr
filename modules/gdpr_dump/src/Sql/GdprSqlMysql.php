@@ -49,30 +49,27 @@ class GdprSqlMysql extends SqlMysql {
   /**
    * Execute a SQL dump and return the path to the resulting dump file.
    *
-   * @param string|bool $file
-   *   The path where the dump file should be stored. If TRUE, generate a path
-   *   based on usual backup directory and current date.
-   *
    * @return mixed
    *   Bool or void.
    */
-  public function dump($file = '') {
-    $file_suffix = '';
-    $table_selection = $this->getExpandedTableSelection($this->getOptions(), $this->listTables());
+  public function dump() {
+    $file = $this->getOption('result-file');
+    $fileSuffix = '';
+    $tableSelection = $this->getExpandedTableSelection($this->getOptions(), $this->listTables());
     $file = $this->dumpFile($file);
     // @todo: Cross-platform check.
     $cmd = '{ ';
-    $cmd .= $this->dumpCmd($table_selection);
+    $cmd .= $this->dumpCmd($tableSelection);
     // Append the RENAME commands at the end.
-    $cmd .= ' ; ' . $this->createRenameCommands($table_selection) . '}';
+    $cmd .= ' ; ' . $this->createRenameCommands($tableSelection) . '}';
 
     // Gzip the output from dump command(s) if requested.
-    if (drush_get_option('gzip')) {
+    if ($this->getOption('gzip')) {
       $cmd .= ' | gzip -f';
-      $file_suffix .= '.gz';
+      $fileSuffix .= '.gz';
     }
     if ($file) {
-      $file .= $file_suffix;
+      $file .= $fileSuffix;
       $cmd .= ' > ' . drush_escapeshellarg($file);
     }
 
@@ -139,11 +136,9 @@ class GdprSqlMysql extends SqlMysql {
     $skipTables = \array_merge($structureTables, $skipTables);
     // Skip tables with sensitive data.
     $skipTables = \array_merge(\array_keys($this->tablesToAnonymize), $skipTables);
-    $dataOnly = drush_get_option('data-only');
+    $dataOnly = $this->getOption('data-only');
     // The ordered-dump option is only supported by MySQL for now.
-    // @todo add documentation once a hook for drush_get_option_help() is available.
-    // @see drush_get_option_help() in drush.inc
-    $orderedDump = drush_get_option('ordered-dump');
+    $orderedDump = $this->getOption('ordered-dump');
 
     $exec = 'mysqldump ';
     // Mysqldump wants 'databasename' instead of
@@ -161,7 +156,7 @@ class GdprSqlMysql extends SqlMysql {
     if (NULL !== $orderedDump) {
       $extra .= ' --skip-extended-insert --order-by-primary';
     }
-    if ($option = drush_get_option('extra', $this->query_extra)) {
+    if ($option = $this->getOption('extra-dump', $this->queryExtra)) {
       $extra .= " $option";
     }
     $exec .= $extra;
@@ -172,8 +167,9 @@ class GdprSqlMysql extends SqlMysql {
     else {
       // @todo: Maybe use --ignore-table={db.table1,db.table2,...} syntax.
       // Append the ignore-table options.
+      $dbSpec = $this->getDbSpec();
       foreach ($skipTables as $table) {
-        $ignores[] = '--ignore-table=' . $this->db_spec['database'] . '.' . $table;
+        $ignores[] = '--ignore-table=' . $dbSpec['database'] . '.' . $table;
         $multipleCommands = TRUE;
       }
       $exec .= ' ' . \implode(' ', $ignores);
