@@ -2,7 +2,8 @@
 
 namespace Drupal\gdpr_dump\Commands;
 
-use Drupal\gdpr_dump\Sql\GdprSqlBase;
+use Drupal\gdpr_dump\Service\GdprSanitize;
+use Drupal\gdpr_dump\Service\GdprSqlDump;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -13,6 +14,37 @@ use Drush\Commands\DrushCommands;
  * @package Drupal\gdpr_dump\Commands
  */
 class GdprDumpCommands extends DrushCommands {
+
+  /**
+   * The dump service.
+   *
+   * @var \Drupal\gdpr_dump\Service\GdprSqlDump
+   */
+  protected $dumpService;
+
+  /**
+   * The sanitize service.
+   *
+   * @var \Drupal\gdpr_dump\Service\GdprSanitize
+   */
+  protected $sanitizeService;
+
+  /**
+   * GdprDumpCommands constructor.
+   *
+   * @param \Drupal\gdpr_dump\Service\GdprSqlDump $dump
+   *   The dump service.
+   * @param \Drupal\gdpr_dump\Service\GdprSanitize $sanitize
+   *   The sanitize service.
+   */
+  public function __construct(
+    GdprSqlDump $dump,
+    GdprSanitize $sanitize
+  ) {
+    parent::__construct();
+    $this->dumpService = $dump;
+    $this->sanitizeService = $sanitize;
+  }
 
   const DEFAULT_DUMP_OPTIONS = [
     'result-file' => NULL,
@@ -63,10 +95,8 @@ class GdprDumpCommands extends DrushCommands {
    * @throws \Exception
    */
   public function dump(array $options = self::DEFAULT_DUMP_OPTIONS) {
-    /** @var \Drupal\gdpr_dump\Service\GdprSqlDump $service */
-    $service = \Drupal::service('gdpr_dump.sql_dump');
     try {
-      return $service->dump($options);
+      return $this->dumpService->dump($options);
     }
     catch (\Exception $e) {
       return drush_set_error('DRUSH_DUMP_ERROR', $e->getMessage());
@@ -83,9 +113,7 @@ class GdprDumpCommands extends DrushCommands {
    * @throws \Exception
    */
   public function sanitize() {
-    /** @var \Drupal\gdpr_dump\Service\GdprSanitize $service */
-    $service = \Drupal::service('gdpr_dump.sanitize');
-    $service->sanitize();
+    $this->sanitizeService->sanitize();
   }
 
 }

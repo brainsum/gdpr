@@ -1,5 +1,8 @@
 services:
   gdpr_dump.commands:
     class: \Drupal\gdpr_dump\Commands\GdprDumpCommands
+    arguments:
+      - '@gdpr_dump.sql_dump'
+      - '@gdpr_dump.sanitize'
     tags:
       - { name: drush.command }

@@ -39,8 +39,8 @@ class GdprSqlMysql extends SqlMysql {
   /**
    * {@inheritdoc}
    */
-  public function __construct($db_spec = NULL, $options) {
-    parent::__construct($db_spec, $options);
+  public function __construct($dbSpec, $options) {
+    parent::__construct($dbSpec, $options);
     $this->gdprDumpConfig = \Drupal::config(SettingsForm::GDPR_DUMP_CONF_KEY);
     $this->tablesToAnonymize = $this->gdprDumpConfig->get('mapping');
     $this->tablesToSkip = \array_keys($this->gdprDumpConfig->get('empty_tables'));

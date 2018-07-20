@@ -112,8 +112,8 @@ function gdpr_checklistapi_checklist_items() {
   else {
     $contentDiscoveryDescription = $renderer->renderPlain($description);
     $contentDiscoveryDescription = t('You can configure content links here: @config_link', [
-        '@config_link' => $contentConfigFormLink,
-      ]) . $contentDiscoveryDescription;
+      '@config_link' => $contentConfigFormLink,
+    ]) . $contentDiscoveryDescription;
 
     if (!empty($contentLinks[$langCode]['privacy_policy'])) {
       $privacyPolicyDescription = t('This one looks good to go, but you need to verify that it has real and relevant content.');
