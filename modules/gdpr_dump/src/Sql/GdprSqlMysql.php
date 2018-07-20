@@ -106,9 +106,7 @@ class GdprSqlMysql extends SqlMysql {
       $clone = GdprSqlDump::GDPR_TABLE_PREFIX . $table;
       $rename = "RENAME TABLE \`$clone\` TO \`$table\`;";
       if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
-        Drush::logger()->info("Adding rename command: '@command'", [
-          '@command' => $rename,
-        ]);
+        Drush::logger()->info("Adding rename command: '$rename'");
       }
 
       $command .= " ( echo \"$rename\" ); ";

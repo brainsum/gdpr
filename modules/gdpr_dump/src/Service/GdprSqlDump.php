@@ -204,9 +204,7 @@ class GdprSqlDump {
         $query->execute();
       }
       catch (\Exception $e) {
-        Drush::logger()->error('Error while cloning the "@table" table.', [
-          '@table' => $table,
-        ]);
+        Drush::logger()->error("Error while cloning the '$table'' table.");
         $transaction->rollBack();
       }
     }
