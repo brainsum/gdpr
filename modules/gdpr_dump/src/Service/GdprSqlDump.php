@@ -7,27 +7,9 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\gdpr_dump\Exception\GdprDumpAnonymizationException;
 use Drupal\gdpr_dump\Form\SettingsForm;
+use Drupal\gdpr_dump\Sql\GdprSqlBase;
+use Drush\Drush;
 use Drush\Sql\SqlException;
-
-/* @todo:
- *  - Prepare and set the GDPR settings (tables and columns to be sanitized)
- *  - Create shadow-tables of the set ones with gdpr_tmp_ prefix.
- *  - Use db connection to sanitize the tables.
- *  - Force the exclusion of these tables for all commands
- *  - Run initial command and save output in memory (?)
- *  - Run second command, and in-memory replace the 'CREATE TABLE' commands
- *    based on the GDPR settings.
- *  - Dump them into a file (if needed), gzip them (if needed).
- *
- * Basically:
- *   - get settings
- *   - create clones
- *   - apply sanitation
- *   - create command:
- *     - base dump (exclude both original and gdpr tables)
- *     - && string replaced secondary dump
- *   - use file and gzip like the default
- */
 
 /**
  * Class GdprSqlDump.
@@ -83,6 +65,13 @@ class GdprSqlDump {
   protected $driver;
 
   /**
+   * The SQL instance.
+   *
+   * @var \Drush\Sql\SqlBase
+   */
+  protected $sql;
+
+  /**
    * GdprSqlDump constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
@@ -111,19 +100,18 @@ class GdprSqlDump {
   /**
    * Dump command.
    *
-   * @throws \Drush\Sql\SqlException
-   * @throws \InvalidArgumentException
-   * @throws \Drupal\Core\Database\IntegrityConstraintViolationException
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
-   * @throws \Drupal\Core\Database\TransactionNoActiveException
-   * @throws \Drupal\Core\Database\TransactionCommitFailedException
+   * @param array $options
+   *   Options for the command.
+   *
+   * @return bool
+   *   The result of the dump.
+   *
    * @throws \Exception
    */
-  public function dump() {
-    drush_sql_bootstrap_further();
-    $sql = $this->getInstance();
+  public function dump(array $options) {
+    $this->sql = $this->getInstance($options);
     $this->prepare();
-    $result = $sql->dump(drush_get_option('result-file', FALSE));
+    $result = $this->sql->dump();
     $this->cleanup();
 
     return $result;
@@ -132,60 +120,16 @@ class GdprSqlDump {
   /**
    * Get a SqlBase instance according to dbSpecs.
    *
-   * @param array $dbSpec
-   *   If known, specify a $dbSpec that the class can operate with.
-   *
-   * @throws \Drush\Sql\SqlException
+   * @param array $options
+   *   The command options, if known.
    *
    * @return \Drush\Sql\SqlBase
    *   The Sql instance.
    *
-   * @see \drush_sql_get_class()
+   * @throws \Exception
    */
-  protected function getInstance(array $dbSpec = NULL) {
-    $database = drush_get_option('database', 'default');
-    $target = drush_get_option('target', 'default');
-
-    // Try a few times to quickly get $dbSpec.
-    if (!empty($dbSpec)) {
-      if (!empty($dbSpec['driver'])) {
-        // Try loading our implementation first.
-        $instance = drush_get_class(
-          '\Drupal\gdpr_dump\Sql\GdprSql',
-          [$dbSpec],
-          [\ucfirst($dbSpec['driver'])]
-        );
-
-        if (!empty($instance)) {
-          return $instance;
-        }
-      }
-    }
-    elseif ($url = drush_get_option('db-url')) {
-      $url = \is_array($url) ? $url[$database] : $url;
-      $dbSpec = drush_convert_db_from_db_url($url);
-      $dbSpec['db_prefix'] = drush_get_option('db-prefix');
-      return $this->getInstance($dbSpec);
-    }
-    elseif (
-      ($databases = drush_get_option('databases'))
-      && \array_key_exists($database, $databases)
-      && \array_key_exists($target, $databases[$database])
-    ) {
-      $dbSpec = $databases[$database][$target];
-      return $this->getInstance($dbSpec);
-    }
-    else {
-      // No parameter or options provided. Determine $dbSpec ourselves.
-      /** @var \Drush\Sql\SqlVersion $sqlVersion */
-      if ($sqlVersion = drush_sql_get_version()) {
-        if ($dbSpec = $sqlVersion->get_db_spec()) {
-          return $this->getInstance($dbSpec);
-        }
-      }
-    }
-
-    throw new SqlException('Unable to find a matching SQL Class. Drush cannot find your database connection details.');
+  protected function getInstance(array $options = NULL) {
+    return GdprSqlBase::create($options);
   }
 
   /**
@@ -254,13 +198,13 @@ class GdprSqlDump {
 
       try {
         if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
-          drush_print("Executing: '$queryString'", 0, STDERR);
+          Drush::output()->writeln("Executing: '$queryString'");
         }
         $query = $this->database->query($queryString);
         $query->execute();
       }
       catch (\Exception $e) {
-        drush_print("Error while cloning the '$table' table.");
+        Drush::output()->writeln("Error while cloning the '$table' table.");
         $transaction->rollBack();
       }
     }
@@ -303,7 +247,12 @@ class GdprSqlDump {
       $query->condition('TABLE_SCHEMA', $this->database->getConnectionOptions()['database']);
       $query->condition('TABLE_NAME', $table);
 
-      $columnDetails = $query->execute()->fetchAllAssoc('COLUMN_NAME');
+      $result = $query->execute();
+      if (NULL === $result) {
+        // @todo: Notify.
+        continue;
+      }
+      $columnDetails = $result->fetchAllAssoc('COLUMN_NAME');
 
       while ($row = $oldRows->fetchAssoc()) {
         foreach ($anonymizationOptions as $column => $pluginId) {
@@ -325,7 +274,7 @@ class GdprSqlDump {
             $value = $this->pluginFactory->get($pluginId)->anonymize($row[$column]);
             if (
               !empty($columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH)
-              && strlen($value) > $columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH
+              && \strlen($value) > $columnDetails[$column]->CHARACTER_MAXIMUM_LENGTH
             ) {
               $isValid = FALSE;
             }
@@ -365,11 +314,10 @@ class GdprSqlDump {
    */
   protected function buildTablesToSkip() {
     // Get table expanded selection.
-    $sql = $this->getInstance();
-    $table_selection = $sql->get_expanded_table_selection();
+    $table_selection = $this->sql->getExpandedTableSelection($this->sql->getOptions(), $this->sql->listTables());
     $tablesToSkip = \array_merge($table_selection['skip'], $table_selection['structure']);
     $tablesToSkip = \array_flip($tablesToSkip);
-    $tablesToSkip = $tablesToSkip + $this->tablesToSkip;
+    $tablesToSkip += $this->tablesToSkip;
 
     $this->tablesToSkip = $tablesToSkip;
   }

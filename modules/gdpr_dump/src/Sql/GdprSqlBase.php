@@ -16,6 +16,9 @@ class GdprSqlBase extends SqlBase {
 
   /**
    * {@inheritdoc}
+   *
+   * To create instances of our own classes we only need to update this
+   * function.
    */
   public static function getInstance($dbSpec, $options) {
     $driver = $dbSpec['driver'];

@@ -57,12 +57,19 @@ class GdprDumpCommands extends DrushCommands {
    *
    * @see \Drush\Commands\sql\SqlCommands::dump()
    *
+   * @return bool|\Drupal\gdpr_dump\Sql\GdprSqlBase
+   *   The result of the dump.
+   *
    * @throws \Exception
    */
   public function dump(array $options = self::DEFAULT_DUMP_OPTIONS) {
-    $sql = GdprSqlBase::create($options);
-    if (FALSE === $sql->dump()) {
-      throw new \Exception('Unable to dump database. Rerun with --debug to see any error message.');
+    /** @var \Drupal\gdpr_dump\Service\GdprSqlDump $service */
+    $service = \Drupal::service('gdpr_dump.sql_dump');
+    try {
+      return $service->dump($options);
+    }
+    catch (\Exception $e) {
+      return drush_set_error('DRUSH_DUMP_ERROR', $e->getMessage());
     }
   }
 
