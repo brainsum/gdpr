@@ -124,7 +124,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
       $container->get('uuid'),
       $container->get('plugin.manager.field.field_type'),
       $container->get('queue')->get('gdpr_tasks_process_gdpr_sar'),
-      $container->get('gdpr_tasks.rta_display_traversal'),
+      $container->get('gdpr_tasks.rta_traversal'),
       $container->get('file_system'),
       $container->get('messenger')
     );
