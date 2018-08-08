@@ -42,7 +42,7 @@ class RightToBeForgottenDisplayTraversal extends EntityTraversal {
 
       $this->results[$key] = [
         'title' => $field->getLabel(),
-        'value' => $entity->get($field_id)->view(),
+        'value' => $entity->get($field_id)->getString(),
         'entity' => $entity_definition->getLabel(),
         'bundle' => $this->getBundleLabel($entity),
         'notes' => $field_config->notes,

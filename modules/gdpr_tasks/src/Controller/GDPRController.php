@@ -124,8 +124,10 @@ class GDPRController extends ControllerBase {
         $newTask->save();
         $this->messenger->addStatus($this->t('Your request has been logged.'));
 
-        $this->queue->createQueue();
-        $this->queue->createItem($newTask->id());
+        if ($gdpr_task_type === 'gdpr_sar') {
+          $this->queue->createQueue();
+          $this->queue->createItem($newTask->id());
+        }
       }
       catch (EntityStorageException $exception) {
         $this->messenger->addError($this->t('There was an error while logging your request.'));
