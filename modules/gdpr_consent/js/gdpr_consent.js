@@ -2,7 +2,7 @@
     $(function () {
         // Hide the description for any GDPR checkboxes.
         var container = $('.gdpr_consent_agreement').parent();
-        var desc = container.next('.description');
+        var desc = container.children().next('.description');
 
         if(!desc.length) {
             container = container.parent();
@@ -14,7 +14,7 @@
         $('<a href="javascript:void(0)" class="gdpr_agreed_toggle">?</a>')
             .appendTo(container)
             .click(function () {
-                var desc = $(this).next('.description');
+                var desc = $(this).parent().children().next('.description');
                 if(!desc.length) {
                     desc = $(this).parent().next('.description');
                 }
@@ -24,13 +24,13 @@
 
         // Do the same for implicit
         container = $('.gdpr_consent_implicit').parent();
-        desc = container.next('.description');
+        desc = container.children().next('.description');
         desc.hide();
 
         $('<a href="javascript:void(0)" class="gdpr_agreed_toggle">?</a>')
             .appendTo(container)
             .click(function () {
-                $(this).next('.description').slideToggle()
+                $(this).parent().children().next('.description').slideToggle()
             });
     });
 })(jQuery);
