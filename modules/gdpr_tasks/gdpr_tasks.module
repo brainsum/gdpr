@@ -676,7 +676,9 @@ function gdpr_tasks_field_info_alter(&$field_info) {
     'commerce_price',
   );
   foreach ($types as $type) {
-    $field_info[$type]['property_callbacks'][] = 'gdpr_tasks_field_metatdata_property_info_alter';
+    if (isset($field_info[$type])) {
+      $field_info[$type]['property_callbacks'][] = 'gdpr_tasks_field_metatdata_property_info_alter';
+    }
   }
 }
 
