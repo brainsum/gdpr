@@ -453,24 +453,29 @@ function _get_module_statuses() {
  *   Nodes array
  */
 function gdpr_search_content() {
-  // TODO: Localization.
-  $nodes = [];
+  if ($cached_content = cache_get('gdpr_content', 'cache')) {
+    $nids = $cached_content->data;
+  }
+  else {
+    // TODO: Localization.
+    $nids = [];
 
-  if (module_exists('node')) {
-    $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
+    if (module_exists('node')) {
+      $pattern = '(privacy( +)policy)|(terms( +)of( +)use)|(about( +)us)|(impressum)';
 
-    $query = new EntityFieldQuery();
-    $results = $query->entityCondition('entity_type', 'node')
-      ->propertyCondition('title', $pattern, 'RLIKE')
-      ->execute();
+      $query = new EntityFieldQuery();
+      $results = $query->entityCondition('entity_type', 'node')
+        ->propertyCondition('title', $pattern, 'RLIKE')
+        ->execute();
 
-    if (!empty($results['node'])) {
-      $nids = array_keys($results['node']);
-      $nodes = node_load_multiple($nids);
+      if (!empty($results['node'])) {
+        $nids = array_keys($results['node']);
+      }
     }
+    cache_set('gdpr_content', $nids, 'cache', CACHE_TEMPORARY);
   }
 
-  return $nodes;
+  return node_load_multiple($nids);
 }
 
 /**
