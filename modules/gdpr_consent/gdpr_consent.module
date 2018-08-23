@@ -9,24 +9,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 
 /**
- * Implements hook_toolbar_alter().
- */
-function gdpr_consent_toolbar_alter(&$items) {
-  $user = \Drupal::currentUser();
-
-  if ($user->hasPermission('manage gdpr agreements')) {
-    $items['gdpr']['tray']['links']['#links']['agreements'] = [
-      'title' => t('Agreements'),
-      'url' => Url::fromRoute('entity.gdpr_consent_agreement.collection'),
-      'attributes' => [
-        'title' => t('Consent Agreements'),
-      ],
-      'weight' => 100,
-    ];
-  }
-}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  */
 function gdpr_consent_form_field_ui_field_storage_add_form_alter(&$form, FormStateInterface $form_state, $form_id) {
