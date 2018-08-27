@@ -7,7 +7,6 @@
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Url;
 use Drupal\file\FileInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityDisplayInterface;
@@ -167,13 +166,11 @@ function _gdpr_tasks_file_save_data($data, AccountInterface $user, $destination 
  * Implements hook_entity_view_alter().
  */
 function gdpr_tasks_entity_view_alter(&$build, EntityInterface $entity, EntityDisplayInterface $display) {
-  if ($entity->bundle() === 'gdpr_sar' && in_array($entity->getStatus(), ['reviewing', 'processed'])) {
-    if (isset($build['sar_export'])) {
+  if ($entity->bundle() === 'gdpr_sar') {
+    if (isset($build['sar_export']) && \in_array($entity->getStatus(), ['reviewing', 'processed'])) {
       unset($build['sar_export']);
     }
-  }
-  else if ($entity->bundle() === 'gdpr_sar') {
-    if (isset($build['sar_export_parts'])) {
+    elseif (isset($build['sar_export_parts'])) {
       unset($build['sar_export_parts']);
     }
   }
