@@ -268,13 +268,20 @@ class ConsentAgreementController extends ControllerBase {
           ->loadMultiple($ids);
 
         foreach ($entities as $entity) {
+          /** @var \Drupal\gdpr_consent\Entity\ConsentAgreementInterface $agreement */
           $agreement = $agreement_storage->loadRevision($entity->{$field_name}->target_revision_id);
+
+          $link = $agreement->title->value;
+
+          if ($agreement->access('view', $this->currentUser)) {
+            $link = $agreement->toLink($agreement->title->value, 'revision')->toString();
+          }
 
           $row = [];
 
           $row[] = [
             'data' => [
-              '#markup' => $agreement->toLink($agreement->title->value, 'revision')->toString(),
+              '#markup' => $link,
             ],
           ];
 
