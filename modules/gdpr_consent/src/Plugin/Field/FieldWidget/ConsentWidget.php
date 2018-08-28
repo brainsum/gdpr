@@ -118,15 +118,18 @@ class ConsentWidget extends WidgetBase implements ContainerFactoryPluginInterfac
       return [];
     }
 
-    if (!$canEditAnyonesConsent && $consentingUser->id() !== $this->currentUser->id()) {
-      // Abort if the current user does not have permission
-      // to edit other user's consent and we're editing another user.
-      return [];
-    }
+    // The current user is anonymous on the register page.
+    if (!$this->currentUser->isAnonymous()) {
+      if (!$canEditAnyonesConsent && $consentingUser->id() !== $this->currentUser->id()) {
+        // Abort if the current user does not have permission
+        // to edit other user's consent and we're editing another user.
+        return [];
+      }
 
-    if (!$canEditOwnConsent && $consentingUser->id() === $this->currentUser->id()) {
-      // Abort if the current user cannot edit their own consent.
-      return [];
+      if (!$canEditOwnConsent && $consentingUser->id() === $this->currentUser->id()) {
+        // Abort if the current user cannot edit their own consent.
+        return [];
+      }
     }
 
     $agreement = ConsentAgreement::load($agreementId);
