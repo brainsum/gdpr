@@ -53,6 +53,13 @@ class CreateGdprRequestOnBehalfOfUserForm extends FormBase {
       'notes' => $notes,
     ]);
     $task->save();
+    
+    if ($request_type === 'gdpr_sar') {
+      $queue = \Drupal::queue('gdpr_tasks_process_gdpr_sar');
+      $queue->createQueue();
+      $queue->createItem($task->id());
+    }
+    
     $this->messenger()->addStatus('The request has been logged');
     return $this->redirect('view.gdpr_tasks_my_data_requests.page_1', ['user' => $user_id]);
   }
