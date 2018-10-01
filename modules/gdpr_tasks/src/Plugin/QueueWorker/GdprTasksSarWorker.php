@@ -210,6 +210,9 @@ class GdprTasksSarWorker {
     // Update the status as completed.
     $task->status = 'closed';
     $task->save();
+
+    // Send confirmation email.
+    gdpr_tasks_send_mail('task_processed', $task);
   }
 
   /**

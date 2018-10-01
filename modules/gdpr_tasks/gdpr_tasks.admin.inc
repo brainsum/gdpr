@@ -64,9 +64,6 @@ function gdpr_task_form_submit($form, &$form_state) {
   $task->processed_by = $user->uid;
   drupal_set_message(t('Task has been processed.'));
   $task->save();
-
-  // Send confirmation email.
-  gdpr_tasks_send_mail('task_processed', $task);
 }
 
 /**
@@ -237,6 +234,9 @@ function gdpr_task_edit_gdpr_remove_form_submit($form, &$form_state) {
   if (empty($errors)) {
     $task->status = 'closed';
     gdpr_task_form_submit($form, $form_state);
+
+    // Send confirmation email.
+    gdpr_tasks_send_mail('task_processed', $task);
   }
   else {
     // @todo Better error handling.
