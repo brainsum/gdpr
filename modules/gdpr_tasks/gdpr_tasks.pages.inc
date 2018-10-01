@@ -22,7 +22,14 @@ function gdpr_task_user_request($user) {
 function gdpr_tasks_request($account, $gdpr_task_type) {
   $tasks = gdpr_tasks_get_user_tasks($account, $gdpr_task_type);
 
-  if (!empty($tasks)) {
+  $pending = FALSE;
+  foreach ($tasks as $task) {
+    if (in_array($task->status, array('requested', 'processed'), TRUE)) {
+      $pending = TRUE;
+    }
+  }
+
+  if ($pending) {
     drupal_set_message(t('You already have a pending task.'), 'warning');
   }
   else {
