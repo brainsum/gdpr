@@ -148,10 +148,10 @@ class GdprSqlMysql extends SqlMysql {
     // insufficient permissions, but removed it because it slows down the
     // import a lot.  See http://drupal.org/node/1283978
     $extra = ' --no-autocommit --single-transaction --opt -Q';
-    if (NULL !== $dataOnly) {
+    if (TRUE === $dataOnly) {
       $extra .= ' --no-create-info';
     }
-    if (NULL !== $orderedDump) {
+    if (TRUE === $orderedDump) {
       $extra .= ' --skip-extended-insert --order-by-primary';
     }
     if ($option = $this->getOption('extra-dump', $this->queryExtra)) {
