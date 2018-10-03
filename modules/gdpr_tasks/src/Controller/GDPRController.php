@@ -100,7 +100,15 @@ class GDPRController extends ControllerBase {
   public function requestPage(AccountInterface $user, $gdpr_task_type) {
     $tasks = $this->taskManager->getUserTasks($user, $gdpr_task_type);
 
-    if (!empty($tasks)) {
+    $pending = FALSE;
+    $statuses = ['requested', 'processed', 'reviewing'];
+    foreach ($tasks as $task) {
+      if (in_array($task->status->getString(), $statuses, TRUE)) {
+        $pending = TRUE;
+      }
+    }
+
+    if ($pending) {
       $this->messenger->addWarning('You already have a pending task.');
     }
     else {
