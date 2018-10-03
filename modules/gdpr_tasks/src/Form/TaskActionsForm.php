@@ -181,6 +181,7 @@ class TaskActionsForm extends ContentEntityForm {
       }
       else {
         $should_save = TRUE;
+        $status = 'closed';
       }
     }
     else {
@@ -188,10 +189,11 @@ class TaskActionsForm extends ContentEntityForm {
       $this->queue->createQueue();
       $this->queue->createItem($entity->id());
       $should_save = TRUE;
+      $status = 'processed';
     }
 
     if ($should_save) {
-      $entity->status = 'processed';
+      $entity->status = $status;
       $entity->setProcessedById($this->currentUser()->id());
       $this->messenger()->addStatus('Task has been processed.');
       parent::save($form, $form_state);
