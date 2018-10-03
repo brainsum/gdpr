@@ -29,3 +29,13 @@ gdpr.content_links_form:
     _permission: 'administer site configuration'
   options:
     _admin_route: TRUE
+
+gdpr.admin_gdpr:
+  path: '/admin/gdpr'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'GDPR'
+  requirements:
+    _permission: 'administer gdpr settings'
+  options:
+    _admin_route: TRUE

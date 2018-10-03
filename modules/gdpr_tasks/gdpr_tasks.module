@@ -13,35 +13,6 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityDisplayInterface;
 
 /**
- * Implements hook_toolbar().
- */
-function gdpr_tasks_toolbar_alter(&$items) {
-  $user = \Drupal::currentUser();
-
-  if ($user->hasPermission('view gdpr tasks')) {
-    // Root menu url.
-    $items['gdpr']['tab']['#url'] = Url::fromRoute('gdpr_tasks.summary');
-
-    $items['gdpr']['tray']['links']['#links']['summary'] = [
-      'title' => t('Summary'),
-      'url' => Url::fromRoute('gdpr_tasks.summary'),
-      'attributes' => [
-        'title' => t('GDPR Summary'),
-      ],
-      'weight' => 0,
-    ];
-
-    $items['gdpr']['tray']['links']['#links']['tasks'] = [
-      'title' => t('Tasks'),
-      'url' => Url::fromRoute('entity.gdpr_task.collection'),
-      'attributes' => [
-        'title' => t('GDPR Task list'),
-      ],
-    ];
-  }
-}
-
-/**
  * Implements hook_theme().
  */
 function gdpr_tasks_theme() {

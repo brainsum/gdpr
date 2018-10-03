@@ -1,0 +1,5 @@
+gdpr_fields.fields_list:
+  title: 'GDPR field list'
+  description: 'List GDPR fields'
+  parent: gdpr.admin_config
+  route_name: gdpr_fields.fields_list

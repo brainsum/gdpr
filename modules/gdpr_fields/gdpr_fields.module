@@ -12,29 +12,6 @@ use Drupal\gdpr_fields\Entity\GdprFieldConfigEntity;
 use Drupal\gdpr_fields\Form\GdprFieldSettingsForm;
 
 /**
- * Implements hook_toolbar_alter().
- */
-function gdpr_fields_toolbar_alter(&$items) {
-  $user = \Drupal::currentUser();
-
-  if ($user->hasPermission('view gdpr fields')) {
-    // Root menu url.
-    if (empty($items['gdpr']['tab']['#url'])) {
-      $items['gdpr']['tab']['#url'] = Url::fromRoute('gdpr_fields.fields_list');
-    }
-
-    $items['gdpr']['tray']['links']['#links']['fields'] = [
-      'title' => t('Field list'),
-      'url' => Url::fromRoute('gdpr_fields.fields_list'),
-      'attributes' => [
-        'title' => t('Field list'),
-      ],
-      'weight' => 100,
-    ];
-  }
-}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  *
  * @todo Check user edit permission for GDPR fields.
