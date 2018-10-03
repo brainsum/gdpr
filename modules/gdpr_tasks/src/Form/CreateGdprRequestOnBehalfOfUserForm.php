@@ -4,12 +4,39 @@ namespace Drupal\gdpr_tasks\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Queue\QueueFactory;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\gdpr_tasks\Entity\Task;
 
 /**
  * Form for user task requests.
  */
 class CreateGdprRequestOnBehalfOfUserForm extends FormBase {
+  /**
+   * The gdpr_tasks_process_gdpr_sar queue.
+   *
+   * @var \Drupal\Core\Queue\QueueInterface
+   */
+  protected $queue;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('queue')
+    );
+  }
+
+  /**
+   * Constructs a new CreateGdprRequestOnBehalfOfUserForm.
+   *
+   * @param \Drupal\Core\Queue\QueueFactory $queue
+   *   Queue factory.
+   */
+  public function __construct(QueueFactory $queue) {
+    $this->queue = $queue->get('gdpr_tasks_process_gdpr_sar');
+  }
 
   /**
    * {@inheritdoc}
@@ -55,9 +82,8 @@ class CreateGdprRequestOnBehalfOfUserForm extends FormBase {
     $task->save();
 
     if ($request_type === 'gdpr_sar') {
-      $queue = \Drupal::queue('gdpr_tasks_process_gdpr_sar');
-      $queue->createQueue();
-      $queue->createItem($task->id());
+      $this->queue->createQueue();
+      $this->queue->createItem($task->id());
     }
 
     $this->messenger()->addStatus('The request has been logged');
