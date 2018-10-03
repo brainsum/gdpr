@@ -26,7 +26,7 @@ class GdprSqlBase extends SqlBase {
    *
    * @throws \Exception
    */
-  public static function create($options = []) {
+  public static function create(array $options = []) {
     // Set defaults in the unfortunate event that caller doesn't provide values.
     $options += [
       'database' => 'default',
