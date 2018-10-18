@@ -277,6 +277,51 @@ function gdpr_tasks_mail($key, &$message, $params) {
 }
 
 /**
+ * Implements hook_token_info().
+ */
+function gdpr_tasks_token_info() {
+  $tokens = [];
+
+  $tokens['gdpr_task']['type'] = [
+    'name' => t('Type'),
+    'description' => t('GDPR task type.'),
+  ];
+
+  return [
+    'tokens' => $tokens,
+  ];
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function gdpr_tasks_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'gdpr_task_type');
+
+  $results = $query->execute();
+
+  $keys = array_keys($results['gdpr_task_type']);
+
+  foreach (entity_load('gdpr_task_type', $keys) as $task_type) {
+    if ($type == 'gdpr_task') {
+      foreach ($tokens as $name => $original) {
+        switch ($name) {
+          case 'type':
+            $entity = reset($data);
+            $replacements[$original] = entity_label('gdpr_task_type', $task_type);
+            break;
+        }
+      }
+    }
+  }
+
+  return $replacements;
+}
+
+/**
  * Access callback for task entities.
  */
 function gdpr_task_access($op, $task = NULL, $account = NULL) {
