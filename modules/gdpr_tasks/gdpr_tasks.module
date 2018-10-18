@@ -95,6 +95,32 @@ function gdpr_tasks_entity_info() {
 }
 
 /**
+ * Implements hook_variable_info().
+ */
+function gdpr_tasks_variable_info($options) {
+
+  $variable['gdpr_tasks_emails'] = array(
+    'title' => t('GDPR taks emails'),
+    'localize' => TRUE,
+    'group' => 'gdpr_settings',
+  );
+
+  return $variable;
+}
+
+/**
+ * Implements hook_variable_group_info().
+ */
+function gdpr_tasks_variable_group_info() {
+  $groups['gdpr_settings'] = array(
+    'title' => t('GDPR settings'),
+    'access' => 'administer site',
+    'path' => 'admin/config/gdpr',
+  );
+  return $groups;
+}
+
+/**
  * Implements hook_theme().
  */
 function gdpr_tasks_theme() {
@@ -627,7 +653,13 @@ function gdpr_tasks_collect_rtf_data_extract_value($type, EntityMetadataWrapper 
  *   gdpr_task is be added automatically.
  */
 function gdpr_tasks_send_mail($key, GDPRTask $task, array $tokens = array()) {
-  $emails = variable_get('gdpr_tasks_emails', array());
+  global $language;
+
+  if (module_exists('i18n_variable') && i18n_variable_list('gdpr_tasks_emails')) {
+    $emails = i18n_variable_get('gdpr_tasks_emails', $language->language, array());
+  } else {
+    $emails = variable_get('gdpr_tasks_emails', array());
+  }
 
   // Allow other modules to alter the task emails.
   drupal_alter('gdpr_tasks_send_mail', $emails, $key, $task, $tokens);
@@ -638,7 +670,6 @@ function gdpr_tasks_send_mail($key, GDPRTask $task, array $tokens = array()) {
   $email = $emails[$key];
 
   // Gather our params.
-  global $language;
   $tokens['gdpr_task'] = $task;
   $params = array(
     'context' => array(
