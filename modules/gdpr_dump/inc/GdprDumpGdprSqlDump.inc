@@ -213,8 +213,8 @@ class GdprDumpGdprSqlDump {
 
       $unique_data = [];
       $schema = drupal_get_schema($table);
-      $uniq_keys = $schema['unique keys'];
-      $primary_key = $schema['primary key'][0];
+      $uniq_keys = isset($schema['unique keys']) ? $schema['unique keys'] : [];
+      $primary_key = isset($schema['primary key'][0]) ? $schema['primary key'][0] : '';
 
       while ($row = $oldRows->fetchAssoc()) {
         foreach ($sanitationOptions as $column => $pluginId) {
