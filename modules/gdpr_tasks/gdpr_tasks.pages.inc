@@ -23,9 +23,12 @@ function gdpr_tasks_request($account, $gdpr_task_type) {
   $tasks = gdpr_tasks_get_user_tasks($account, $gdpr_task_type);
 
   $pending = FALSE;
-  foreach ($tasks as $task) {
-    if (in_array($task->status, array('requested', 'processed'), TRUE)) {
-      $pending = TRUE;
+
+  if ($tasks) {
+    foreach ($tasks as $task) {
+      if (in_array($task->status, array('requested', 'processed'), TRUE)) {
+        $pending = TRUE;
+      }
     }
   }
 
