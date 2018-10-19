@@ -848,3 +848,15 @@ function gdpr_tasks_sars_callback_address_field(EntityMetadataWrapper $value) {
 function gdpr_tasks_sars_callback_commerce_price(EntityMetadataWrapper $value) {
   return commerce_currency_format($value->amount->value(), $value->currency_code->value());
 }
+
+/**
+ * Implements hook_file_download_access().
+ */
+function gdpr_tasks_file_download_access($file_item, $entity_type, $entity) {
+  if ($entity_type === 'gdpr_task') {
+    global $user;
+    return
+      ($entity->user_id == $user->uid && user_access('view own gdpr tasks'))
+      || user_access('view gdpr tasks');
+  }
+}
