@@ -7,8 +7,8 @@ General Data Protection Regulation
 INTRODUCTION
 ------------
 
-The General Data Protection Regulation module gives end user visibility to the
-data stored about themself and aims to help site admins follow the guidelines
+The General Data Protection Regulation module gives end-user visibility to the
+data stored about themselves and aims to help site admins follow the guidelines
 and legislation set by the EU.
 
 Please note:
