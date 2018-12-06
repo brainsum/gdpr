@@ -3,7 +3,7 @@
 namespace Drupal\gdpr_tasks\Plugin\QueueWorker;
 
 use Drupal\Core\File\FileSystem;
-use Drupal\Component\Uuid\Php;
+use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManager;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -38,7 +38,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
   /**
    * The uuid service.
    *
-   * @var \Drupal\Component\Uuid\Php
+   * @var \Drupal\Component\Uuid\UuidInterface
    */
   protected $uuid;
 
@@ -88,7 +88,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    *   The plugin implementation definition.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\Component\Uuid\Php $uuid
+   * @param \Drupal\Component\Uuid\UuidInterface $uuid
    *   The uuid service.
    * @param \Drupal\Core\Field\FieldTypePluginManager $field_type_plugin_manager
    *   The field type plugin manager.
@@ -101,7 +101,7 @@ class GdprTasksSarWorker extends QueueWorkerBase implements ContainerFactoryPlug
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger service.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, EntityTypeManagerInterface $entity_type_manager, Php $uuid, FieldTypePluginManager $field_type_plugin_manager, QueueInterface $queue, EntityTraversalFactory $rta_traversal, FileSystem $file_system, MessengerInterface $messenger) {
+  public function __construct(array $configuration, $plugin_id, array $plugin_definition, EntityTypeManagerInterface $entity_type_manager, UuidInterface $uuid, FieldTypePluginManager $field_type_plugin_manager, QueueInterface $queue, EntityTraversalFactory $rta_traversal, FileSystem $file_system, MessengerInterface $messenger) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->taskStorage = $entity_type_manager->getStorage('gdpr_task');
     $this->uuid = $uuid;
