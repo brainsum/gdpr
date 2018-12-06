@@ -5,5 +5,7 @@ type: module
 configure: checklistapi.checklists.gdpr_checklist
 package: General Data Protection Regulation
 
+php: 5.6
+
 dependencies:
   - checklistapi:checklistapi
