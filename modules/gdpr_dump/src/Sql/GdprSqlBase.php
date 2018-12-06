@@ -18,7 +18,7 @@ class GdprSqlBase extends SqlBase {
   /**
    * Get a driver specific instance of this class.
    *
-   * @param array $options
+   * @param mixed $options
    *   An options array as handed to a command callback.
    *
    * @return \Drush\Sql\SqlBase
@@ -26,7 +26,7 @@ class GdprSqlBase extends SqlBase {
    *
    * @throws \Exception
    */
-  public static function create(array $options = []) {
+  public static function create($options = []) {
     // Set defaults in the unfortunate event that caller doesn't provide values.
     $options += [
       'database' => 'default',
