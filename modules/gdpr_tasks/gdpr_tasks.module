@@ -40,6 +40,7 @@ function gdpr_tasks_entity_info() {
       'bundle' => 'type',
       'label' => 'id',
       'language' => 'language',
+      'status' => 'none',
     ),
     'bundle keys' => array(
       'bundle' => 'type',
@@ -728,6 +729,10 @@ function gdpr_tasks_send_mail($key, GDPRTask $task, array $tokens = array()) {
   $from = variable_get('gdpr_tasks_emails_from', NULL);
   $to = $task->getOwner()->mail;
   drupal_mail('gdpr_tasks', 'gdpr_tasks_' . $key, $to, $language, $params, $from);
+  if ($key == 'task_requested_self') {
+    $to = variable_get('site_mail', '');
+    drupal_mail('gdpr_tasks', 'gdpr_tasks_' . $key, $to, $language, $params, $from);
+  }
 }
 
 /**
