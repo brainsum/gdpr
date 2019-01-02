@@ -6,7 +6,7 @@ package: General Data Protection Regulation
 
 configure: gdpr_dump.settings
 
-php: 5.6
+php: 7.1
 
 dependencies:
   - drupal:system (>=8.4.0)
