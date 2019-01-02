@@ -34,6 +34,10 @@ For information about GDPR:
 REQUIREMENTS
 ------------
 
+Since PHP 5.6 reached its end of life on 31 Dec. 2018, for security reasons,
+the required minimum PHP version has been changed to 7.1.
+Read more here: http://php.net/supported-versions.php
+
 This module requires the following outside of Drupal core.
 
  * Checklist API - https://www.drupal.org/project/checklistapi
