@@ -166,7 +166,7 @@ function gdpr_tasks_menu() {
     'description' => 'Configure email templates to be sent for task requests.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('gdpr_tasks_email_settings'),
-    'access arguments' => array('administer gdpr settings'),
+    'access arguments' => array('administer task emails'),
     'file' => 'gdpr_tasks.admin.inc',
     'weight' => 99,
   );
@@ -193,6 +193,10 @@ function gdpr_tasks_permission() {
     ),
     'administer task type entities' => array(
       'title' => t('Administer task entities'),
+      'restrict access' => TRUE,
+    ),
+    'administer task emails' => array(
+      'title' => t('Administer task emails'),
       'restrict access' => TRUE,
     ),
     'process gdpr tasks' => array(
