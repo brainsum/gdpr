@@ -746,6 +746,96 @@ function gdpr_tasks_entity_property_info_alter(&$info) {
 }
 
 /**
+ * Implements hook_entity_property_info().
+ */
+function gdpr_tasks_entity_property_info() {
+  $info = array();
+  // Add meta-data about the basic node properties.
+  $properties = &$info['gdpr_task']['properties'];
+  $properties['id'] = array(
+    'label' => t("Task ID"),
+    'type' => 'integer',
+    'description' => t("The unique ID of the task."),
+    'schema field' => 'id',
+  );
+  $properties['type'] = array(
+    'label' => t("Task type"),
+    'type' => 'token',
+    'description' => t("The type of the task."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer task entities',
+    'required' => TRUE,
+    'schema field' => 'type',
+  );
+  $properties['language'] = array(
+    'label' => t("Language"),
+    'type' => 'token',
+    'description' => t("The language the task is written in."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'options list' => 'entity_metadata_language_list',
+    'schema field' => 'language',
+    'setter permission' => 'administer task entities',
+  );
+  $properties['owner'] = array(
+    'label' => t('Owner'),
+    'type' => 'user',
+    'description' => t("The user for which this task was requested."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer task entities',
+    'required' => TRUE,
+    'schema field' => 'user_id',
+  );
+  $properties['status'] = array(
+    'label' => t("Status"),
+    'description' => t("Whether the task is published or unpublished."),
+    'type' => 'integer',
+    'options list' => 'gdpr_tasks_entity_status_options_list',
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer task entities',
+    'schema field' => 'status',
+  );
+  $properties['created'] = array(
+    'label' => t("Date created"),
+    'type' => 'date',
+    'description' => t("The date the task was created."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer task entities',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t("Date changed"),
+    'type' => 'date',
+    'schema field' => 'changed',
+    'description' => t("The date the task was most recently updated."),
+  );
+  $properties['complete'] = array(
+    'label' => t("Date completed"),
+    'type' => 'date',
+    'schema field' => 'complete',
+    'description' => t("The date the task was completed."),
+  );
+  $properties['requested_by'] = array(
+    'label' => t('Requested by'),
+    'type' => 'user',
+    'description' => t("The user by which this task was requested."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer task entities',
+    'required' => TRUE,
+    'schema field' => 'requested_by',
+  );
+  $properties['processed_by'] = array(
+    'label' => t('Processed by'),
+    'type' => 'user',
+    'description' => t("The user by which this task was most recently processed."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer task entities',
+    'required' => TRUE,
+    'schema field' => 'processed_by',
+  );
+  return $info;
+}
+
+/**
  * Implements hook_field_info_alter().
  */
 function gdpr_tasks_field_info_alter(&$field_info) {
@@ -864,4 +954,16 @@ function gdpr_tasks_file_download_access($file_item, $entity_type, $entity) {
       ($entity->user_id == $user->uid && user_access('view own gdpr tasks'))
       || user_access('view gdpr tasks');
   }
+}
+
+/**
+ * Returns list of task statuses.
+ */
+function gdpr_tasks_entity_status_options_list() {
+  return [
+    'requested' => t('Requested'),
+    'reviewing' => t('Reviewing'),
+    'processed' => t('Processed'),
+    'closed' => t('Closed')
+  ];
 }
