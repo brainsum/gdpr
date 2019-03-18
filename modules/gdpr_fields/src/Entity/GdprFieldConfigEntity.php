@@ -90,6 +90,10 @@ class GdprFieldConfigEntity extends ConfigEntityBase {
         $result['sars_filename'] = $this->getFilename($bundle);
       }
 
+      if (empty($result['entity_type_id'])) {
+        $result['entity_type_id'] = $this->id();
+      }
+
       return new GdprField($result);
     }
 
