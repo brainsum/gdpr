@@ -176,6 +176,11 @@ class TaskListBuilder extends EntityListBuilder {
     ];
     /* @var $entity \Drupal\gdpr_tasks\Entity\Task */
     foreach ($this->load() as $entity) {
+      // SARs tasks need to be processed on cron before staff can work on them.
+      if ($entity->bundle() == 'gdpr_sar' && $entity->status->value == 'requested') {
+        continue;
+      }
+
       if ($row = $this->buildRow($entity)) {
         $build[$entity->status->value]['table']['#rows'][$entity->id()] = $row;
       }
