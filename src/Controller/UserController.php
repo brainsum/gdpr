@@ -90,6 +90,6 @@ class UserController extends ControllerBase {
     }
 
     return $this->redirect('gdpr_consent.agreements', ['user' => $user->id()]);
-   }
+  }
 
 }
