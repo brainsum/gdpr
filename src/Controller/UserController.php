@@ -76,52 +76,20 @@ class UserController extends ControllerBase {
    * @param \Drupal\user\UserInterface $user
    *   The user.
    *
-   * @return array
+   * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
    *   Render array.
    */
   public function collectedData(UserInterface $user) {
-    $rows = [];
-    /** @var \Drupal\Core\Field\FieldItemListInterface $field */
-    foreach ($user as $key => $field) {
-      // Don't show the hash.
-      if ('pass' === $key) {
-        $rows[] = [
-          'type' => $field->getName(),
-          'value' => '******',
-        ];
-        continue;
-      }
 
-      $fieldValue = $field->getString();
-
-      // @todo: Maybe display as N/A, or as empty?
-      if (empty($fieldValue)) {
-        continue;
-      }
-
-      if ($key === 'created' || $key === 'changed' || $key === 'login' || $key === 'access') {
-        $fieldValue = $this->dateFormatter->format($fieldValue, 'medium');
-      }
-
-      // @todo: Maybe turn to human readable values?
-      $rows[] = [
-        'type' => $key,
-        'value' => $fieldValue,
-      ];
-
+    if (!$this->moduleHandler()->moduleExists('gdpr_tasks') && !$this->moduleHandler()->moduleExists('gdpr_consent')) {
+      return ['#markup' => $this->t('Data stored about you.')];
     }
 
-    $table = [
-      '#type' => 'table',
-      '#caption' => $this->t('Stored user data'),
-      '#header' => [
-        $this->t('Type'),
-        $this->t('Value'),
-      ],
-      '#rows' => $rows,
-    ];
+    if ($this->moduleHandler()->moduleExists('gdpr_tasks')) {
+      return $this->redirect('view.gdpr_tasks_my_data_requests.page_1', ['user' => $user->id()]);
+    }
 
-    return $table;
+    return $this->redirect('gdpr_consent.agreements', ['user' => $user->id()]);
   }
 
 }
