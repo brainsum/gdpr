@@ -1,6 +1,7 @@
 General Data Protection Regulation
 ==================================
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3cadd2cfc4db4214a5ea217d58716d92)](https://app.codacy.com/app/mhavelant/gdpr?utm_source=github.com&utm_medium=referral&utm_content=brainsum/gdpr&utm_campaign=badger)
 [![Build Status](https://travis-ci.org/brainsum/gdpr.svg?branch=8.x-1.x)](https://travis-ci.org/brainsum/gdpr)
 
 
